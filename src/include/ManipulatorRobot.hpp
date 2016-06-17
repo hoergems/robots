@@ -9,6 +9,8 @@
 #include <boost/make_shared.hpp>
 #include "fcl/BV/BV.h" 
 #include "fcl/collision_object.h"
+#include "fcl/collision_data.h"
+#include "fcl/collision.h"
 #include "fcl/shape/geometric_shapes.h"
 #include "fcl/shape/geometric_shapes_utility.h"
 #include <tinyxml.h>

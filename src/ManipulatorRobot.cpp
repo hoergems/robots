@@ -589,60 +589,8 @@ void ManipulatorRobot::setViewerBackgroundColor(double r, double g, double b) {
 void ManipulatorRobot::setViewerCameraTransform(std::vector<double> &rot, std::vector<double> &trans) {
 	viewer_->setCameraTransform(rot, trans);
 }
-
-void ManipulatorRobot::setObstacleColor(std::string obstacle_name, 
- 		                     std::vector<double> &diffuse_color, 
-                             std::vector<double> &ambient_color) {
-	viewer_->setObstacleColor(obstacle_name, diffuse_color, ambient_color);
-}
-
 #endif
 
-void ManipulatorRobot::addBoxObstacles(std::vector<std::shared_ptr<shared::Obstacle>> &obstacles) {
-#ifdef USE_URDF
-	for (size_t i = 0; i < obstacles.size(); i++) {
-		std::vector<double> dims;		
-		std::shared_ptr<shared::Obstacle> o = obstacles[i];
-		std::shared_ptr<shared::BoxObstacle> o_box = std::static_pointer_cast<shared::BoxObstacle>(o);
-		dims.push_back(o_box->pos_x_);
-		dims.push_back(o_box->pos_y_);
-		dims.push_back(o_box->pos_z_);
-		dims.push_back(o_box->size_x_);
-		dims.push_back(o_box->size_y_);
-		dims.push_back(o_box->size_z_);
-			
-		std::string name = o_box->getName();
-		viewer_->addObstacle(name,
-					         dims);
-	}
-#endif
-}
-
-void ManipulatorRobot::addObstacles(std::vector<std::shared_ptr<shared::ObstacleWrapper>> &obstacles) {
-#ifdef USE_URDF
-	for (size_t i = 0; i < obstacles.size(); i++) {
-		std::vector<double> dims;		
-		std::shared_ptr<shared::Obstacle> o = std::static_pointer_cast<shared::Obstacle>(obstacles[i]);
-		std::shared_ptr<shared::BoxObstacle> o_box = std::static_pointer_cast<shared::BoxObstacle>(o);
-		dims.push_back(o_box->pos_x_);
-		dims.push_back(o_box->pos_y_);
-		dims.push_back(o_box->pos_z_);
-		dims.push_back(o_box->size_x_);
-		dims.push_back(o_box->size_y_);
-		dims.push_back(o_box->size_z_);
-		
-		std::string name = o_box->getName();
-		viewer_->addObstacle(name,
-				             dims);
-	}
-#endif
-}
-
-void ManipulatorRobot::removeObstacles() {
-#ifdef USE_URDF
-	viewer_->removeObstacles();
-#endif
-}
 
 bool ManipulatorRobot::propagate_linear(std::vector<double> &current_state,
     	    		         std::vector<double> &control_input,
@@ -1033,16 +981,6 @@ BOOST_PYTHON_MODULE(libmanipulatorrobot) {
     	class_<std::vector<std::string> > ("v_string")
     	    .def(vector_indexing_suite<std::vector<std::string> >());
     }
-    
-    info = boost::python::type_id<std::vector<std::shared_ptr<shared::ObstacleWrapper>>>();
-    const boost::python::converter::registration* reg_vobst = boost::python::converter::registry::query(info);
-    if (reg_vobst == NULL || (*reg_vobst).m_to_python == NULL)  { 
-    	class_<std::vector<std::shared_ptr<shared::ObstacleWrapper>> > ("v_obstacle")
-    	    .def(vector_indexing_suite<std::vector<std::shared_ptr<shared::ObstacleWrapper>> >());
-    	to_python_converter<std::vector<std::shared_ptr<shared::ObstacleWrapper>, std::allocator<std::shared_ptr<shared::ObstacleWrapper>> >, 
-    	    VecToList<std::shared_ptr<shared::ObstacleWrapper>> >();
-    	register_ptr_to_python<std::shared_ptr<shared::ObstacleWrapper>>();
-    }
     	
     class_<fcl::OBB>("OBB");
     class_<fcl::CollisionObject>("CollisionObject", init<const boost::shared_ptr<fcl::CollisionGeometry>, const fcl::Transform3f>());
@@ -1094,9 +1032,7 @@ BOOST_PYTHON_MODULE(libmanipulatorrobot) {
 						.def("setAccelerationLimit", &ManipulatorRobot::setAccelerationLimit)
 						.def("getEndEffectorVelocity", &ManipulatorRobot::getEndEffectorVelocity)
 						.def("getProcessMatrices", &ManipulatorRobot::getProcessMatrices)						
-						.def("getEndEffectorJacobian", &ManipulatorRobot::getEndEffectorJacobian)
-						.def("addObstacles", &ManipulatorRobot::addObstacles)
-						.def("removeObstacles", &ManipulatorRobot::removeObstacles)
+						.def("getEndEffectorJacobian", &ManipulatorRobot::getEndEffectorJacobian)						
 						.def("setNewtonModel", &ManipulatorRobot::setNewtonModel)
 						.def("checkSelfCollision", &ManipulatorRobot::checkSelfCollisionPy)
 #ifdef USE_URDF
@@ -1106,8 +1042,7 @@ BOOST_PYTHON_MODULE(libmanipulatorrobot) {
 						.def("setViewerBackgroundColor", &ManipulatorRobot::setViewerBackgroundColor)
 					    .def("setViewerCameraTransform", &ManipulatorRobot::setViewerCameraTransform)
 					    .def("addPermanentViewerParticles", &ManipulatorRobot::addPermanentViewerParticles)
-					    .def("removePermanentViewerParticles", &ManipulatorRobot::removePermanentViewerParticles)					    
-						.def("setObstacleColor", &ManipulatorRobot::setObstacleColor)
+					    .def("removePermanentViewerParticles", &ManipulatorRobot::removePermanentViewerParticles)
 #endif
                         //.def("setup", &Integrate::setup)                        
     ;

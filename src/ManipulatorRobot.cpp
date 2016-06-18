@@ -939,12 +939,12 @@ std::vector<double> ManipulatorRobot::getProcessMatrices(std::vector<double> &x,
 	return static_cast<shared::ManipulatorPropagator *>(propagator_.get())->getIntegrator()->getProcessMatricesVec(x, rho, t_e);
 }
 
-boost::shared_ptr<shared::Robot> makeManipulatorRobot(std::string model_file) {
-	boost::shared_ptr<shared::Robot> robot_ptr = boost::make_shared<ManipulatorRobot>(model_file);
+std::shared_ptr<shared::Robot> makeManipulatorRobot(std::string model_file) {
+	std::shared_ptr<shared::Robot> robot_ptr = std::make_shared<ManipulatorRobot>(model_file);
 	return robot_ptr;
 }
 
-BOOST_PYTHON_MODULE(libmanipulatorrobot) {
+BOOST_PYTHON_MODULE(librobots) {
     using namespace boost::python;
     
     boost::python::type_info info= boost::python::type_id<std::vector<double>>();
@@ -990,7 +990,7 @@ BOOST_PYTHON_MODULE(libmanipulatorrobot) {
         VecToList<std::shared_ptr<fcl::CollisionObject>> >();
     register_ptr_to_python<std::shared_ptr<fcl::CollisionObject>>();
     
-    class_<Robot, boost::shared_ptr<Robot>, boost::noncopyable>("Robot", no_init);
+    class_<Robot, std::shared_ptr<Robot>, boost::noncopyable>("Robot", no_init);
     
     class_<RobotWrapper, boost::noncopyable>("Robot", init<std::string>())
     		.def("getDOF", &RobotWrapper::getDOF)

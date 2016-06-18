@@ -13,7 +13,30 @@ SET(PYTHON_MIN_VERSION "2.7.0")
 include(FindPkgConfig)
 include(GNUInstallDirs)
 
+
+set(USE_URDF True)
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
+if (USE_URDF) 
+############################# LOAD OPENRAVE #############################
+    if(PKG_CONFIG_FOUND)
+        pkg_check_modules(OPENRAVE openrave0.9-core)
+        if(NOT OPENRAVE_FOUND)
+           message(FATAL_ERROR "OpenRAVE 0.9 could not be found")           
+        endif()
+        include_directories(${OPENRAVE_INCLUDE_DIRS})
+        link_directories(${OPENRAVE_LIBRARY_DIRS})           
+    endif() 
+    
+    if(PKG_CONFIG_FOUND)    
+	    pkg_check_modules(VIEWER viewer_interface)
+	    if(NOT VIEWER_FOUND)
+	       message(FATAL_ERROR "VIEWER could not be found")	       
+	    endif()	
+	    include_directories(${VIEWER_INCLUDE_DIRS})
+	    link_directories(${VIEWER_LIBRARY_DIRS})    
+        add_definitions(-DUSE_URDF)    
+	endif()      
+endif()
 
 ############################# LOAD PYTHON #############################
 if(PKG_CONFIG_FOUND)    

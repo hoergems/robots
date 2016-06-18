@@ -349,7 +349,7 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
 	rbdl_interface_(nullptr){
 	
 	propagator_ = std::make_shared<shared::ManipulatorPropagator>();
-#ifdef USE_URDF
+#ifdef USE_URDF	
 	viewer_ = std::make_shared<shared::ViewerInterface>();
 #endif
 	TiXmlDocument xml_doc;

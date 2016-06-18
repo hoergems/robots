@@ -1,11 +1,15 @@
 #include "include/robot.hpp"
 
+using std::cout;
+using std::endl;
+
 namespace shared {
 
 Robot::Robot(std::string robot_file):
 	robot_file_(robot_file),
 	constraints_enforced_(false),
-	propagator_(nullptr){
+	propagator_(nullptr),
+	viewer_(nullptr){
 	
 }
 
@@ -46,7 +50,9 @@ void Robot::setupViewer(std::string model_file, std::string environment_file) {
 }
 
 void Robot::setParticlePlotLimit(unsigned int particle_plot_limit) {	
-	viewer_->setParticlePlotLimit(particle_plot_limit);	
+	if (viewer_) {
+		viewer_->setParticlePlotLimit(particle_plot_limit);
+	}
 }
 
 #endif

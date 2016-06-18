@@ -1,5 +1,5 @@
-#ifndef ROBOT_HPP_
-#define ROBOT_HPP_
+#ifndef _MANIPULATOR_ROBOT_HPP_
+#define _MANIPULATOR_ROBOT_HPP_
 #include <string>
 #include <iostream>
 #include <assert.h>

@@ -125,9 +125,11 @@ endif()
 add_library(robots SHARED 
             ${CMAKE_CURRENT_SOURCE_DIR}/src/robot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorRobot.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinRobot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/propagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Kinematics.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorPropagator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinPropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/integrate.cpp)
             
 target_link_libraries (robots

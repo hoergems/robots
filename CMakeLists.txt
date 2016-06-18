@@ -16,8 +16,9 @@ include(GNUInstallDirs)
 
 set(USE_URDF True)
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
-if (USE_URDF) 
+ 
 ############################# LOAD OPENRAVE #############################
+if (USE_URDF)
     if(PKG_CONFIG_FOUND)
         pkg_check_modules(OPENRAVE openrave0.9-core)
         if(NOT OPENRAVE_FOUND)
@@ -36,6 +37,18 @@ if (USE_URDF)
 	    link_directories(${VIEWER_LIBRARY_DIRS})    
         add_definitions(-DUSE_URDF)    
 	endif()      
+endif()
+
+############################# LOAD VIEWER_INTERFACE #############################
+if (USE_URDF)
+	if(PKG_CONFIG_FOUND)    
+	    pkg_check_modules(VIEWER viewer_interface)
+	    if(NOT VIEWER_FOUND)
+	       message(FATAL_ERROR "VIEWER could not be found")
+	    endif()
+	    include_directories(${VIEWER_INCLUDE_DIRS})
+            add_definitions(-DUSE_URDF)    
+	endif()
 endif()
 
 ############################# LOAD PYTHON #############################
@@ -122,7 +135,8 @@ target_link_libraries (robots
                        ${PYTHON_LIBRARIES}
                        ${TINYXML_LIBRARIES}
                        ${FCL_LIBRARIES}
-                       ${RBDL_INTERFACE_LIBRARIES})
+                       ${RBDL_INTERFACE_LIBRARIES}
+                       ${VIEWER_LIBRARIES})
                        
 set(pkg_conf_file_in "${CMAKE_CURRENT_SOURCE_DIR}/robots.pc.in")
 set(pkg_conf_file_out "${CMAKE_CURRENT_BINARY_DIR}/robots.pc")

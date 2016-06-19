@@ -986,8 +986,8 @@ int ManipulatorRobot::getDOF() const {
 
 bool ManipulatorRobot::isTerminal(std::vector<double> &state) const {
 	std::vector<double> joint_angles;
-	std::vector<double> end_effector_position;
-	for (size_t i = 0; i < joint_angles.size() / 2; i++) {
+	std::vector<double> end_effector_position;	
+	for (size_t i = 0; i < state.size() / 2; i++) {
 		joint_angles.push_back(state[i]);
 	}
 	
@@ -997,8 +997,7 @@ bool ManipulatorRobot::isTerminal(std::vector<double> &state) const {
 		dist += std::pow(end_effector_position[i] - goal_position_[i], 2);
 	}
 	
-	dist = std::sqrt(dist);
-	if (dist < goal_radius_) {
+	if (std::sqrt(dist) < goal_radius_) {		
 		return true;
 	}
 	

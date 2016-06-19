@@ -40,6 +40,8 @@ public:
 	
 	virtual bool constraintsEnforced();
 	
+	virtual bool enforceConstraints(std::vector<double> &state) const = 0;
+	
 	virtual void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const = 0;
 	
 	virtual void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const = 0;
@@ -48,6 +50,8 @@ public:
 			                              std::vector<double> &control, 
 			                              double &duration,
 			                              std::vector<Eigen::MatrixXd> &matrices) const = 0;
+	
+	virtual bool isTerminal(std::vector<double> &state) const = 0;
 	
 	virtual bool checkSelfCollision(std::vector<std::shared_ptr<fcl::CollisionObject>> &collision_objects) const;
 	
@@ -60,6 +64,7 @@ public:
 	virtual void setObservationCovarianceMatrix(Eigen::MatrixXd &observation_covariance_matrix);
 	
 	virtual void getObservationCovarianceMatrix(Eigen::MatrixXd &observation_covariance_matrix) const;
+
 	
 #ifdef USE_URDF
 	void setupViewer(std::string model_file, std::string environment_file);
@@ -140,6 +145,14 @@ public:
 		
 	void getObservationCovarianceMatrix(Eigen::MatrixXd &observation_covariance_matrix) const{
 		this->get_override("getObservationCovarianceMatrix")(observation_covariance_matrix);
+	}
+	
+	bool isTerminal(std::vector<double> &state) const {
+		return this->get_override("isTerminal")(state);
+	}
+	
+	bool enforceConstraints(std::vector<double> &state) const {
+		return this->get_override("enforceConstraints")(state);
 	}
 	
 };

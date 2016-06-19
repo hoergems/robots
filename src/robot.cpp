@@ -21,12 +21,17 @@ bool Robot::propagateState(std::vector<double> &current_state,
 	                       double duration,
 	                       double simulation_step_size,	                       
 	                       std::vector<double> &result) {
-	return propagator_->propagateState(current_state,
-			control_input,
-			control_error,
-			duration,
-			simulation_step_size,			
-			result);                        
+	propagator_->propagateState(current_state,
+			                    control_input,
+			                    control_error,
+			                    duration,
+			                    simulation_step_size,			
+			                    result);
+	if (constraints_enforced_) {
+		return enforceConstraints(result);
+	}
+	
+	return true;
 }
 
 bool Robot::checkSelfCollision(std::vector<std::shared_ptr<fcl::CollisionObject>> &collision_objects) const {

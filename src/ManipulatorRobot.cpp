@@ -346,7 +346,9 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
 	link_inertia_origins_(),
 	robot_state_(),	
 	kinematics_(new Kinematics()),	
-	rbdl_interface_(nullptr){
+	rbdl_interface_(nullptr),
+	goal_position_(),
+	goal_radius_(0){
 	
 	propagator_ = std::make_shared<shared::ManipulatorPropagator>();
 #ifdef USE_URDF	
@@ -424,6 +426,15 @@ ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double> &
 	std::vector<std::shared_ptr<fcl::CollisionObject>> collision_objects;
 	createEndEffectorCollisionObject(joint_angles, collision_objects);
 	return collision_objects;
+}
+
+void ManipulatorRobot::setGoalArea(std::vector<double> &goal_position, double &goal_radius) {
+	goal_position_.clear();
+	for (size_t i = 0; i < goal_position.size(); i++) {
+		goal_position_.push_back(goal_position[i]);
+	}
+	
+	goal_radius_ = goal_radius;
 }
 
 void ManipulatorRobot::initCollisionObjects() {
@@ -552,7 +563,7 @@ void ManipulatorRobot::getPositionOfLinkN(const std::vector<double> &joint_angle
 	kinematics_->getPositionOfLinkN(joint_angles, n, position);
 }
     	    
-void ManipulatorRobot::getEndEffectorPosition(const std::vector<double> &joint_angles, std::vector<double> &end_effector_position) {
+void ManipulatorRobot::getEndEffectorPosition(const std::vector<double> &joint_angles, std::vector<double> &end_effector_position) const {
 	kinematics_->getEndEffectorPosition(joint_angles, end_effector_position);
 }
 
@@ -822,6 +833,37 @@ void ManipulatorRobot::getActiveJoints(std::vector<std::string> &joints) const{
 	}
 }
 
+bool ManipulatorRobot::enforceConstraints(std::vector<double> &state) const {
+	std::vector<double> lowerStateLimits; 
+	std::vector<double> upperStateLimits;
+	getStateLimits(lowerStateLimits, upperStateLimits);
+	bool return_val = true;
+	for (size_t i = 0; i < state.size() / 2; i++) {
+		if (state[i] < lowerStateLimits[i]) {
+			state[i] = lowerStateLimits[i];
+			state[i + state.size() / 2] = 0.0;
+			return_val = false;
+		}
+		else if (state[i] > lowerStateLimits[i]) {
+			state[i] = upperStateLimits[i];
+			state[i + state.size() / 2] = 0.0;
+			return_val = false;
+		}
+		
+		if (state[i + state.size() / 2] < lowerStateLimits[i + state.size() / 2]) {
+			state[i + state.size() / 2] = lowerStateLimits[i + state.size() / 2];
+			return_val = false;
+		}
+		
+		else if (state[i + state.size() / 2] > lowerStateLimits[i + state.size() / 2]) {
+			state[i + state.size() / 2] = upperStateLimits[i + state.size() / 2];
+			return_val = false;
+		}
+	}
+	
+	return return_val;
+}
+
 void ManipulatorRobot::getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
 	std::vector<std::string> activeJoints;
 	getActiveJoints(activeJoints);
@@ -940,6 +982,27 @@ int ManipulatorRobot::getControlSpaceDimension() {
 
 int ManipulatorRobot::getDOF() const {	
 	return active_joints_.size();
+}
+
+bool ManipulatorRobot::isTerminal(std::vector<double> &state) const {
+	std::vector<double> joint_angles;
+	std::vector<double> end_effector_position;
+	for (size_t i = 0; i < joint_angles.size() / 2; i++) {
+		joint_angles.push_back(state[i]);
+	}
+	
+	getEndEffectorPosition(joint_angles, end_effector_position);
+	double dist = 0.0;
+	for (size_t i = 0; i < end_effector_position.size(); i++) {
+		dist += std::pow(end_effector_position[i] - goal_position_[i], 2);
+	}
+	
+	dist = std::sqrt(dist);
+	if (dist < goal_radius_) {
+		return true;
+	}
+	
+	return false;
 }
 
 std::vector<double> ManipulatorRobot::getProcessMatrices(std::vector<double> &x, 

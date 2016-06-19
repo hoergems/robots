@@ -36,6 +36,8 @@ public:
 	
 	int getDOF() const override;
 	
+	bool isTerminal(std::vector<double> &state) const override;
+	
 	void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
 	
 	void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
@@ -44,6 +46,8 @@ public:
 	    	    			      std::vector<double> &control, 
 	    	    			      double &duration,
 	    	    			      std::vector<Eigen::MatrixXd> &matrices) const override;
+	
+	bool enforceConstraints(std::vector<double> &state) const override;
 	
 	
 };

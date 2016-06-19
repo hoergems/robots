@@ -168,8 +168,10 @@ bool ManipulatorPropagator::propagateState(const std::vector<double> &currentSta
 	std::vector<double> state = currentState;
 	std::vector<double> integration_result;
 	std::vector<double> inte_times({0.0, duration, simulation_step_size});	
-	integrator_->do_integration(state, control, control_error, inte_times, integration_result);	
-	std::vector<double> newJointValues;
+	integrator_->do_integration(state, control, control_error, inte_times, integration_result);
+	result = integration_result;
+	return true;
+	/**std::vector<double> newJointValues;
 	std::vector<double> newJointVelocities;	
 	for (size_t i = 0; i < integration_result.size() / 2; i++) {
 		newJointValues.push_back(integration_result[i]);		
@@ -203,7 +205,7 @@ bool ManipulatorPropagator::propagateState(const std::vector<double> &currentSta
 				legal = false;
 			}		        
 		}
-	}
+	}*/
 	
 	// Normalize joint angles to be within [-pi, pi]
 	/**for (size_t i = 0; i < newJointValues.size(); i++) {
@@ -215,7 +217,7 @@ bool ManipulatorPropagator::propagateState(const std::vector<double> &currentSta
 		}
 	}*/
 	
-	for (size_t i = 0; i < newJointValues.size(); i++) {
+	/**for (size_t i = 0; i < newJointValues.size(); i++) {
 		result.push_back(newJointValues[i]);
 	}
 	
@@ -223,7 +225,7 @@ bool ManipulatorPropagator::propagateState(const std::vector<double> &currentSta
 		result.push_back(newJointVelocities[i]);
 	}
 	
-	return legal;
+	return legal;*/
 }
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(propagate_nonlinear_overload, propagateState, 6, 6);

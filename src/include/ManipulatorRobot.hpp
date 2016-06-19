@@ -100,6 +100,10 @@ struct Joint {
     	    			                          double &duration,
     	    			                          std::vector<Eigen::MatrixXd> &matrices) const override;
     	    
+    	    virtual bool isTerminal(std::vector<double> &state) const override;
+    	    
+    	    virtual bool enforceConstraints(std::vector<double> &state) const override;
+    	    
     	    void getJointLowerPositionLimits(std::vector<std::string> &joints, std::vector<double> &joint_limits) const;
     	    
     	    void getJointUpperPositionLimits(std::vector<std::string> &joints, std::vector<double> &joint_limits) const;
@@ -112,7 +116,7 @@ struct Joint {
     	    
     	    void getPositionOfLinkN(const std::vector<double> &joint_angles, const int &n, std::vector<double> &position);
     	    
-    	    void getEndEffectorPosition(const std::vector<double> &joint_angles, std::vector<double> &end_effector_position); 
+    	    void getEndEffectorPosition(const std::vector<double> &joint_angles, std::vector<double> &end_effector_position) const; 
     	    
     	    void getEndEffectorJacobian(const std::vector<double> &joint_angles, 
     	    		                    std::vector<std::vector<double>> &ee_jacobian);
@@ -125,6 +129,8 @@ struct Joint {
     	    virtual int getControlSpaceDimension() override;
     	    
     	    virtual int getDOF() const override;
+    	    
+    	    void setGoalArea(std::vector<double> &goal_position, double &goal_radius);
     	    
     	    bool propagate_first_order(std::vector<double> &current_state,
     	    	                   std::vector<double> &control_input,
@@ -251,6 +257,10 @@ struct Joint {
     	    
     	    
         private:
+    	    std::vector<double> goal_position_;
+    	    
+    	    double goal_radius_;
+    	    
     	    std::vector<shared::Link> links_;
     	    
     	    std::vector<shared::Joint> joints_;

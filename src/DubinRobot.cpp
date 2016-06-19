@@ -27,6 +27,10 @@ int DubinRobot::getDOF() const {
 	return 4;
 }
 
+bool DubinRobot::isTerminal(std::vector<double> &state) const {
+	return false;
+}
+
 void DubinRobot::getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
 	
 }
@@ -40,6 +44,10 @@ void DubinRobot::getLinearProcessMatrices(std::vector<double> &state,
 	    	    			              double &duration,
 	    	    			              std::vector<Eigen::MatrixXd> &matrices) const {
 	
+}
+
+bool DubinRobot::enforceConstraints(std::vector<double> &state) const {
+	return true;
 }
 
 }

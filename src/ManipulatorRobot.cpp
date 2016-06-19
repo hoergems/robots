@@ -844,7 +844,7 @@ bool ManipulatorRobot::enforceConstraints(std::vector<double> &state) const {
 			state[i + state.size() / 2] = 0.0;
 			return_val = false;
 		}
-		else if (state[i] > lowerStateLimits[i]) {
+		else if (state[i] > upperStateLimits[i]) {
 			state[i] = upperStateLimits[i];
 			state[i + state.size() / 2] = 0.0;
 			return_val = false;
@@ -855,7 +855,7 @@ bool ManipulatorRobot::enforceConstraints(std::vector<double> &state) const {
 			return_val = false;
 		}
 		
-		else if (state[i + state.size() / 2] > lowerStateLimits[i + state.size() / 2]) {
+		else if (state[i + state.size() / 2] > upperStateLimits[i + state.size() / 2]) {
 			state[i + state.size() / 2] = upperStateLimits[i + state.size() / 2];
 			return_val = false;
 		}

@@ -23,7 +23,7 @@ int DubinRobot::getControlSpaceDimension() {
 	return 2;
 }
 
-int getDOF() {
+int DubinRobot::getDOF() const {
 	return 4;
 }
 
@@ -32,6 +32,13 @@ void DubinRobot::getStateLimits(std::vector<double> &lowerLimits, std::vector<do
 }
 
 void DubinRobot::getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
+	
+}
+
+void DubinRobot::getLinearProcessMatrices(std::vector<double> &state, 
+	    	    			              std::vector<double> &control, 
+	    	    			              double &duration,
+	    	    			              std::vector<Eigen::MatrixXd> &matrices) const {
 	
 }
 

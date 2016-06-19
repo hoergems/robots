@@ -9,7 +9,9 @@ Robot::Robot(std::string robot_file):
 	robot_file_(robot_file),
 	constraints_enforced_(false),
 	propagator_(nullptr),
-	viewer_(nullptr){
+	viewer_(nullptr),
+	state_covariance_matrix_(),
+	observation_covariance_matrix_(){
 	
 }
 
@@ -42,6 +44,22 @@ bool Robot::constraintsEnforced() {
 void Robot::enforceConstraints(bool enforce) {
 	constraints_enforced_ = enforce;
 	propagator_->enforceConstraints(constraints_enforced_);
+}
+
+void Robot::setStateCovarianceMatrix(Eigen::MatrixXd &state_covariance_matrix) {
+	state_covariance_matrix_ = state_covariance_matrix;
+}
+
+void Robot::getStateCovarianceMatrix(Eigen::MatrixXd &state_covariance_matrix) const{
+	state_covariance_matrix = state_covariance_matrix_;
+}
+
+void Robot::setObservationCovarianceMatrix(Eigen::MatrixXd &observation_covariance_matrix) {
+	observation_covariance_matrix_ = observation_covariance_matrix;
+}
+
+void Robot::getObservationCovarianceMatrix(Eigen::MatrixXd &observation_covariance_matrix) const{
+	observation_covariance_matrix = observation_covariance_matrix_;
 }
 
 #ifdef USE_URDF

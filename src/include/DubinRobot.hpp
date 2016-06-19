@@ -34,11 +34,16 @@ public:
 	
 	int getControlSpaceDimension() override;
 	
-	int getDOF() override;
+	int getDOF() const override;
 	
 	void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
 	
 	void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
+	
+	void getLinearProcessMatrices(std::vector<double> &state, 
+	    	    			      std::vector<double> &control, 
+	    	    			      double &duration,
+	    	    			      std::vector<Eigen::MatrixXd> &matrices) const override;
 	
 	
 };

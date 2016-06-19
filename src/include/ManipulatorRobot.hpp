@@ -95,6 +95,11 @@ struct Joint {
     	    
     	    virtual void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
     	    
+    	    virtual void getLinearProcessMatrices(std::vector<double> &state, 
+    	    			                          std::vector<double> &control, 
+    	    			                          double &duration,
+    	    			                          std::vector<Eigen::MatrixXd> &matrices) const override;
+    	    
     	    void getJointLowerPositionLimits(std::vector<std::string> &joints, std::vector<double> &joint_limits) const;
     	    
     	    void getJointUpperPositionLimits(std::vector<std::string> &joints, std::vector<double> &joint_limits) const;
@@ -119,7 +124,7 @@ struct Joint {
     	    
     	    virtual int getControlSpaceDimension() override;
     	    
-    	    virtual int getDOF() override;
+    	    virtual int getDOF() const override;
     	    
     	    bool propagate_first_order(std::vector<double> &current_state,
     	    	                   std::vector<double> &control_input,

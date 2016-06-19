@@ -513,6 +513,15 @@ bool ManipulatorRobot::checkSelfCollision(std::vector<std::shared_ptr<fcl::Colli
 	
 	return false;
 }
+
+void ManipulatorRobot::getLinearProcessMatrices(std::vector<double> &state, 
+    	    			                        std::vector<double> &control, 
+    	    			                        double &duration,
+    	    			                        std::vector<Eigen::MatrixXd> &matrices) const {
+	static_cast<shared::ManipulatorPropagator *>(propagator_.get())->getIntegrator()->getProcessMatrices(state, control, duration, matrices);
+	matrices.push_back(Eigen::MatrixXd::Identity(getDOF() * 2, getDOF() * 2));
+	matrices.push_back(Eigen::MatrixXd::Identity(getDOF() * 2, getDOF() * 2));
+}
     	    
 bool ManipulatorRobot::checkSelfCollision(const std::vector<double> &state) const {
 	std::vector<std::shared_ptr<fcl::CollisionObject>> robot_collision_objects;
@@ -929,7 +938,7 @@ int ManipulatorRobot::getControlSpaceDimension() {
 	return active_joints_.size();
 }
 
-int ManipulatorRobot::getDOF() {	
+int ManipulatorRobot::getDOF() const {	
 	return active_joints_.size();
 }
 

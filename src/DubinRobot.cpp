@@ -15,11 +15,11 @@ void DubinRobot::createRobotCollisionObjects(const std::vector<double> &state,
 	
 }
 
-int DubinRobot::getStateSpaceDimension() {
+int DubinRobot::getStateSpaceDimension() const {
 	return 4;
 }
 
-int DubinRobot::getControlSpaceDimension() {
+int DubinRobot::getControlSpaceDimension() const {
 	return 2;
 }
 

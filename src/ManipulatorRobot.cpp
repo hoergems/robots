@@ -477,13 +477,17 @@ void ManipulatorRobot::initCollisionObjects() {
 }
 
 void ManipulatorRobot::createRobotCollisionObjects(const std::vector<double> &state, 
-		                                           std::vector<std::shared_ptr<fcl::CollisionObject>> &collision_objects) const {
+		                                           std::vector<std::shared_ptr<fcl::CollisionObject>> &collision_objects) const {	
+	unsigned int len = state.size();
+	if (state.size() > getControlSpaceDimension()) {
+		len = state.size() / 2;
+	}
 	Eigen::MatrixXd res = Eigen::MatrixXd::Identity(4, 4);
 	res(0, 3) = joint_origins_[0][0];
 	res(1, 3) = joint_origins_[0][1];
 	res(2, 3) = joint_origins_[0][2];
 	
-	for (size_t i = 0; i < state.size(); i++) {
+	for (size_t i = 0; i < len; i++) {
 		res = kinematics_->getPoseOfLinkN(state[i], res, i);
 		fcl::Matrix3f trans_matrix(res(0,0), res(0,1), res(0,2),
 				                   res(1,0), res(1,1), res(1,2),
@@ -563,8 +567,20 @@ void ManipulatorRobot::getPositionOfLinkN(const std::vector<double> &joint_angle
 	kinematics_->getPositionOfLinkN(joint_angles, n, position);
 }
     	    
-void ManipulatorRobot::getEndEffectorPosition(const std::vector<double> &joint_angles, std::vector<double> &end_effector_position) const {
-	kinematics_->getEndEffectorPosition(joint_angles, end_effector_position);
+void ManipulatorRobot::getEndEffectorPosition(const std::vector<double> &joint_angles, std::vector<double> &end_effector_position) const {	
+	if (joint_angles.size() > getStateSpaceDimension() / 2) {
+		std::vector<double> ja;
+		for (size_t i = 0; i < getStateSpaceDimension() / 2; i++) {
+			ja.push_back(joint_angles[i]);
+		}
+		
+		const std::vector<double> ja2(ja);		
+		kinematics_->getEndEffectorPosition(ja2, end_effector_position);
+	}
+	else {
+		kinematics_->getEndEffectorPosition(joint_angles, end_effector_position);
+	}
+	
 }
 
 
@@ -972,11 +988,11 @@ void ManipulatorRobot::getJointAxis(std::vector<std::string> &joints, std::vecto
 	}
 }
 
-int ManipulatorRobot::getStateSpaceDimension() {
+int ManipulatorRobot::getStateSpaceDimension() const {
 	return active_joints_.size() * 2;
 }
 
-int ManipulatorRobot::getControlSpaceDimension() {
+int ManipulatorRobot::getControlSpaceDimension() const {
 	return active_joints_.size();
 }
 

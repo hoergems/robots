@@ -7,7 +7,7 @@ namespace shared {
 
 Robot::Robot(std::string robot_file):
 	robot_file_(robot_file),
-	constraints_enforced_(false),
+	constraints_enforced_(true),
 	propagator_(nullptr),
 	viewer_(nullptr),
 	state_covariance_matrix_(),
@@ -21,13 +21,37 @@ bool Robot::propagateState(std::vector<double> &current_state,
 	                       double duration,
 	                       double simulation_step_size,	                       
 	                       std::vector<double> &result) {
-	propagator_->propagateState(current_state,
+	/**cout << "current state: ";
+	for (auto &k: current_state) {
+		cout << k << ", " << endl;
+	}
+	cout << endl;
+	cout << "control input: ";
+	for (auto &k: control_input) {
+		cout << k << ", " << endl;
+	}
+	cout << endl;
+	
+	cout << "control error: ";
+	for (auto &k: control_error) {
+		cout << k << ", " << endl;
+	}
+	cout << endl;
+	
+	cout << "duration: " << duration << endl;
+	cout << "simulation_step_size: " << simulation_step_size << endl;*/
+ 	propagator_->propagateState(current_state,
 			                    control_input,
 			                    control_error,
 			                    duration,
 			                    simulation_step_size,			
 			                    result);
-	if (constraints_enforced_) {
+ 	/**cout << "result: ";
+ 	for (auto &k: result) {
+ 		cout << k << ", " << endl;
+ 	}
+ 	cout << endl;*/
+	if (constraints_enforced_) {		
 		return enforceConstraints(result);
 	}
 	

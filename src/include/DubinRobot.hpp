@@ -30,9 +30,9 @@ public:
 	void createRobotCollisionObjects(const std::vector<double> &state, 
 		       std::vector<std::shared_ptr<fcl::CollisionObject>> &collision_objects) const override;
 	
-	int getStateSpaceDimension() override;
+	int getStateSpaceDimension() const override;
 	
-	int getControlSpaceDimension() override;
+	int getControlSpaceDimension() const override;
 	
 	int getDOF() const override;
 	

@@ -124,9 +124,9 @@ struct Joint {
     	    
     	    
     	    
-    	    virtual int getStateSpaceDimension() override;
+    	    virtual int getStateSpaceDimension() const override;
     	    
-    	    virtual int getControlSpaceDimension() override;
+    	    virtual int getControlSpaceDimension() const override;
     	    
     	    virtual int getDOF() const override;
     	    

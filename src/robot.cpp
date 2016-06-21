@@ -42,6 +42,7 @@ bool Robot::propagateState(std::vector<double> &current_state,
 	
 	cout << "duration: " << duration << endl;
 	cout << "simulation_step_size: " << simulation_step_size << endl;*/
+	result.clear();
  	propagator_->propagateState(current_state,
 			                    control_input,
 			                    control_error,

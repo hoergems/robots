@@ -1005,6 +1005,15 @@ bool ManipulatorRobot::isTerminal(std::vector<double> &state) const {
 	return false;
 }
 
+void ManipulatorRobot::makeNextStateAfterCollision(std::vector<double> &previous_state,
+    	    			                           std::vector<double> &colliding_state,
+    	    			                           std::vector<double> &next_state) {
+	next_state = previous_state;
+	for (size_t i = previous_state.size() / 2; i < previous_state.size(); i++) {
+		next_state[i] = 0.0;
+	}
+}
+
 std::vector<double> ManipulatorRobot::getProcessMatrices(std::vector<double> &x, 
                                               std::vector<double> &rho, 
 				                              double t_e) {

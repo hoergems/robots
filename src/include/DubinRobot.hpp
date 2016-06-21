@@ -47,6 +47,10 @@ public:
 	    	    			      double &duration,
 	    	    			      std::vector<Eigen::MatrixXd> &matrices) const override;
 	
+	void makeNextStateAfterCollision(std::vector<double> &previous_state,
+				                     std::vector<double> &colliding_state,
+				                     std::vector<double> &next_state) override;
+	
 	bool enforceConstraints(std::vector<double> &state) const override;
 	
 	

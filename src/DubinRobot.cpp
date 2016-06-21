@@ -27,6 +27,12 @@ int DubinRobot::getDOF() const {
 	return 4;
 }
 
+void DubinRobot::makeNextStateAfterCollision(std::vector<double> &previous_state,
+				                             std::vector<double> &colliding_state,
+				                             std::vector<double> &next_state) {
+	next_state = previous_state;
+}
+
 bool DubinRobot::isTerminal(std::vector<double> &state) const {
 	return false;
 }

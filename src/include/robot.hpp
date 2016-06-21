@@ -36,6 +36,10 @@ public:
 	
 	virtual int getDOF() const = 0;
 	
+	virtual void makeNextStateAfterCollision(std::vector<double> &previous_state,
+			                                 std::vector<double> &colliding_state,
+			                                 std::vector<double> &next_state) = 0;
+	
 	virtual void setGoalArea(std::vector<double> &goal_position, double &goal_radius);
 	
 	virtual void enforceConstraints(bool enforce);
@@ -163,6 +167,12 @@ public:
 	
 	void enforceConstraints(bool enforce) {
 		this->get_override("enforceConstraints")(enforce);
+	}
+	
+	void makeNextStateAfterCollision(std::vector<double> &previous_state,
+                                     std::vector<double> &colliding_state,
+                                     std::vector<double> &next_state) {
+		this->get_override("makeNextStateAfterCollision")(previous_state, colliding_state, next_state);
 	}
 	
 };

@@ -130,6 +130,10 @@ struct Joint {
     	    
     	    virtual int getDOF() const override;
     	    
+    	    virtual void makeNextStateAfterCollision(std::vector<double> &previous_state,
+    	    			                             std::vector<double> &colliding_state,
+    	    			                             std::vector<double> &next_state) override;
+    	    
     	    bool propagate_first_order(std::vector<double> &current_state,
     	    	                   std::vector<double> &control_input,
     	    	                   std::vector<double> &control_error,

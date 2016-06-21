@@ -1001,13 +1001,9 @@ int ManipulatorRobot::getDOF() const {
 }
 
 bool ManipulatorRobot::isTerminal(std::vector<double> &state) const {
-	std::vector<double> joint_angles;
+	assert(goal_position_.size() != 0 && "ManipulatorRobot: No goal area set. Cannot check if state is terminal!");	
 	std::vector<double> end_effector_position;	
-	for (size_t i = 0; i < state.size() / 2; i++) {
-		joint_angles.push_back(state[i]);
-	}
-	
-	getEndEffectorPosition(joint_angles, end_effector_position);
+	getEndEffectorPosition(state, end_effector_position);	
 	double dist = 0.0;
 	for (size_t i = 0; i < end_effector_position.size(); i++) {
 		dist += std::pow(end_effector_position[i] - goal_position_[i], 2);
@@ -1033,6 +1029,9 @@ std::shared_ptr<shared::Robot> makeManipulatorRobot(std::string model_file) {
 
 BOOST_PYTHON_MODULE(librobots) {
     using namespace boost::python;
+    
+    void (RobotWrapper::*enforceConstraintsB)(bool) = &RobotWrapper::enforceConstraints;    
+    //bool (RobotWrapper::*enforceConstraintsS)(std::vector<double> &) = &RobotWrapper::enforceConstraints;
     
     boost::python::type_info info= boost::python::type_id<std::vector<double>>();
     const boost::python::converter::registration* reg_double = boost::python::converter::registry::query(info);
@@ -1083,7 +1082,11 @@ BOOST_PYTHON_MODULE(librobots) {
     		.def("getDOF", &RobotWrapper::getDOF)
     		.def("getStateSpaceDimension", &RobotWrapper::getStateSpaceDimension)
     		.def("getControlSpaceDimension", &RobotWrapper::getControlSpaceDimension)
+    		.def("enforceConstraints", enforceConstraintsB)
     ;
+    
+    void (ManipulatorRobot::*enforceConstraintsMB)(bool) = &RobotWrapper::enforceConstraints;   
+    
     class_<ManipulatorRobot, boost::shared_ptr<ManipulatorRobot>, bases<Robot>>("ManipulatorRobot", init<std::string>())
                         .def("getLinkNames", &ManipulatorRobot::getLinkNames)
                         .def("getLinkDimension", &ManipulatorRobot::getLinkDimension)
@@ -1112,7 +1115,7 @@ BOOST_PYTHON_MODULE(librobots) {
 						.def("getJointUpperPositionLimits", &ManipulatorRobot::getJointUpperPositionLimits)
 						.def("getJointVelocityLimits", &ManipulatorRobot::getJointVelocityLimits)
 						.def("getJointTorqueLimits", &ManipulatorRobot::getJointTorqueLimits)
-						.def("enforceConstraints", &ManipulatorRobot::enforceConstraints)
+						.def("enforceConstraints", enforceConstraintsMB)
 						.def("constraintsEnforced", &ManipulatorRobot::constraintsEnforced)
 						.def("setGravityConstant", &ManipulatorRobot::setGravityConstant)
 						.def("setExternalForce", &ManipulatorRobot::setExternalForce)

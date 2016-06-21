@@ -155,6 +155,10 @@ public:
 		return this->get_override("enforceConstraints")(state);
 	}
 	
+	void enforceConstraints(bool enforce) {
+		this->get_override("enforceConstraints")(enforce);
+	}
+	
 };
 
 }

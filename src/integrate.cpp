@@ -120,7 +120,6 @@ void Integrate::getProcessMatrices(std::vector<double> &x,
 	MatrixXd integral = power_series_(AMatrix, t_e, 20);	
 	MatrixXd B_matrx = A_matrx1 * integral * BMatrix;
 	MatrixXd V_matrx = A_matrx1 * integral * VMatrix;
-	
 	matrices.push_back(A_matrx1);
     matrices.push_back(B_matrx);
 	matrices.push_back(V_matrx);

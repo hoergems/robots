@@ -80,14 +80,16 @@ void Robot::setStateCovarianceMatrix(Eigen::MatrixXd &state_covariance_matrix) {
 }
 
 void Robot::getStateCovarianceMatrix(Eigen::MatrixXd &state_covariance_matrix) const{
+	assert(state_covariance_matrix_.rows() != 0 && "Robot: ERROR: State covariance matrix has not been set.");
 	state_covariance_matrix = state_covariance_matrix_;
 }
 
-void Robot::setObservationCovarianceMatrix(Eigen::MatrixXd &observation_covariance_matrix) {
+void Robot::setObservationCovarianceMatrix(Eigen::MatrixXd &observation_covariance_matrix) {	
 	observation_covariance_matrix_ = observation_covariance_matrix;
 }
 
 void Robot::getObservationCovarianceMatrix(Eigen::MatrixXd &observation_covariance_matrix) const{
+	assert(observation_covariance_matrix_.rows() != 0 && "Robot: ERROR: Observation covariance matrix has not been set.");
 	observation_covariance_matrix = observation_covariance_matrix_;
 }
 

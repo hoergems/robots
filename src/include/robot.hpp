@@ -36,6 +36,8 @@ public:
 	
 	virtual int getDOF() const = 0;
 	
+	virtual void setGoalArea(std::vector<double> &goal_position, double &goal_radius);
+	
 	virtual void enforceConstraints(bool enforce);
 	
 	virtual bool constraintsEnforced();
@@ -82,6 +84,10 @@ protected:
 	Eigen::MatrixXd state_covariance_matrix_;
 	
 	Eigen::MatrixXd observation_covariance_matrix_;
+	
+	std::vector<double> goal_position_;
+	
+	double goal_radius_;
 
 #ifdef USE_URDF
     std::shared_ptr<shared::ViewerInterface> viewer_;

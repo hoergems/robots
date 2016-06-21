@@ -11,7 +11,9 @@ Robot::Robot(std::string robot_file):
 	propagator_(nullptr),
 	viewer_(nullptr),
 	state_covariance_matrix_(),
-	observation_covariance_matrix_(){
+	observation_covariance_matrix_(),
+	goal_position_(),
+	goal_radius_(){
 	
 }
 
@@ -56,6 +58,15 @@ bool Robot::propagateState(std::vector<double> &current_state,
 	}
 	
 	return true;
+}
+
+void Robot::setGoalArea(std::vector<double> &goal_position, double &goal_radius) {
+	goal_position_.clear();
+	for (size_t i = 0; i < goal_position.size(); i++) {
+		goal_position_.push_back(goal_position[i]);
+	}
+	
+	goal_radius_ = goal_radius;
 }
 
 bool Robot::checkSelfCollision(std::vector<std::shared_ptr<fcl::CollisionObject>> &collision_objects) const {

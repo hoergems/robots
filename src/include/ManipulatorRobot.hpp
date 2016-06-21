@@ -130,8 +130,6 @@ struct Joint {
     	    
     	    virtual int getDOF() const override;
     	    
-    	    void setGoalArea(std::vector<double> &goal_position, double &goal_radius);
-    	    
     	    bool propagate_first_order(std::vector<double> &current_state,
     	    	                   std::vector<double> &control_input,
     	    	                   std::vector<double> &control_error,
@@ -257,10 +255,6 @@ struct Joint {
     	    
     	    
         private:
-    	    std::vector<double> goal_position_;
-    	    
-    	    double goal_radius_;
-    	    
     	    std::vector<shared::Link> links_;
     	    
     	    std::vector<shared::Joint> joints_;

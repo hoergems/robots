@@ -51,9 +51,6 @@ public:
 				                     std::vector<double> &colliding_state,
 				                     std::vector<double> &next_state) override;
 	
-	bool enforceConstraints(std::vector<double> &state) const override;
-	
-	
 };
 
 }

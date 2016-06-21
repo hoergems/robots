@@ -46,7 +46,9 @@ public:
 	
 	virtual bool constraintsEnforced();
 	
-	virtual bool enforceConstraints(std::vector<double> &state) const = 0;
+	virtual bool enforceConstraints(std::vector<double> &state) const;
+	
+	virtual bool enforceControlConstraints(std::vector<double> &control) const;
 	
 	virtual void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const = 0;
 	
@@ -92,6 +94,14 @@ protected:
 	std::vector<double> goal_position_;
 	
 	double goal_radius_;
+	
+	std::vector<double> lowerStateLimits_;
+	
+	std::vector<double> upperStateLimits_;
+	
+	std::vector<double> lowerControlLimits_;
+		
+	std::vector<double> upperControlLimits_;
 
 #ifdef USE_URDF
     std::shared_ptr<shared::ViewerInterface> viewer_;

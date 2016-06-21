@@ -52,8 +52,4 @@ void DubinRobot::getLinearProcessMatrices(std::vector<double> &state,
 	
 }
 
-bool DubinRobot::enforceConstraints(std::vector<double> &state) const {
-	return true;
-}
-
 }

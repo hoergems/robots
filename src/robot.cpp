@@ -13,7 +13,11 @@ Robot::Robot(std::string robot_file):
 	state_covariance_matrix_(),
 	observation_covariance_matrix_(),
 	goal_position_(),
-	goal_radius_(){
+	goal_radius_(),
+	lowerStateLimits_(),
+	upperStateLimits_(),
+	lowerControlLimits_(),
+	upperControlLimits_(){
 	
 }
 
@@ -22,38 +26,14 @@ bool Robot::propagateState(std::vector<double> &current_state,
 	                       std::vector<double> &control_error,
 	                       double duration,
 	                       double simulation_step_size,	                       
-	                       std::vector<double> &result) {
-	/**cout << "current state: ";
-	for (auto &k: current_state) {
-		cout << k << ", " << endl;
-	}
-	cout << endl;
-	cout << "control input: ";
-	for (auto &k: control_input) {
-		cout << k << ", " << endl;
-	}
-	cout << endl;
-	
-	cout << "control error: ";
-	for (auto &k: control_error) {
-		cout << k << ", " << endl;
-	}
-	cout << endl;
-	
-	cout << "duration: " << duration << endl;
-	cout << "simulation_step_size: " << simulation_step_size << endl;*/
+	                       std::vector<double> &result) {	
 	result.clear();
  	propagator_->propagateState(current_state,
 			                    control_input,
 			                    control_error,
 			                    duration,
 			                    simulation_step_size,			
-			                    result);
- 	/**cout << "result: ";
- 	for (auto &k: result) {
- 		cout << k << ", " << endl;
- 	}
- 	cout << endl;*/
+			                    result); 	
 	if (constraints_enforced_) {		
 		return enforceConstraints(result);
 	}
@@ -85,6 +65,35 @@ bool Robot::constraintsEnforced() {
 void Robot::enforceConstraints(bool enforce) {
 	constraints_enforced_ = enforce;
 	propagator_->enforceConstraints(constraints_enforced_);
+}
+
+bool Robot::enforceConstraints(std::vector<double> &state) const {
+	bool enforced = false;
+	for (size_t i = 0; i < state.size(); i++) {
+		if (state[i] < lowerStateLimits_[i]) {
+			state[i] = lowerStateLimits_[i];
+			enforced = true;
+		}
+		
+		else if (state[i] > upperStateLimits_[i]) {
+			state[i] = upperStateLimits_[i];
+			enforced = true;
+		}
+	}
+	
+	return enforced;
+}
+
+bool Robot::enforceControlConstraints(std::vector<double> &control) const {	
+	for (size_t i = 0; i < control.size(); i++) {
+		if (control[i] < lowerControlLimits_[i]) {
+			control[i] = lowerControlLimits_[i];
+		}
+		
+		else if (control[i] > upperControlLimits_[i]) {
+			control[i] = upperControlLimits_[i];
+		}
+	}
 }
 
 void Robot::setStateCovarianceMatrix(Eigen::MatrixXd &state_covariance_matrix) {

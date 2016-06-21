@@ -80,6 +80,8 @@ bool ManipulatorRobot::initJoints(TiXmlElement *robot_xml) {
 		}
 		
 		joint_torque_limits_.push_back(torque_limit);
+		lowerStateLimits_.push_back(lower_limit);
+		upperStateLimits_.push_back(upper_limit);
 		lower_joint_limits_.push_back(lower_limit);
 		upper_joint_limits_.push_back(upper_limit);
 		joint_velocity_limits_.push_back(velocity_limit);
@@ -368,6 +370,17 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
 	kinematics_->setJointOrigins(joint_origins_);	
 	kinematics_->setLinkDimensions(active_link_dimensions_);
 	static_cast<shared::ManipulatorPropagator *>(propagator_.get())->getIntegrator()->setJointDamping(joint_dampings_);
+	lowerStateLimits_ = active_lower_joint_limits_;
+	upperStateLimits_ = active_upper_joint_limits_;
+	for (size_t i = 0; i < active_joint_velocity_limits_.size(); i++) {
+		lowerStateLimits_.push_back(-active_joint_velocity_limits_[i]);
+		upperStateLimits_.push_back(active_joint_velocity_limits_[i]);
+	}
+	
+	for (size_t i = 0; i < active_joint_torque_limits_.size(); i++) {
+		lowerControlLimits_.push_back(-active_joint_torque_limits_[i]);
+		upperControlLimits_.push_back(active_joint_torque_limits_[i]);
+	}
 }
 
 void ManipulatorRobot::setNewtonModel() {
@@ -838,30 +851,27 @@ void ManipulatorRobot::getActiveJoints(std::vector<std::string> &joints) const{
 	}
 }
 
-bool ManipulatorRobot::enforceConstraints(std::vector<double> &state) const {
-	std::vector<double> lowerStateLimits; 
-	std::vector<double> upperStateLimits;
-	getStateLimits(lowerStateLimits, upperStateLimits);
+bool ManipulatorRobot::enforceConstraints(std::vector<double> &state) const {	
 	bool return_val = true;
 	for (size_t i = 0; i < state.size() / 2; i++) {
-		if (state[i] < lowerStateLimits[i]) {
-			state[i] = lowerStateLimits[i];
+		if (state[i] < lowerStateLimits_[i]) {
+			state[i] = lowerStateLimits_[i];
 			state[i + state.size() / 2] = 0.0;
 			return_val = false;
 		}
-		else if (state[i] > upperStateLimits[i]) {
-			state[i] = upperStateLimits[i];
+		else if (state[i] > upperStateLimits_[i]) {
+			state[i] = upperStateLimits_[i];
 			state[i + state.size() / 2] = 0.0;
 			return_val = false;
 		}
 		
-		if (state[i + state.size() / 2] < lowerStateLimits[i + state.size() / 2]) {
-			state[i + state.size() / 2] = lowerStateLimits[i + state.size() / 2];
+		if (state[i + state.size() / 2] < lowerStateLimits_[i + state.size() / 2]) {
+			state[i + state.size() / 2] = lowerStateLimits_[i + state.size() / 2];
 			return_val = false;
 		}
 		
-		else if (state[i + state.size() / 2] > upperStateLimits[i + state.size() / 2]) {
-			state[i + state.size() / 2] = upperStateLimits[i + state.size() / 2];
+		else if (state[i + state.size() / 2] > upperStateLimits_[i + state.size() / 2]) {
+			state[i + state.size() / 2] = upperStateLimits_[i + state.size() / 2];
 			return_val = false;
 		}
 	}

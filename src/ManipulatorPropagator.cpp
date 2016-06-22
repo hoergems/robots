@@ -171,61 +171,6 @@ bool ManipulatorPropagator::propagateState(const std::vector<double> &currentSta
 	integrator_->do_integration(state, control, control_error, inte_times, integration_result);
 	result = integration_result;
 	return true;
-	/**std::vector<double> newJointValues;
-	std::vector<double> newJointVelocities;	
-	for (size_t i = 0; i < integration_result.size() / 2; i++) {
-		newJointValues.push_back(integration_result[i]);		
-	}
-	
-	for (size_t i = integration_result.size() / 2; i < integration_result.size(); i++) {
-		newJointVelocities.push_back(integration_result[i]);		
-	}
-	
-	//Enforce position and velocity limits
-	bool legal = true;
-	if (constraintsEnforced_) {		
-		for (unsigned int i = 0; i < newJointValues.size(); i++) {
-			if (newJointValues[i] < stateLowerLimits_[i]) {
-				legal = false;	    	
-				newJointValues[i] = stateLowerLimits_[i];
-				newJointVelocities[i] = 0;				
-			}
-			else if (newJointValues[i] > stateUpperLimits_[i]) {
-				legal = false;			
-				newJointValues[i] = stateUpperLimits_[i];
-				newJointVelocities[i] = 0;
-			}
-	
-			if (newJointVelocities[i] < stateLowerLimits_[i + integration_result.size() / 2]) {
-				newJointVelocities[i] = stateLowerLimits_[i + integration_result.size() / 2];
-				legal = false;
-			}
-			else if (newJointVelocities[i] > stateUpperLimits_[i + integration_result.size() / 2]) {
-				newJointVelocities[i] = stateUpperLimits_[i + integration_result.size() / 2];
-				legal = false;
-			}		        
-		}
-	}*/
-	
-	// Normalize joint angles to be within [-pi, pi]
-	/**for (size_t i = 0; i < newJointValues.size(); i++) {
-		if (newJointValues[i] > M_PI) {
-			newJointValues[i] = newJointValues[i] - 2.0 * M_PI;
-		}
-		else if (newJointValues[i] < -M_PI) {
-			newJointValues[i] = newJointValues[i] + 2.0 * M_PI;
-		}
-	}*/
-	
-	/**for (size_t i = 0; i < newJointValues.size(); i++) {
-		result.push_back(newJointValues[i]);
-	}
-	
-	for (size_t i = 0; i < newJointVelocities.size(); i++) {
-		result.push_back(newJointVelocities[i]);
-	}
-	
-	return legal;*/
 }
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(propagate_nonlinear_overload, propagateState, 6, 6);
@@ -234,8 +179,7 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(propagate_linear_overload, propagate_line
 BOOST_PYTHON_MODULE(libpropagator) {
     using namespace boost::python;
    
-    class_<ManipulatorPropagator>("ManipulatorPropagator", init<>())
-							   .def("setup", &Propagator::setup)							   
+    class_<ManipulatorPropagator>("ManipulatorPropagator", init<>())							   						   
 							   .def("propagateState", &Propagator::propagateState, propagate_nonlinear_overload())
 							   .def("propagateLinear", &ManipulatorPropagator::propagate_linear, propagate_linear_overload())		            		 
                         //.def("doIntegration", &Integrate::do_integration)                        

@@ -364,9 +364,6 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
 	std::vector<double> stateUpperLimits;
 	getStateLimits(stateLowerLimits, stateUpperLimits);
 	
-	propagator_->setup(stateLowerLimits,
-			           stateUpperLimits,			           
-					   constraints_enforced_);
 	kinematics_->setJointOrigins(joint_origins_);	
 	kinematics_->setLinkDimensions(active_link_dimensions_);
 	static_cast<shared::ManipulatorPropagator *>(propagator_.get())->getIntegrator()->setJointDamping(joint_dampings_);
@@ -879,7 +876,7 @@ bool ManipulatorRobot::enforceConstraints(std::vector<double> &state) const {
 	return return_val;
 }
 
-void ManipulatorRobot::getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
+/**void ManipulatorRobot::getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
 	std::vector<std::string> activeJoints;
 	getActiveJoints(activeJoints);
 	getJointLowerPositionLimits(activeJoints, lowerLimits);
@@ -899,7 +896,7 @@ void ManipulatorRobot::getControlLimits(std::vector<double> &lowerLimits, std::v
 	for (auto &k: upperLimits) {
 		lowerLimits.push_back(-k);
 	}
-}
+}*/
 
 void ManipulatorRobot::getJointLowerPositionLimits(std::vector<std::string> &joints, std::vector<double> &joint_limits) const{
 	int index = 0;

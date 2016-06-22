@@ -40,10 +40,6 @@ public:
 	
 	double distanceGoal(std::vector<double> &state) const override;
 	
-	void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
-	
-	void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
-	
 	void getLinearProcessMatrices(std::vector<double> &state, 
 	    	    			      std::vector<double> &control, 
 	    	    			      double &duration,
@@ -52,6 +48,13 @@ public:
 	void makeNextStateAfterCollision(std::vector<double> &previous_state,
 				                     std::vector<double> &colliding_state,
 				                     std::vector<double> &next_state) override;
+
+private:
+	double dim_x_;
+	double dim_y_;
+	double dim_z_;
+	
+	double d_;
 	
 };
 

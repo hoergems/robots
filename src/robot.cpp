@@ -63,8 +63,7 @@ bool Robot::constraintsEnforced() {
 }
 
 void Robot::enforceConstraints(bool enforce) {
-	constraints_enforced_ = enforce;
-	propagator_->enforceConstraints(constraints_enforced_);
+	constraints_enforced_ = enforce;	
 }
 
 bool Robot::enforceConstraints(std::vector<double> &state) const {
@@ -94,6 +93,16 @@ bool Robot::enforceControlConstraints(std::vector<double> &control) const {
 			control[i] = upperControlLimits_[i];
 		}
 	}
+}
+
+void Robot::getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
+	lowerLimits = lowerStateLimits_;
+	upperLimits = upperStateLimits_;
+}
+
+void Robot::getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
+	lowerLimits = lowerControlLimits_;
+	upperLimits = upperControlLimits_;
 }
 
 void Robot::setStateCovarianceMatrix(Eigen::MatrixXd &state_covariance_matrix) {

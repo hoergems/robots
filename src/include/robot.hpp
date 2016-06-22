@@ -50,9 +50,9 @@ public:
 	
 	virtual bool enforceControlConstraints(std::vector<double> &control) const;
 	
-	virtual void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const = 0;
+	virtual void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const;
 	
-	virtual void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const = 0;
+	virtual void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const;
 	
 	virtual void getLinearProcessMatrices(std::vector<double> &state, 
 			                              std::vector<double> &control, 

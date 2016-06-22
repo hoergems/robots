@@ -91,9 +91,9 @@ struct Joint {
     	    
     	    void getState(std::vector<double> &state);
     	    
-    	    virtual void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
+    	    //virtual void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
     	    
-    	    virtual void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
+    	    //virtual void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
     	    
     	    virtual void getLinearProcessMatrices(std::vector<double> &state, 
     	    			                          std::vector<double> &control, 

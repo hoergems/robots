@@ -38,6 +38,8 @@ public:
 	
 	bool isTerminal(std::vector<double> &state) const override;
 	
+	double distanceGoal(std::vector<double> &state) const override;
+	
 	void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
 	
 	void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;

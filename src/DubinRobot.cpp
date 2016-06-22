@@ -34,7 +34,22 @@ void DubinRobot::makeNextStateAfterCollision(std::vector<double> &previous_state
 }
 
 bool DubinRobot::isTerminal(std::vector<double> &state) const {
+	double dist = distanceGoal(state);
+	if (dist < goal_radius_) {
+		return true;
+	}
+	
 	return false;
+}
+
+double DubinRobot::distanceGoal(std::vector<double> &state) const {
+	assert(goal_position_.size() != 0 && "ManipulatorRobot: No goal area set. Cannot calculate distance!");
+	double dist = 0.0;
+	for (size_t i = 0; i < state.size(); i++) {
+		dist += std::pow(state[i] - goal_position_[i], 2);
+	}
+		
+	return std::sqrt(dist);
 }
 
 void DubinRobot::getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {

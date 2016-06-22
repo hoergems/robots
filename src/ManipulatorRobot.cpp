@@ -1000,19 +1000,25 @@ int ManipulatorRobot::getDOF() const {
 }
 
 bool ManipulatorRobot::isTerminal(std::vector<double> &state) const {
-	assert(goal_position_.size() != 0 && "ManipulatorRobot: No goal area set. Cannot check if state is terminal!");	
-	std::vector<double> end_effector_position;	
-	getEndEffectorPosition(state, end_effector_position);	
+	double dist = distanceGoal(state);	
+	if (dist < goal_radius_) {		
+		return true;
+	}
+	
+	return false;
+}
+
+double ManipulatorRobot::distanceGoal(std::vector<double> &state) const {	
+	assert(goal_position_.size() != 0 && "ManipulatorRobot: No goal area set. Cannot calculate distance!");
+	std::vector<double> end_effector_position;
+	getEndEffectorPosition(state, end_effector_position);
 	double dist = 0.0;
 	for (size_t i = 0; i < end_effector_position.size(); i++) {
 		dist += std::pow(end_effector_position[i] - goal_position_[i], 2);
 	}
 	
-	if (std::sqrt(dist) < goal_radius_) {		
-		return true;
-	}
+	return std::sqrt(dist);
 	
-	return false;
 }
 
 void ManipulatorRobot::makeNextStateAfterCollision(std::vector<double> &previous_state,

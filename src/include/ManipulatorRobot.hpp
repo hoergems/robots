@@ -102,6 +102,8 @@ struct Joint {
     	    
     	    virtual bool isTerminal(std::vector<double> &state) const override;
     	    
+    	    virtual double distanceGoal(std::vector<double> &state) const override;
+    	    
     	    virtual bool enforceConstraints(std::vector<double> &state) const override;
     	    
     	    void getJointLowerPositionLimits(std::vector<std::string> &joints, std::vector<double> &joint_limits) const;

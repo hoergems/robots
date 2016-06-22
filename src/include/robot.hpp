@@ -61,6 +61,8 @@ public:
 	
 	virtual bool isTerminal(std::vector<double> &state) const = 0;
 	
+	virtual double distanceGoal(std::vector<double> &state) const = 0;
+	
 	virtual bool checkSelfCollision(std::vector<std::shared_ptr<fcl::CollisionObject>> &collision_objects) const;
 	
 	virtual bool checkSelfCollision(const std::vector<double> &state) const;
@@ -169,6 +171,10 @@ public:
 	
 	bool isTerminal(std::vector<double> &state) const {
 		return this->get_override("isTerminal")(state);
+	}
+	
+	double distanceGoal(std::vector<double> &state) const {
+		return this->get_override("distanceGoal")(state);
 	}
 	
 	bool enforceConstraints(std::vector<double> &state) const {

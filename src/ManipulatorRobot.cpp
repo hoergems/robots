@@ -345,8 +345,7 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
 	active_lower_joint_limits_(),
 	active_upper_joint_limits_(),
 	link_masses_(),
-	link_inertia_origins_(),
-	robot_state_(),	
+	link_inertia_origins_(),	
 	kinematics_(new Kinematics()),	
 	rbdl_interface_(nullptr){
 	
@@ -757,21 +756,6 @@ bool ManipulatorRobot::propagate_second_order(std::vector<double> &current_state
 				                                         simulation_step_size,
 				                                         duration,
 				                                         result);
-}
-
-void ManipulatorRobot::setState(std::vector<double> &joint_values, std::vector<double> &joint_velocities) {
-	robot_state_.joint_values = joint_values;
-	robot_state_.joint_velocities = joint_velocities;
-}
-
-void ManipulatorRobot::getState(std::vector<double> &state) {
-	for (auto &s: robot_state_.joint_values) {
-		state.push_back(s);
-	}
-	
-	for (auto &s: robot_state_.joint_velocities) {
-		state.push_back(s);
-	}
 }
 
 unsigned int ManipulatorRobot::get_link_index(std::string &link_name) {	

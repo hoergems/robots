@@ -28,11 +28,6 @@ using std::endl;
 
 namespace shared {
 
-struct RobotState {
-	std::vector<double> joint_values;
-	std::vector<double> joint_velocities;
-};
-
 struct Link {
 	std::string name;
 	
@@ -86,14 +81,6 @@ struct Joint {
     	    void getJointOrigin(std::vector<std::string> &joints, std::vector<std::vector<double>> &origins);
     	    
     	    void getJointAxis(std::vector<std::string> &joints, std::vector<std::vector<int>> &axis);
-    	    
-    	    void setState(std::vector<double> &joint_values, std::vector<double> &joint_velocities);
-    	    
-    	    void getState(std::vector<double> &state);
-    	    
-    	    //virtual void getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
-    	    
-    	    //virtual void getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const override;
     	    
     	    virtual void getLinearProcessMatrices(std::vector<double> &state, 
     	    			                          std::vector<double> &control, 
@@ -322,8 +309,6 @@ struct Joint {
             unsigned int get_link_index(std::string &link_name);
             
             std::vector<double> process_origin_(TiXmlElement *xml);
-            
-            shared::RobotState robot_state_;
             
             std::shared_ptr<shared::Kinematics> kinematics_;
             

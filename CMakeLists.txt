@@ -155,4 +155,5 @@ install(FILES ${INCLUDE_DIR}/ManipulatorPropagator.hpp  DESTINATION include/robo
 install(FILES ${INCLUDE_DIR}/ManipulatorRobot.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DubinPropagator.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DubinRobot.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/utils.hpp  DESTINATION include/robots)
 install(FILES "${pkg_conf_file_out}" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/ COMPONENT pkgconfig)

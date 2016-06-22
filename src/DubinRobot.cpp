@@ -26,23 +26,23 @@ DubinRobot::DubinRobot(std::string robot_file):
 	
 	lowerStateLimits_.push_back(-6.0);
 	lowerStateLimits_.push_back(-6.0);
-	lowerStateLimits_.push_back(-3000);
-	lowerStateLimits_.push_back(0.0);
+	lowerStateLimits_.push_back(-3.14);
+	lowerStateLimits_.push_back(-0.5);
 	
 	upperStateLimits_.push_back(6.0);
 	upperStateLimits_.push_back(6.0);
-	upperStateLimits_.push_back(3000);
-	upperStateLimits_.push_back(0.2);
+	upperStateLimits_.push_back(3.14);
+	upperStateLimits_.push_back(0.5);
 	
 	//make the control limits
 	lowerControlLimits_.clear();
 	upperControlLimits_.clear();
 	
-	lowerControlLimits_.push_back(0.0);
-	lowerControlLimits_.push_back(-1.57);
+	lowerControlLimits_.push_back(-50.0);
+	lowerControlLimits_.push_back(-0.65);
 	
-	upperControlLimits_.push_back(3.0);
-	upperControlLimits_.push_back(1.57);
+	upperControlLimits_.push_back(50.0);
+	upperControlLimits_.push_back(0.65);
 }
 
 void DubinRobot::createRobotCollisionObjects(const std::vector<double> &state, 
@@ -99,11 +99,16 @@ bool DubinRobot::isTerminal(std::vector<double> &state) const {
 
 double DubinRobot::distanceGoal(std::vector<double> &state) const {
 	assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
-	double dist = 0.0;
-	for (size_t i = 0; i < state.size(); i++) {
-		dist += std::pow(state[i] - goal_position_[i], 2);
-	}
-		
+	double x = state[0];
+	double y = state[1];
+	//cout << "x: " << x << endl;
+	//cout << "y: " << y << endl;
+	//cout << "goal_x: " << goal_position_[0] << endl;
+	//cout << "goal_y: " << goal_position_[1] << endl;
+	
+ 	double dist = std::pow(goal_position_[0] - x, 2);
+	dist += std::pow(goal_position_[1] - y, 2);	
+	//cout << "dist: " << std::sqrt(dist) << endl;
 	return std::sqrt(dist);
 }
 

@@ -6,7 +6,6 @@
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/make_shared.hpp>
 #include "fcl/BV/BV.h" 
 #include "fcl/collision_object.h"
 #include "fcl/collision_data.h"
@@ -82,7 +81,7 @@ struct Joint {
     	    
     	    void getJointAxis(std::vector<std::string> &joints, std::vector<std::vector<int>> &axis);
     	    
-    	    virtual void getLinearProcessMatrices(std::vector<double> &state, 
+    	    virtual void getLinearProcessMatrices(const std::vector<double> &state, 
     	    			                          std::vector<double> &control, 
     	    			                          double &duration,
     	    			                          std::vector<Eigen::MatrixXd> &matrices) const override;

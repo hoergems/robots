@@ -106,7 +106,7 @@ MatrixXd Integrate::get_end_effector_jacobian(const state_type &x, const state_t
 	return getEEJacobian(x, rho, zeta);	
 }
 
-void Integrate::getProcessMatrices(std::vector<double> &x, 
+void Integrate::getProcessMatrices(const std::vector<double> &x, 
     			                   std::vector<double> &rho, 
     			                   double t_e,
     			                   std::vector<MatrixXd> &matrices) const {	

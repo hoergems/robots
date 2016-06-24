@@ -30,6 +30,7 @@ bool Robot::propagateState(const std::vector<double>& current_state,
                            double simulation_step_size,
                            std::vector<double>& result)
 {
+    boost::this_thread::interruption_point();
     result.clear();
     propagator_->propagateState(current_state,
                                 control_input,

@@ -1,6 +1,7 @@
 #ifndef ROBOT_INTERFACE_HPP_
 #define ROBOT_INTERFACE_HPP_
 #include <boost/python.hpp>
+#include <boost/thread.hpp>
 #include <Eigen/Dense>
 #include "fcl/BV/BV.h"
 #include "fcl/collision_object.h"

@@ -154,4 +154,10 @@ void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
 
 }
 
+void DubinRobot::updateViewer(std::vector<double>& state, 
+			      std::vector<std::vector<double>>& particles,
+			      std::vector<std::vector<double>> &particle_colors) {
+    
+}
+
 }

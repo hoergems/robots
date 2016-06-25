@@ -340,9 +340,6 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
 {
 
     propagator_ = std::make_shared<shared::ManipulatorPropagator>();
-#ifdef USE_URDF
-    viewer_ = std::make_shared<shared::ViewerInterface>();
-#endif
     TiXmlDocument xml_doc;
     xml_doc.LoadFile(robot_file);
     TiXmlElement* robot_xml = xml_doc.FirstChildElement("robot");
@@ -367,6 +364,13 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
         lowerControlLimits_.push_back(-active_joint_torque_limits_[i]);
         upperControlLimits_.push_back(active_joint_torque_limits_[i]);
     }
+}
+
+void ManipulatorRobot::updateViewer(std::vector<double>& state, 
+				    std::vector<std::vector<double>>& particles,
+				    std::vector<std::vector<double>> &particle_colors)
+{
+
 }
 
 void ManipulatorRobot::setNewtonModel()
@@ -585,7 +589,7 @@ void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_a
 /****************************************
  * Viewer functions
  */
-#ifdef USE_URDF
+#ifdef USE_OPENRAVE
 void ManipulatorRobot::addPermanentViewerParticles(const std::vector<std::vector<double>>& particle_joint_values,
         const std::vector<std::vector<double>>& particle_colors)
 {
@@ -883,28 +887,6 @@ bool ManipulatorRobot::enforceConstraints(std::vector<double>& state) const
     return return_val;
 }
 
-/**void ManipulatorRobot::getStateLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
-  std::vector<std::string> activeJoints;
-  getActiveJoints(activeJoints);
-  getJointLowerPositionLimits(activeJoints, lowerLimits);
-  getJointUpperPositionLimits(activeJoints, upperLimits);
-  std::vector<double> velocityLimits;
-  getJointVelocityLimits(activeJoints, velocityLimits);
-  for (auto &k: velocityLimits) {
-    lowerLimits.push_back(-k);
-    upperLimits.push_back(k);
-  }
-}
-
-void ManipulatorRobot::getControlLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const {
-  std::vector<std::string> activeJoints;
-  getActiveJoints(activeJoints);
-  getJointTorqueLimits(activeJoints, upperLimits);
-  for (auto &k: upperLimits) {
-    lowerLimits.push_back(-k);
-  }
-}*/
-
 void ManipulatorRobot::getJointLowerPositionLimits(std::vector<std::string>& joints, std::vector<double>& joint_limits) const
 {
     int index = 0;
@@ -1160,7 +1142,7 @@ BOOST_PYTHON_MODULE(librobots)
     .def("getEndEffectorJacobian", &ManipulatorRobot::getEndEffectorJacobian)
     .def("setNewtonModel", &ManipulatorRobot::setNewtonModel)
     .def("checkSelfCollision", &ManipulatorRobot::checkSelfCollisionPy)
-#ifdef USE_URDF
+#ifdef USE_OPENRAVE
     .def("setupViewer", &ManipulatorRobot::setupViewer)
     .def("updateViewerValues", &ManipulatorRobot::updateViewerValues)
     .def("setViewerSize", &ManipulatorRobot::setViewerSize)

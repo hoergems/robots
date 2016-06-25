@@ -20,6 +20,9 @@ Robot::Robot(std::string robot_file):
     lowerControlLimits_(),
     upperControlLimits_()
 {
+#ifdef USE_OPENRAVE
+    viewer_ = std::make_shared<shared::ViewerInterface>();
+#endif
 
 }
 
@@ -140,19 +143,20 @@ void Robot::getObservationCovarianceMatrix(Eigen::MatrixXd& observation_covarian
     observation_covariance_matrix = observation_covariance_matrix_;
 }
 
-#ifdef USE_URDF
+
 void Robot::setupViewer(std::string model_file, std::string environment_file)
 {
+#ifdef USE_OPENRAVE
     viewer_->setupViewer(model_file, environment_file);
+#endif
 }
+
 
 void Robot::setParticlePlotLimit(unsigned int particle_plot_limit)
 {
-    if (viewer_) {
-        viewer_->setParticlePlotLimit(particle_plot_limit);
-    }
-}
-
+#ifdef USE_OPENRAVE
+    viewer_->setParticlePlotLimit(particle_plot_limit);
 #endif
+}
 
 }

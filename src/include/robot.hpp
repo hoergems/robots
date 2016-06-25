@@ -77,13 +77,14 @@ public:
     virtual void setObservationCovarianceMatrix(Eigen::MatrixXd& observation_covariance_matrix);
 
     virtual void getObservationCovarianceMatrix(Eigen::MatrixXd& observation_covariance_matrix) const;
+    
+    virtual void updateViewer(std::vector<double> &state, 
+			      std::vector<std::vector<double>> &particles,
+			      std::vector<std::vector<double>> &particle_colors) = 0;
 
+    virtual void setupViewer(std::string model_file, std::string environment_file);
 
-#ifdef USE_URDF
-    void setupViewer(std::string model_file, std::string environment_file);
-
-    void setParticlePlotLimit(unsigned int particle_plot_limit);
-#endif
+    virtual void setParticlePlotLimit(unsigned int particle_plot_limit);
 
 protected:
     bool constraints_enforced_;
@@ -108,7 +109,7 @@ protected:
 
     std::vector<double> upperControlLimits_;
 
-#ifdef USE_URDF
+#ifdef USE_OPENRAVE
     std::shared_ptr<shared::ViewerInterface> viewer_;
 #else
     std::shared_ptr<double> viewer_;
@@ -185,6 +186,12 @@ public:
 
     void enforceConstraints(bool enforce) {
         this->get_override("enforceConstraints")(enforce);
+    }
+    
+    void updateViewer(std::vector<double> &state, 
+		      std::vector<std::vector<double>> &particles,
+		      std::vector<std::vector<double>> &particle_colors) {
+	this->get_override("updateViewer")(state, particles, particle_colors);
     }
 
     void makeNextStateAfterCollision(std::vector<double>& previous_state,

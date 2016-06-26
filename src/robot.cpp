@@ -21,9 +21,8 @@ Robot::Robot(std::string robot_file):
     upperControlLimits_()
 {
 #ifdef USE_OPENRAVE
-    viewer_ = std::make_shared<shared::ViewerInterface>();
+    viewer_ = std::make_shared<shared::ViewerInterface>();    
 #endif
-
 }
 
 bool Robot::propagateState(const std::vector<double>& current_state,

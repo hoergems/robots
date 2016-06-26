@@ -9,7 +9,7 @@
 #include "fcl/shape/geometric_shapes_utility.h"
 #include "propagator.hpp"
 
-#ifdef USE_URDF
+#ifdef USE_OPENRAVE
 #include <viewer_interface/viewer_interface.hpp>
 #endif
 

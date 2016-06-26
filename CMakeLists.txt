@@ -39,7 +39,7 @@ if(PKG_CONFIG_FOUND)
 endif()
 
 if(USE_OPENRAVE)
-add_definitions(-DUSE_URDF)
+add_definitions(-DUSE_OPENRAVE)
 endif() 
 
 ############################# LOAD PYTHON #############################

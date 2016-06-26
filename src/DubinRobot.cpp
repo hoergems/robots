@@ -12,7 +12,7 @@ DubinRobot::DubinRobot(std::string robot_file):
 {
     //Dimensions
     dim_x_ = 0.3;
-    dim_y_ = 0.1;
+    dim_y_ = 0.3;
     dim_z_ = 0.05;
 
     //Distance between axels
@@ -25,15 +25,15 @@ DubinRobot::DubinRobot(std::string robot_file):
     lowerStateLimits_.clear();
     upperStateLimits_.clear();
 
-    lowerStateLimits_.push_back(-6.0);
-    lowerStateLimits_.push_back(-6.0);
+    lowerStateLimits_.push_back(-8.0);
+    lowerStateLimits_.push_back(-8.0);
     lowerStateLimits_.push_back(-3.14);
-    lowerStateLimits_.push_back(-0.5);
+    lowerStateLimits_.push_back(-1.2);
 
-    upperStateLimits_.push_back(6.0);
-    upperStateLimits_.push_back(6.0);
+    upperStateLimits_.push_back(8.0);
+    upperStateLimits_.push_back(8.0);
     upperStateLimits_.push_back(3.14);
-    upperStateLimits_.push_back(0.5);
+    upperStateLimits_.push_back(1.2);
 
     //make the control limits
     lowerControlLimits_.clear();
@@ -92,6 +92,7 @@ void DubinRobot::makeNextStateAfterCollision(std::vector<double>& previous_state
         std::vector<double>& next_state)
 {
     next_state = previous_state;
+    next_state[3] = 0.0;
 }
 
 bool DubinRobot::isTerminal(std::vector<double>& state) const
@@ -157,7 +158,12 @@ void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
 void DubinRobot::updateViewer(std::vector<double>& state, 
 			      std::vector<std::vector<double>>& particles,
 			      std::vector<std::vector<double>> &particle_colors) {
-    
+#ifdef USE_OPENRAVE
+	std::string name = "dubin";
+	std::vector<double> dims({state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});
+	viewer_->addBox(name, dims);
+	
+#endif
 }
 
 }

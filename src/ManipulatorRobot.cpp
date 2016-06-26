@@ -366,13 +366,6 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
     }
 }
 
-void ManipulatorRobot::updateViewer(std::vector<double>& state, 
-				    std::vector<std::vector<double>>& particles,
-				    std::vector<std::vector<double>> &particle_colors)
-{
-
-}
-
 void ManipulatorRobot::setNewtonModel()
 {
     rbdl_interface_ = std::make_shared<RBDLInterface>();
@@ -583,6 +576,38 @@ void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_a
         kinematics_->getEndEffectorPosition(joint_angles, end_effector_position);
     }
 
+}
+
+void ManipulatorRobot::updateViewer(std::vector<double>& state, 
+				    std::vector<std::vector<double>>& particles,
+				    std::vector<std::vector<double>> &particle_colors)
+{
+#ifdef USE_OPENRAVE
+	std::vector<double> joint_values;
+     std::vector<double> joint_velocities;
+     std::vector<std::vector<double>> particle_joint_values;
+	 //std::vector<std::vector<double>> particle_joint_colors;
+     for (size_t i = 0; i < state.size() / 2; i++) {
+    	 joint_values.push_back(state[i]);
+    	 joint_velocities.push_back(state[i + state.size() / 2]);
+     } 
+     
+     for (size_t i = 0; i < particles.size(); i++) {
+    	 std::vector<double> particle;
+    	 for (size_t j = 0; j < state.size() / 2; j++) {
+    		 particle.push_back(particles[i][j]);
+    	 }
+    	 particle_joint_values.push_back(particle);
+    	 
+     }
+     
+     viewer_->updateRobotValues(joint_values,
+                                    joint_velocities,
+                                    particle_joint_values,
+                                    particle_colors,
+                                    nullptr);
+     
+#endif
 }
 
 

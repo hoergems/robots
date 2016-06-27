@@ -8,6 +8,7 @@
 #include "fcl/shape/geometric_shapes.h"
 #include "fcl/shape/geometric_shapes_utility.h"
 #include "propagator.hpp"
+#include <random> 
 
 #ifdef USE_OPENRAVE
 #include <viewer_interface/viewer_interface.hpp>
@@ -56,6 +57,8 @@ public:
     virtual void getStateLimits(std::vector<double>& lowerLimits, std::vector<double>& upperLimits) const;
 
     virtual void getControlLimits(std::vector<double>& lowerLimits, std::vector<double>& upperLimits) const;
+    
+    virtual void sampleRandomControl(std::vector<double> &control, std::default_random_engine* randGen);
 
     virtual void getLinearProcessMatrices(const std::vector<double>& state,
                                           std::vector<double>& control,
@@ -198,6 +201,10 @@ public:
                                      std::vector<double>& colliding_state,
                                      std::vector<double>& next_state) {
         this->get_override("makeNextStateAfterCollision")(previous_state, colliding_state, next_state);
+    }
+    
+    void sampleRandomControl(std::vector<double> &control, std::default_random_engine* randGen) {
+	this->get_override("sampleRandomControl")(control, randGen);
     }
 
 };

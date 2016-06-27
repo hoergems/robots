@@ -108,6 +108,15 @@ bool Robot::enforceControlConstraints(std::vector<double>& control) const
     }
 }
 
+void Robot::sampleRandomControl(std::vector<double> &control, std::default_random_engine* randGen) {    
+    control = std::vector<double>(lowerControlLimits_.size());    
+    for (size_t i = 0; i < lowerControlLimits_.size(); i++) {
+	std::uniform_real_distribution<double> uniform_dist(lowerControlLimits_[i], upperControlLimits_[i]);
+	double rand_num = uniform_dist(*randGen);
+	control[i] = rand_num;
+    }
+}
+
 void Robot::getStateLimits(std::vector<double>& lowerLimits, std::vector<double>& upperLimits) const
 {
     lowerLimits = lowerStateLimits_;

@@ -11,12 +11,12 @@ DubinRobot::DubinRobot(std::string robot_file):
     d_(0.0)
 {
     //Dimensions
-    dim_x_ = 0.3;
+    dim_x_ = 0.5;
     dim_y_ = 0.3;
     dim_z_ = 0.05;
 
     //Distance between axels
-    d_ = 0.2;
+    d_ = 0.45;
 
     propagator_ = std::make_shared<shared::DubinPropagator>();
     static_cast<shared::DubinPropagator*>(propagator_.get())->setD(d_);
@@ -58,10 +58,10 @@ void DubinRobot::createRobotCollisionObjects(const std::vector<double>& state,
                              0.0, 0.0, 1.0);
     fcl::Vec3f trans_vec(x, y, 0.01 + dim_z_ / 2.0);
     fcl::Transform3f trans(rot_matrix, trans_vec);
-    fcl::AABB link_aabb(fcl::Vec3f(0.0,
+    fcl::AABB link_aabb(fcl::Vec3f(-dim_x_ / 2.0,
                                    -dim_y_ / 2.0,
                                    -dim_z_ / 2.0),
-                        fcl::Vec3f(dim_x_,
+                        fcl::Vec3f(dim_x_ / 2.0,
                                    dim_y_ / 2.0,
                                    dim_z_ / 2.0));
     fcl::Box* box = new fcl::Box();
@@ -109,11 +109,7 @@ double DubinRobot::distanceGoal(std::vector<double>& state) const
 {
     assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
     double x = state[0];
-    double y = state[1];
-    //cout << "x: " << x << endl;
-    //cout << "y: " << y << endl;
-    //cout << "goal_x: " << goal_position_[0] << endl;
-    //cout << "goal_y: " << goal_position_[1] << endl;
+    double y = state[1];    
 
     double dist = std::pow(goal_position_[0] - x, 2);
     dist += std::pow(goal_position_[1] - y, 2);
@@ -155,14 +151,46 @@ void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
 
 }
 
-void DubinRobot::updateViewer(std::vector<double>& state, 
-			      std::vector<std::vector<double>>& particles,
-			      std::vector<std::vector<double>> &particle_colors) {
+void DubinRobot::updateViewer(std::vector<double>& state,
+                              std::vector<std::vector<double>>& particles,
+                              std::vector<std::vector<double>>& particle_colors)
+{
 #ifdef USE_OPENRAVE
-	std::string name = "dubin";
-	std::vector<double> dims({state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});
-	viewer_->addBox(name, dims);
-	
+
+    /**std::vector<double> dims( {state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});
+    std::string name = "dubin";
+    viewer_->addBox(name, dims);*/
+
+    std::vector<std::string> names;
+    std::vector<std::vector<double>> dims;
+    std::vector<std::vector<double>> colors;
+
+    std::string name = "dubin";
+    names.push_back(name);
+    std::vector<double> main_dims( {state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});
+    dims.push_back(main_dims);
+    std::vector<double> main_color( {1.0, 0.0, 0.0, 0.5});
+    colors.push_back(main_color);
+    for (size_t i = 0; i < particles.size(); i++) {
+        std::string p_name = "particle_dubin" + std::to_string(i);
+        names.push_back(p_name);
+
+        std::vector<double> p_dims( {particles[i][0],
+                                     particles[i][1],
+                                     0.025,
+                                     dim_x_,
+                                     dim_y_,
+                                     dim_z_,
+                                     particles[i][2]
+                                    });
+        dims.push_back(p_dims);
+        //std::vector<double> c({0.0, 1.0, 0.0, 0.5});
+        colors.push_back(particle_colors[i]);
+    }
+    
+    viewer_->addBoxes(names, dims, colors);
+
+
 #endif
 }
 

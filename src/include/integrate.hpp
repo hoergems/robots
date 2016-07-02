@@ -81,6 +81,12 @@ public:
                         std::vector<double>& control_error,
                         std::vector<double>& int_times,
                         std::vector<double>& result) const;
+			
+    void do_integration_delta(std::vector<double> &x, 
+		              std::vector<double> &control,
+		              std::vector<double> &control_error,
+		              std::vector<double> &int_times,
+		              std::vector<double> &result) const;
 
     void getProcessMatrices(const std::vector<double>& x,
                             std::vector<double>& rho,
@@ -100,6 +106,8 @@ public:
     void ode_second_order(const state_type& x , state_type& dxdt , double t) const;
 
     void ode(const state_type& x , state_type& dxdt , double t) const;
+    
+    void odeDelta(const state_type &x, state_type& dxdt, double t) const;
 
     std::vector<double> getResult();
 
@@ -108,12 +116,12 @@ public:
     std::shared_ptr<shared::RBDLInterface> getRBDLInterface();
 
 private:
-    MatrixXd getEEJacobian(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getF0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getM0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getV0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getB0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getA0(const state_type& x, const state_type& rho, const state_type& zeta) const;
+MatrixXd getEEJacobian(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getF0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getM0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getV0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getB0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getA0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
 
 
     // A fuction type of he form MatrixXd function(const state_type&) const

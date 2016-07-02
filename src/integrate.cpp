@@ -280,6 +280,22 @@ void Integrate::do_integration(std::vector<double> &x,
 	result = x;
 }
 
+void Integrate::do_integration_delta(std::vector<double> &x, 
+		                     std::vector<double> &control,
+		                     std::vector<double> &control_error,
+		                     std::vector<double> &int_times,
+		                     std::vector<double> &result) const {
+	double t0 = int_times[0];
+	double te = int_times[1];
+	double step_size = int_times[2];
+	rho_ = control;
+	zeta_ = control_error;
+	size_t k = integrate_const(adams_bashforth<2, state_type>() ,
+		                   std::bind(&Integrate::odeDelta , this , pl::_1 , pl::_2 , pl::_3),
+		                   x , t0 , te , step_size);
+	result = x;
+}
+
 void Integrate::setupSteadyStates() const {
 	
 }
@@ -367,11 +383,21 @@ void Integrate::ode(const state_type &x , state_type &dxdt , double t) const {
 	
 	MatrixXd M = getM0(x, rho_, zeta_);
 	calc_inverse_inertia_matrix(M);
-    MatrixXd res = getF0(x, rho_, zeta_);
-	for (size_t i = 0; i < res.size(); i++) {		
-		dxdt.push_back(res(i));
-	}
-	
+        MatrixXd res = getF0(x, rho_, zeta_);
+	Eigen::VectorXd::Map(&dxdt[0], res.size()) = res;
+}
+
+void Integrate::odeDelta(const state_type &x, state_type& dxdt, double t) const {
+    /**dxdt.clear();
+    MatrixXd M = getM0(x, rho_, zeta_);
+    calc_inverse_inertia_matrix(M);
+    Eigen::Map<Eigen::VectorXd> e_vec(x.data(), x.size());
+    MatrixXd res = M_inv_ * e_vec;
+    dxdt = std::vector<double>(2 * res.size(), 0.0);
+    for (size_t i = 0; i < res.size() / 2; ++i) {
+	dxdt[i + res.size() / 2] = res[i];
+    }*/
+    
 }
 
 BOOST_PYTHON_MODULE(libintegrate) {
@@ -571,11 +597,11 @@ MatrixXd m(6, 4);
 m(0, 0) = -sin(x[0])*cos(x[1]) - sin(x[0])*cos(x[3])*cos(x[1] + x[2]) - sin(x[0]) - sin(x[3])*cos(x[0]) + (1.0L/2.0L)*sin(-x[0] + x[1] + x[2]) - 1.0L/2.0L*sin(x[0] + x[1] + x[2]); 
 m(0, 1) = -sin(x[1])*cos(x[0]) - sin(x[1] + x[2])*cos(x[0])*cos(x[3]) - sin(x[1] + x[2])*cos(x[0]); 
 m(0, 2) = -sin(x[1] + x[2])*cos(x[0])*cos(x[3]) - sin(x[1] + x[2])*cos(x[0]); 
-m(0, 3) = -1.0L/2.0L*sin(x[0] - x[3]) - 1.0L/2.0L*sin(x[0] + x[3]) - 1.0L/4.0L*sin(-x[0] + x[1] + x[2] + x[3]) - 1.0L/4.0L*sin(x[0] - x[1] - x[2] + x[3]) + (1.0L/4.0L)*sin(x[0] + x[1] + x[2] - x[3]) - 1.0L/4.0L*sin(x[0] + x[1] + x[2] + x[3]); 
+m(0, 3) = -sin(x[0])*pow(sin(x[1] + x[2]), 2)*cos(x[3]) - 1.0L/4.0L*sin(x[0] - x[3]) - 1.0L/4.0L*sin(x[0] + x[3]) - 1.0L/4.0L*sin(-x[0] + x[1] + x[2] + x[3]) + (1.0L/8.0L)*sin(-x[0] + 2*x[1] + 2*x[2] + x[3]) - 1.0L/8.0L*sin(x[0] - 2*x[1] - 2*x[2] + x[3]) - 1.0L/4.0L*sin(x[0] - x[1] - x[2] + x[3]) + (1.0L/4.0L)*sin(x[0] + x[1] + x[2] - x[3]) - 1.0L/4.0L*sin(x[0] + x[1] + x[2] + x[3]) - 1.0L/8.0L*sin(x[0] + 2*x[1] + 2*x[2] - x[3]) - 1.0L/8.0L*sin(x[0] + 2*x[1] + 2*x[2] + x[3]); 
 m(1, 0) = -sin(x[0])*sin(x[3]) + cos(x[0])*cos(x[1]) + cos(x[0])*cos(x[3])*cos(x[1] + x[2]) + cos(x[0]) + (1.0L/2.0L)*cos(-x[0] + x[1] + x[2]) + (1.0L/2.0L)*cos(x[0] + x[1] + x[2]); 
 m(1, 1) = -sin(x[0])*sin(x[1]) - sin(x[0])*sin(x[1] + x[2])*cos(x[3]) - sin(x[0])*sin(x[1] + x[2]); 
 m(1, 2) = -sin(x[0])*sin(x[1] + x[2])*cos(x[3]) - sin(x[0])*sin(x[1] + x[2]); 
-m(1, 3) = (1.0L/2.0L)*cos(x[0] - x[3]) + (1.0L/2.0L)*cos(x[0] + x[3]) - 1.0L/4.0L*cos(-x[0] + x[1] + x[2] + x[3]) + (1.0L/4.0L)*cos(x[0] - x[1] - x[2] + x[3]) - 1.0L/4.0L*cos(x[0] + x[1] + x[2] - x[3]) + (1.0L/4.0L)*cos(x[0] + x[1] + x[2] + x[3]); 
+m(1, 3) = pow(sin(x[1] + x[2]), 2)*cos(x[0])*cos(x[3]) + (1.0L/4.0L)*cos(x[0] - x[3]) + (1.0L/4.0L)*cos(x[0] + x[3]) - 1.0L/4.0L*cos(-x[0] + x[1] + x[2] + x[3]) + (1.0L/8.0L)*cos(-x[0] + 2*x[1] + 2*x[2] + x[3]) + (1.0L/8.0L)*cos(x[0] - 2*x[1] - 2*x[2] + x[3]) + (1.0L/4.0L)*cos(x[0] - x[1] - x[2] + x[3]) - 1.0L/4.0L*cos(x[0] + x[1] + x[2] - x[3]) + (1.0L/4.0L)*cos(x[0] + x[1] + x[2] + x[3]) + (1.0L/8.0L)*cos(x[0] + 2*x[1] + 2*x[2] - x[3]) + (1.0L/8.0L)*cos(x[0] + 2*x[1] + 2*x[2] + x[3]); 
 m(2, 0) = 0; 
 m(2, 1) = -cos(x[1]) - cos(x[1] + x[2]) - 1.0L/2.0L*cos(x[1] + x[2] - x[3]) - 1.0L/2.0L*cos(x[1] + x[2] + x[3]); 
 m(2, 2) = -cos(x[1] + x[2]) - 1.0L/2.0L*cos(x[1] + x[2] - x[3]) - 1.0L/2.0L*cos(x[1] + x[2] + x[3]); 

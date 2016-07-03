@@ -13,12 +13,6 @@ ManipulatorPropagator::ManipulatorPropagator():
 {
 }
 
-Eigen::MatrixXd ManipulatorPropagator::get_ee_jacobian(std::vector<double>& state)
-{
-    const std::vector<double> rho;
-    const std::vector<double> zeta;
-    return integrator_->get_end_effector_jacobian(state, rho, zeta);
-}
 
 std::shared_ptr<Integrate> ManipulatorPropagator::getIntegrator()
 {

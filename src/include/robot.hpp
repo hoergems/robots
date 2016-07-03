@@ -45,6 +45,10 @@ public:
             std::vector<double>& next_state) = 0;
 
     virtual void setGoalArea(std::vector<double>& goal_position, double& goal_radius);
+    
+    virtual void setGravityConstant(double gravity_constant) = 0;
+    
+    virtual void setNewtonModel();
 
     virtual void enforceConstraints(bool enforce);
 
@@ -205,6 +209,14 @@ public:
     
     void sampleRandomControl(std::vector<double> &control, std::default_random_engine* randGen) {
 	this->get_override("sampleRandomControl")(control, randGen);
+    }
+    
+    void setGravityConstant(double gravity_constant) {
+        this->get_override("setGravityConstant")(gravity_constant);
+    }
+    
+    void setNewtonModel() {
+        this->get_override("setNewtonModel")();
     }
 
 };

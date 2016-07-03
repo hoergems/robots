@@ -47,10 +47,6 @@ namespace shared {
 	   		                        const double duration,
 	   		                        std::vector<double> &result);
 	   
-	   /**
-	    * Gets the state dependent end-effector jacobian
-	    */
-	   Eigen::MatrixXd get_ee_jacobian(std::vector<double> &state);
 	   
 	   /**
 	    * Gets the underlying integrator

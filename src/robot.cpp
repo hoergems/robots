@@ -41,7 +41,7 @@ bool Robot::propagateState(const std::vector<double>& current_state,
                                 simulation_step_size,
                                 result);
     if (constraints_enforced_) {
-        return enforceConstraints(result);
+        enforceConstraints(result);
     }
 
     return true;
@@ -149,6 +149,10 @@ void Robot::getObservationCovarianceMatrix(Eigen::MatrixXd& observation_covarian
 {
     assert(observation_covariance_matrix_.rows() != 0 && "Robot: ERROR: Observation covariance matrix has not been set.");
     observation_covariance_matrix = observation_covariance_matrix_;
+}
+
+void Robot::setNewtonModel() {
+    
 }
 
 

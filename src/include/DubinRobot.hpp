@@ -55,6 +55,8 @@ public:
     void updateViewer(std::vector<double>& state, 
 		      std::vector<std::vector<double>>& particles,
 		      std::vector<std::vector<double>> &particle_colors) override;
+                      
+    void setGravityConstant(double gravity_constant) override;
 
 private:
     double dim_x_;

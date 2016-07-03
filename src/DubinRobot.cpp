@@ -105,6 +105,7 @@ bool DubinRobot::isTerminal(std::vector<double>& state) const
     return false;
 }
 
+
 double DubinRobot::distanceGoal(std::vector<double>& state) const
 {
     assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
@@ -115,6 +116,10 @@ double DubinRobot::distanceGoal(std::vector<double>& state) const
     dist += std::pow(goal_position_[1] - y, 2);
     //cout << "dist: " << std::sqrt(dist) << endl;
     return std::sqrt(dist);
+}
+
+void DubinRobot::setGravityConstant(double gravity_constant) {
+    
 }
 
 void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,

@@ -731,7 +731,9 @@ void ManipulatorRobot::getEndEffectorJacobian(const std::vector<double>& joint_a
 void ManipulatorRobot::getEndEffectorVelocity(std::vector<double>& state,
         std::vector<double>& ee_velocity)
 {
-    MatrixXd j = static_cast<shared::ManipulatorPropagator*>(propagator_.get())->get_ee_jacobian(state);
+    MatrixXd j(6, getStateSpaceDimension() / 2);
+    kinematics_->getEEJacobian(state, j);
+    
     MatrixXd vel(state.size() / 2, 1);
     for (size_t i = 0; i < state.size() / 2; i++) {
         vel(i, 0) = state[i + state.size() / 2];

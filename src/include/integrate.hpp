@@ -91,9 +91,7 @@ public:
     void getProcessMatrices(const std::vector<double>& x,
                             std::vector<double>& rho,
                             double t_e,
-                            std::vector<MatrixXd>& matrices) const;
-
-    MatrixXd get_end_effector_jacobian(const state_type& x, const state_type& rho, const state_type& zeta) const;
+                            std::vector<MatrixXd>& matrices) const;    
 
     std::vector<double> getProcessMatricesSteadyStatesVec(std::vector<double>& x, double t_e) const;
 
@@ -116,7 +114,6 @@ public:
     std::shared_ptr<shared::RBDLInterface> getRBDLInterface();
 
 private:
-MatrixXd getEEJacobian(const state_type &x, const state_type &rho, const state_type &zeta) const; 
 MatrixXd getF0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
 MatrixXd getM0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
 MatrixXd getV0(const state_type &x, const state_type &rho, const state_type &zeta) const; 

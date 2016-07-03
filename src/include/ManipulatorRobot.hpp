@@ -174,7 +174,7 @@ public:
     /**
      * Set the gravity constant
      */
-    void setGravityConstant(double gravity_constant);
+    virtual void setGravityConstant(double gravity_constant) override;
 
     /**
      * Set the external force acting on the end-effector
@@ -204,7 +204,7 @@ public:
     std::vector<double> getProcessMatrices(std::vector<double>& x,
                                            std::vector<double>& rho,
                                            double t_e);
-    void setNewtonModel();
+    virtual void setNewtonModel() override;
 
     void updateViewer(std::vector<double>& state,
                       std::vector<std::vector<double>>& particles,

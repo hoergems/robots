@@ -14,6 +14,9 @@
 #include <viewer_interface/viewer_interface.hpp>
 #endif
 
+using std::cout;
+using std::endl;
+
 namespace shared
 {
 
@@ -93,6 +96,8 @@ public:
 
     virtual void setParticlePlotLimit(unsigned int particle_plot_limit);
 
+    virtual void addBox(std::string name, std::vector<double> dims);
+
 protected:
     bool constraints_enforced_;
 
@@ -141,6 +146,10 @@ public:
 
     int getControlSpaceDimension() const {
         return this->get_override("getControlSpaceDimension")();
+    }
+    
+    void addBox(std::string name, std::vector<double> dims) {
+	this->get_override("addBox")(name, dims);
     }
 
     void createRobotCollisionObjects(const std::vector<double>& state,

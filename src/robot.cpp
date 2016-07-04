@@ -163,6 +163,13 @@ void Robot::setupViewer(std::string model_file, std::string environment_file)
 #endif
 }
 
+void Robot::addBox(std::string name, std::vector<double> dims) {
+#ifdef USE_OPENRAVE
+    cout << "in add box!" << endl;
+    viewer_->addObstacle(name, dims);
+#endif    
+}
+
 
 void Robot::setParticlePlotLimit(unsigned int particle_plot_limit)
 {

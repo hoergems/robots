@@ -25,13 +25,13 @@ DubinRobot::DubinRobot(std::string robot_file):
     lowerStateLimits_.clear();
     upperStateLimits_.clear();
 
-    lowerStateLimits_.push_back(-8.0);
-    lowerStateLimits_.push_back(-8.0);
+    lowerStateLimits_.push_back(-9.0);
+    lowerStateLimits_.push_back(-9.0);
     lowerStateLimits_.push_back(-3.14);
     lowerStateLimits_.push_back(-1.2);
 
-    upperStateLimits_.push_back(8.0);
-    upperStateLimits_.push_back(8.0);
+    upperStateLimits_.push_back(9.0);
+    upperStateLimits_.push_back(9.0);
     upperStateLimits_.push_back(3.14);
     upperStateLimits_.push_back(1.2);
 

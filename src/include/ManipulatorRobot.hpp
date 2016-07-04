@@ -208,7 +208,8 @@ public:
 
     void updateViewer(std::vector<double>& state,
                       std::vector<std::vector<double>>& particles,
-                      std::vector<std::vector<double>>& particle_colors) override;
+                      std::vector<std::vector<double>>& particle_colors) override;		
+    
 
 #ifdef USE_OPENRAVE
     /**

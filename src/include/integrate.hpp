@@ -14,6 +14,7 @@
 
 #include <boost/numeric/odeint/stepper/euler.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
+#include <boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp>
 
 #include <boost/numeric/odeint/stepper/bulirsch_stoer.hpp>
 #include <boost/numeric/odeint/integrate/integrate_const.hpp>

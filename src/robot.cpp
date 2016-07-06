@@ -185,8 +185,7 @@ void Robot::setupViewer(std::string model_file, std::string environment_file)
 }
 
 void Robot::addBox(std::string name, std::vector<double> dims) {
-#ifdef USE_OPENRAVE
-    cout << "in add box!" << endl;
+#ifdef USE_OPENRAVE    
     viewer_->addObstacle(name, dims);
 #endif    
 }

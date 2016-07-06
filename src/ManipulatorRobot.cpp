@@ -425,6 +425,75 @@ ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& 
     return collision_objects;
 }
 
+bool ManipulatorRobot::makeObservationSpace(std::string& observationType)
+{
+    observationSpace_ = std::make_shared<shared::ObservationSpace>();
+    std::vector<double> lowerLimits;
+    std::vector<double> upperLimits;
+    if (observationType == "linear") {
+        observationSpace_->setDimension(getStateSpaceDimension());
+        getStateLimits(lowerLimits, upperLimits);
+        observationSpace_->setLimits(lowerLimits, upperLimits);
+    } else {
+        observationSpace_->setDimension(3 + getStateSpaceDimension() / 2);
+        std::vector<double> r_state(getStateSpaceDimension() / 2, 0.0);	
+	std::vector<double> end_effector_position;	
+	getEndEffectorPosition(r_state, end_effector_position);
+	double radius = 0.0;
+	for (size_t i = 0; i < end_effector_position.size(); i++) {	     
+ 	    radius += std::pow(joint_origins_[0][i] - end_effector_position[i], 2);
+	}
+	
+	radius = sqrt(radius);
+	getStateLimits(lowerLimits, upperLimits);
+	std::vector<double> lowerObservationLimits;
+	std::vector<double> upperObservationLimits;
+	for (size_t i = 0; i < 3; i++) {
+	    lowerObservationLimits.push_back(-radius);
+	    upperObservationLimits.push_back(radius);
+	}
+	
+	for (size_t i = 0; i < lowerLimits.size() / 2; i++) {
+	    lowerObservationLimits.push_back(lowerLimits[i + lowerLimits.size() / 2]);
+	    upperObservationLimits.push_back(upperLimits[i + upperLimits.size() / 2]);
+	}
+	
+	observationSpace_->setLimits(lowerObservationLimits, upperObservationLimits);
+    }
+}
+
+bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
+{
+    observation.clear();
+    if (observationType_ == "linear") {
+        Eigen::MatrixXd sample(state.size(), 1);
+        observation_distribution_->nextSample(sample);
+        for (size_t i = 0; i < state.size(); i++) {
+            observation.push_back(state[i] + sample(i));
+        }
+    } else {        
+        std::vector<double> end_effector_position;
+        getEndEffectorPosition(state, end_effector_position);        
+	unsigned int observationSpaceDimension = observationSpace_->getDimension();
+	unsigned int observationSpaceDimensionHalf = observationSpaceDimension / 2;
+        Eigen::MatrixXd sample(observationSpace_->getDimension(), 1);
+        observation_distribution_->nextSample(sample); 	
+        observation = std::vector<double>(observationSpaceDimension);
+
+        for (size_t i = 0; i < 3; i++) {            
+	    observation[i] = end_effector_position[i] + sample(i, 0);            
+        }
+        
+        for (size_t i = observationSpaceDimensionHalf; i < observationSpaceDimension; i++) {
+	    observation[i] = state[i] + sample(i + observationSpaceDimensionHalf, 0);
+	}
+	
+
+    }
+
+    return true;
+}
+
 void ManipulatorRobot::initCollisionObjects()
 {
     // Init the link collision objects
@@ -565,9 +634,9 @@ void ManipulatorRobot::getPositionOfLinkN(const std::vector<double>& joint_angle
 void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_angles, std::vector<double>& end_effector_position) const
 {
     if (joint_angles.size() > getStateSpaceDimension() / 2) {
-        std::vector<double> ja;
+        std::vector<double> ja(getStateSpaceDimension() / 2);
         for (size_t i = 0; i < getStateSpaceDimension() / 2; i++) {
-            ja.push_back(joint_angles[i]);
+            ja[i] = joint_angles[i];
         }
 
         const std::vector<double> ja2(ja);
@@ -578,35 +647,35 @@ void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_a
 
 }
 
-void ManipulatorRobot::updateViewer(std::vector<double>& state, 
-				    std::vector<std::vector<double>>& particles,
-				    std::vector<std::vector<double>> &particle_colors)
+void ManipulatorRobot::updateViewer(std::vector<double>& state,
+                                    std::vector<std::vector<double>>& particles,
+                                    std::vector<std::vector<double>>& particle_colors)
 {
 #ifdef USE_OPENRAVE
-	std::vector<double> joint_values;
-     std::vector<double> joint_velocities;
-     std::vector<std::vector<double>> particle_joint_values;
-	 //std::vector<std::vector<double>> particle_joint_colors;
-     for (size_t i = 0; i < state.size() / 2; i++) {
-    	 joint_values.push_back(state[i]);
-    	 joint_velocities.push_back(state[i + state.size() / 2]);
-     } 
-     
-     for (size_t i = 0; i < particles.size(); i++) {
-    	 std::vector<double> particle;
-    	 for (size_t j = 0; j < state.size() / 2; j++) {
-    		 particle.push_back(particles[i][j]);
-    	 }
-    	 particle_joint_values.push_back(particle);
-    	 
-     }
-     
-     viewer_->updateRobotValues(joint_values,
-                                    joint_velocities,
-                                    particle_joint_values,
-                                    particle_colors,
-                                    nullptr);
-     
+    std::vector<double> joint_values;
+    std::vector<double> joint_velocities;
+    std::vector<std::vector<double>> particle_joint_values;
+    //std::vector<std::vector<double>> particle_joint_colors;
+    for (size_t i = 0; i < state.size() / 2; i++) {
+        joint_values.push_back(state[i]);
+        joint_velocities.push_back(state[i + state.size() / 2]);
+    }
+
+    for (size_t i = 0; i < particles.size(); i++) {
+        std::vector<double> particle;
+        for (size_t j = 0; j < state.size() / 2; j++) {
+            particle.push_back(particles[i][j]);
+        }
+        particle_joint_values.push_back(particle);
+
+    }
+
+    viewer_->updateRobotValues(joint_values,
+                               joint_velocities,
+                               particle_joint_values,
+                               particle_colors,
+                               nullptr);
+
 #endif
 }
 
@@ -733,7 +802,7 @@ void ManipulatorRobot::getEndEffectorVelocity(std::vector<double>& state,
 {
     MatrixXd j(6, getStateSpaceDimension() / 2);
     kinematics_->getEEJacobian(state, j);
-    
+
     MatrixXd vel(state.size() / 2, 1);
     for (size_t i = 0; i < state.size() / 2; i++) {
         vel(i, 0) = state[i + state.size() / 2];

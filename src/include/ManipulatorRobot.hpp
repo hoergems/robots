@@ -119,6 +119,10 @@ public:
     virtual void makeNextStateAfterCollision(std::vector<double>& previous_state,
             std::vector<double>& colliding_state,
             std::vector<double>& next_state) override;
+	    
+    virtual bool getObservation(std::vector<double> &state, std::vector<double> &observation) override;
+    
+    virtual bool makeObservationSpace(std::string &observationType) override;
 
     bool propagate_first_order(std::vector<double>& current_state,
                                std::vector<double>& control_input,

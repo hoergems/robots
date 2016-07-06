@@ -18,8 +18,12 @@ Robot::Robot(std::string robot_file):
     lowerStateLimits_(),
     upperStateLimits_(),
     lowerControlLimits_(),
-    upperControlLimits_()
-{
+    upperControlLimits_(),
+    process_distribution_(nullptr),
+    observation_distribution_(nullptr),
+    observationType_("linear"),
+    observationSpace_(nullptr)
+{    
 #ifdef USE_OPENRAVE
     viewer_ = std::make_shared<shared::ViewerInterface>();    
 #endif
@@ -45,6 +49,23 @@ bool Robot::propagateState(const std::vector<double>& current_state,
     }
 
     return true;
+}
+
+void Robot::setProcessDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution) {
+    process_distribution_ = distribution;
+}
+    
+void Robot::setObservationDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution) {
+    observation_distribution_ = distribution;
+}
+
+void Robot::setObservationType(std::string observationType) {
+    observationType_ = observationType;
+    makeObservationSpace(observationType);
+}
+
+shared::ObservationSpace* Robot::getObservationSpace() const {
+    return observationSpace_.get();
 }
 
 void Robot::setGoalArea(std::vector<double>& goal_position, double& goal_radius)

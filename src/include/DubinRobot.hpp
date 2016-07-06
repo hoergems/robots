@@ -41,6 +41,10 @@ public:
     bool isTerminal(std::vector<double>& state) const override;
 
     double distanceGoal(std::vector<double>& state) const override;
+    
+    bool getObservation(std::vector<double> &state, std::vector<double> &observation) override;
+    
+    bool makeObservationSpace(std::string &observationType) override;
 
     void getLinearProcessMatrices(const std::vector<double>& state,
                                   std::vector<double>& control,

@@ -124,7 +124,8 @@ add_library(robots SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Kinematics.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorPropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinPropagator.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/integrate.cpp)
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/integrate.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/ObservationSpace.cpp)
             
 target_link_libraries (robots
                        ${Boost_LIBRARIES}
@@ -149,5 +150,7 @@ install(FILES ${INCLUDE_DIR}/ManipulatorPropagator.hpp  DESTINATION include/robo
 install(FILES ${INCLUDE_DIR}/ManipulatorRobot.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DubinPropagator.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DubinRobot.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/ObservationSpace.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/utils.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/mult_normal.hpp  DESTINATION include/robots)
 install(FILES "${pkg_conf_file_out}" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/ COMPONENT pkgconfig)

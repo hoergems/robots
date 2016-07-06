@@ -9,6 +9,8 @@
 #include "fcl/shape/geometric_shapes_utility.h"
 #include "propagator.hpp"
 #include <random> 
+#include "mult_normal.hpp"
+#include "ObservationSpace.hpp"
 
 #ifdef USE_OPENRAVE
 #include <viewer_interface/viewer_interface.hpp>
@@ -33,6 +35,10 @@ public:
                         double duration,
                         double simulation_step_size,
                         std::vector<double>& result);
+    
+    virtual bool makeObservationSpace(std::string &observationType) = 0; 
+    
+    virtual bool getObservation(std::vector<double> &state, std::vector<double> &observation) = 0;
 
     virtual void createRobotCollisionObjects(const std::vector<double>& state,
             std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const = 0;
@@ -97,6 +103,14 @@ public:
     virtual void setParticlePlotLimit(unsigned int particle_plot_limit);
 
     virtual void addBox(std::string name, std::vector<double> dims);
+    
+    void setProcessDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution);
+    
+    void setObservationDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution);
+    
+    void setObservationType(std::string observationType);
+    
+    shared::ObservationSpace* getObservationSpace() const;
 
 protected:
     bool constraints_enforced_;
@@ -120,6 +134,14 @@ protected:
     std::vector<double> lowerControlLimits_;
 
     std::vector<double> upperControlLimits_;
+    
+    std::shared_ptr<shared::EigenMultivariateNormal<double>> process_distribution_;
+
+    std::shared_ptr<shared::EigenMultivariateNormal<double>> observation_distribution_;
+    
+    std::string observationType_;
+    
+    std::shared_ptr<shared::ObservationSpace> observationSpace_;
 
 #ifdef USE_OPENRAVE
     std::shared_ptr<shared::ViewerInterface> viewer_;
@@ -187,6 +209,10 @@ public:
     void getObservationCovarianceMatrix(Eigen::MatrixXd& observation_covariance_matrix) const {
         this->get_override("getObservationCovarianceMatrix")(observation_covariance_matrix);
     }
+    
+    bool getObservation(std::vector<double> &state, std::vector<double> &observation) {
+	this->get_override("getObservation")(state, observation);
+    }
 
     bool isTerminal(std::vector<double>& state) const {
         return this->get_override("isTerminal")(state);
@@ -226,6 +252,22 @@ public:
     
     void setNewtonModel() {
         this->get_override("setNewtonModel")();
+    }
+    
+    void setProcessDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution) {
+	this->get_override("setProcessDistribution")(distribution);
+    }
+    
+    void setObservationDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution) {
+	this->get_override("setObservationDistribution")(distribution);
+    }
+    
+    void setObservationType(std::string observationType) {
+	this->get_override("setObservationType")(observationType);
+    }
+    
+    bool makeObservationSpace(std::string &observationType) {
+	this->get_override("makeObservationSpace")(observationType);
     }
 
 };

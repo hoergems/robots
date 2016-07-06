@@ -72,6 +72,35 @@ void DubinRobot::createRobotCollisionObjects(const std::vector<double>& state,
     collision_objects.push_back(coll_obj);
 }
 
+bool DubinRobot::makeObservationSpace(std::string &observationType) {
+    observationSpace_ = std::make_shared<shared::ObservationSpace>();
+    std::vector<double> lowerLimits;
+    std::vector<double> upperLimits;
+    if (observationType == "linear") {	
+	observationSpace_->setDimension(getStateSpaceDimension());	
+	getStateLimits(lowerLimits, upperLimits);
+	observationSpace_->setLimits(lowerLimits, upperLimits);
+    } else {
+	
+    }
+}
+
+bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
+{
+    if (observationType_ == "linear") {
+        observation.clear();
+        Eigen::MatrixXd sample(state.size(), 1);
+        observation_distribution_->nextSample(sample);
+        for (size_t i = 0; i < state.size(); i++) {
+            observation.push_back(state[i] + sample(i));
+        }
+    } else {
+
+    }
+
+    return true;
+}
+
 int DubinRobot::getStateSpaceDimension() const
 {
     return 4;
@@ -110,7 +139,7 @@ double DubinRobot::distanceGoal(std::vector<double>& state) const
 {
     assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
     double x = state[0];
-    double y = state[1];    
+    double y = state[1];
 
     double dist = std::pow(goal_position_[0] - x, 2);
     dist += std::pow(goal_position_[1] - y, 2);
@@ -118,8 +147,9 @@ double DubinRobot::distanceGoal(std::vector<double>& state) const
     return std::sqrt(dist);
 }
 
-void DubinRobot::setGravityConstant(double gravity_constant) {
-    
+void DubinRobot::setGravityConstant(double gravity_constant)
+{
+
 }
 
 void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
@@ -192,7 +222,7 @@ void DubinRobot::updateViewer(std::vector<double>& state,
         //std::vector<double> c({0.0, 1.0, 0.0, 0.5});
         colors.push_back(particle_colors[i]);
     }
-    
+
     viewer_->addBoxes(names, dims, colors);
 
 

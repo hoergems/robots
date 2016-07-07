@@ -1,4 +1,5 @@
 #include "include/Kinematics.hpp"
+#include <signal.h>
 
 using std::cout;
 using std::endl;
@@ -54,6 +55,14 @@ void Kinematics::getEndEffectorPosition(const std::vector<double>& joint_angles,
     end_effector_position.push_back(ee_pose.first[0]);
     end_effector_position.push_back(ee_pose.first[1]);
     end_effector_position.push_back(ee_pose.first[2]);
+    if (std::isnan(ee_pose.first[0])) {
+        cout << "joint angles: ";
+        for (auto & k : joint_angles) {
+            cout << k << ", ";
+        }
+        cout << endl;
+	raise(SIGSEGV);
+    }
 }
 
 Eigen::MatrixXd Kinematics::getEndEffectorPose(const std::vector<double>& joint_angles, bool& eigen)
@@ -92,7 +101,7 @@ Eigen::MatrixXd Kinematics::getPoseOfLinkN(const double& joint_angle,
 }
 
 std::pair<fcl::Vec3f, fcl::Matrix3f> Kinematics::getPoseOfLinkN(const std::vector<double>& joint_angles, const int& n) const
-{
+{    
     Eigen::MatrixXd res = Eigen::MatrixXd::Identity(4, 4);
     Eigen::MatrixXd init_trans(4, 4);
     init_trans << 1.0, 0.0, 0.0, joint_origins_[0][0],
@@ -106,16 +115,20 @@ std::pair<fcl::Vec3f, fcl::Matrix3f> Kinematics::getPoseOfLinkN(const std::vecto
         transformations.push_back(getTransformationMatr(joint_angles[i], 0.0, links_[i][0], joint_origins_[i + 1][3]));
     }
 
-    if (n != 0) {
+    /**if (n != 0) {
         transformations.push_back(getTransformationMatr(joint_angles[n], 0.0, 0.0, 0.0));
     } else {
         transformations.push_back(getTransformationMatr(joint_angles[0], 0.0, 0.0, 0.0));
+    }*/
+    if (n < joint_angles.size()) {
+	transformations.push_back(getTransformationMatr(joint_angles[n], 0.0, 0.0, 0.0));
     }
 
     for (int i = transformations.size() - 1; i >= 0; i--) {
         res = transformations[i] * res;
-    }
 
+    }
+    
     fcl::Vec3f r_vec = fcl::Vec3f(res(0, 3), res(1, 3), res(2, 3));
     fcl::Matrix3f r_matr = fcl::Matrix3f(res(0, 0), res(0, 1), res(0, 2),
                                          res(1, 0), res(1, 1), res(1, 2),

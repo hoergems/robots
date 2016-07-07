@@ -24,6 +24,24 @@ using std::endl;
 namespace shared
 {
 
+struct Beacon {
+public:
+    Beacon():
+        x_(0.0),
+        y_(0.0) {
+
+    }
+
+    Beacon(double x, double y):
+        x_(x),
+        y_(y) {
+
+    }
+
+    double x_;
+    double y_;
+};
+
 class DubinRobot: public Robot
 {
 public:
@@ -41,10 +59,12 @@ public:
     bool isTerminal(std::vector<double>& state) const override;
 
     double distanceGoal(std::vector<double>& state) const override;
-    
-    bool getObservation(std::vector<double> &state, std::vector<double> &observation) override;
-    
-    bool makeObservationSpace(std::string &observationType) override;
+
+    bool getObservation(std::vector<double>& state, std::vector<double>& observation) override;
+
+    void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) override;
+
+    bool makeObservationSpace(std::string& observationType) override;
 
     void getLinearProcessMatrices(const std::vector<double>& state,
                                   std::vector<double>& control,
@@ -56,16 +76,18 @@ public:
                                      std::vector<double>& next_state) override;
 
 
-    void updateViewer(std::vector<double>& state, 
-		      std::vector<std::vector<double>>& particles,
-		      std::vector<std::vector<double>> &particle_colors) override;
-                      
+    void updateViewer(std::vector<double>& state,
+                      std::vector<std::vector<double>>& particles,
+                      std::vector<std::vector<double>>& particle_colors) override;
+
     void setGravityConstant(double gravity_constant) override;
 
 private:
     double dim_x_;
     double dim_y_;
     double dim_z_;
+
+    std::vector<shared::Beacon> beacons_;
 
     double d_;
 

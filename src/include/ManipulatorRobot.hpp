@@ -123,6 +123,8 @@ public:
     virtual bool getObservation(std::vector<double> &state, std::vector<double> &observation) override;
     
     virtual bool makeObservationSpace(std::string &observationType) override;
+    
+    virtual void transformToObservationSpace(std::vector<double> &state, std::vector<double> &res) override;
 
     bool propagate_first_order(std::vector<double>& current_state,
                                std::vector<double>& control_input,

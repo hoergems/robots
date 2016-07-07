@@ -9,7 +9,7 @@
 #include "fcl/shape/geometric_shapes_utility.h"
 #include "propagator.hpp"
 #include <random> 
-#include "mult_normal.hpp"
+#include "MultNormal.hpp"
 #include "ObservationSpace.hpp"
 
 #ifdef USE_OPENRAVE
@@ -104,13 +104,15 @@ public:
 
     virtual void addBox(std::string name, std::vector<double> dims);
     
-    void setProcessDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution);
+    void setProcessDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution);
     
-    void setObservationDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution);
+    void setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution);
     
     void setObservationType(std::string observationType);
     
     shared::ObservationSpace* getObservationSpace() const;
+    
+    virtual void transformToObservationSpace(std::vector<double> &state, std::vector<double> &res) = 0;
 
 protected:
     bool constraints_enforced_;
@@ -135,9 +137,9 @@ protected:
 
     std::vector<double> upperControlLimits_;
     
-    std::shared_ptr<shared::EigenMultivariateNormal<double>> process_distribution_;
+    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> process_distribution_;
 
-    std::shared_ptr<shared::EigenMultivariateNormal<double>> observation_distribution_;
+    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> observation_distribution_;
     
     std::string observationType_;
     
@@ -254,11 +256,11 @@ public:
         this->get_override("setNewtonModel")();
     }
     
-    void setProcessDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution) {
+    void setProcessDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution) {
 	this->get_override("setProcessDistribution")(distribution);
     }
     
-    void setObservationDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution) {
+    void setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution) {
 	this->get_override("setObservationDistribution")(distribution);
     }
     
@@ -268,6 +270,10 @@ public:
     
     bool makeObservationSpace(std::string &observationType) {
 	this->get_override("makeObservationSpace")(observationType);
+    }
+    
+    void transformToObservationSpace(std::vector<double> &state, std::vector<double> &res) {
+	this->get_override("transformToObservationSpace")(state, res);
     }
 
 };

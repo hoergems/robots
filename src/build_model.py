@@ -23,6 +23,9 @@ class Test:
         g = Matrix([[0],
                     [0],
                     [g_symb]])
+	
+	print "Calc first order derivatives of observation function" 
+	H, W = self.calc_observation_derivatives()
         
         """
         F is a 6 dimensional external force vector (fx, fy, fz, mx, my, mz), consisting of 
@@ -113,6 +116,8 @@ class Test:
             self.gen_cpp_code2(V, "V0", header_src, imple_src)
             self.gen_cpp_code2(M, "M0", header_src, imple_src)
             self.gen_cpp_code2(f, "F0", header_src, imple_src)
+            self.gen_cpp_code2(H, "H0", header_src, imple_src)
+            self.gen_cpp_code2(W, "W0", header_src, imple_src)
             #self.gen_cpp_code2(First, "First0", header_src, imple_src)
             #self.gen_cpp_code2(Sec, "Sec0", header_src, imple_src)
             #self.gen_cpp_code2(C, "C0", header_src, imple_src)
@@ -235,6 +240,29 @@ class Test:
         
                
         return steady_states[0]
+    
+    def calc_observation_derivatives(self):	
+	g = self.dh(0.0, self.joint_origins[0][2], 0.0, 0.0)	
+	for i in xrange(len(self.q) - 1):
+	    g = g * self.dh(self.q[i], 0.0, self.joint_origins[i + 1][0], self.joint_origins[i + 1][3])
+	    g = trigsimp(g)
+	
+	g_funct = [g[0, 3], g[1, 3], g[2, 3]]
+	for i in xrange(len(self.qdot) - 1):
+	    g_funct.append(self.qdot[i])
+	g_funct = Matrix(g_funct)
+	#g_funct = g_funct.T
+	etas = [symbols("eta_[" + str(i) + "]") for i in xrange(g_funct.shape[0])]	
+	
+	for i in xrange(len(etas)):
+	    g_funct[i] = g_funct[i] + etas[i]
+	x = [self.q[i] for i in xrange(len(self.q) - 1)]
+	x.extend([self.qdot[i] for i in xrange(len(self.qdot) - 1)])
+	H = g_funct.jacobian([x[i] for i in xrange(len(x))])
+	W = g_funct.jacobian([etas[i] for i in xrange(len(etas))])
+	H = simplify(H)
+	H = nsimplify(H, tolerance=1e-4) 
+	return H, W
         
     def parse_urdf(self, xml_file, file):
 	r = urdf.Robot.from_xml_string(file)
@@ -362,17 +390,19 @@ class Test:
         idx2 = -1
         breaking = False
         for i in xrange(len(lines)):
-            if ("MatrixXd Integrate::getA" in lines[i] or 
+	    if ("MatrixXd Integrate::getA" in lines[i] or 
                 "MatrixXd Integrate::getB" in lines[i] or 
                 "MatrixXd Integrate::getV" in lines[i] or
                 "MatrixXd Integrate::getF" in lines[i] or
                 "MatrixXd Integrate::getM" in lines[i] or
                 "MatrixXd Integrate::getC" in lines[i] or
                 "MatrixXd Integrate::getN" in lines[i] or
+                "MatrixXd Integrate::getH" in lines[i] or
+                "MatrixXd Integrate::getW" in lines[i] or
                 "MatrixXd Integrate::getSec" in lines[i] or
                 "MatrixXd Integrate::getFirst" in lines[i] or
                 "MatrixXd Integrate::getEEJacobian" in lines[i] or
-                "MatrixXd Integrate::getMInv" in lines[i]):
+                "MatrixXd Integrate::getMInv" in lines[i]):            
                 idx1 = i                
                 breaking = True
             if "}" in lines[i] and breaking:
@@ -395,17 +425,19 @@ class Test:
         tmp_lines = []
         idxs = []
         for i in xrange(len(lines_header)):
-            if ("MatrixXd getA" in lines_header[i] or 
+	    if ("MatrixXd getA" in lines_header[i] or 
                 "MatrixXd getB" in lines_header[i] or 
                 "MatrixXd getV" in lines_header[i] or
                 "MatrixXd getF" in lines_header[i] or
                 "MatrixXd getM" in lines_header[i] or
                 "MatrixXd getC" in lines_header[i] or
-                "MatrixXd getN" in lines_header[i] or 
+                "MatrixXd getN" in lines_header[i] or
+                "MatrixXd getH" in lines_header[i] or
+                "MatrixXd getW" in lines_header[i] or
                 "MatrixXd getSec" in lines_header[i] or
                 "MatrixXd getFirst" in lines_header[i] or
                 "MatrixXd getEEJacobian" in lines_header[i] or
-                "MatrixXd getMInv" in lines[i]):
+                "MatrixXd getMInv" in lines[i]):            
                 idxs.append(i)
         for i in xrange(len(lines_header)):
             app = True

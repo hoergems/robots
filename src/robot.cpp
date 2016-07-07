@@ -51,11 +51,11 @@ bool Robot::propagateState(const std::vector<double>& current_state,
     return true;
 }
 
-void Robot::setProcessDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution) {
+void Robot::setProcessDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution) {
     process_distribution_ = distribution;
 }
     
-void Robot::setObservationDistribution(std::shared_ptr<shared::EigenMultivariateNormal<double>> &distribution) {
+void Robot::setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution) {
     observation_distribution_ = distribution;
 }
 

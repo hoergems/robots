@@ -352,14 +352,14 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
     std::vector<double> upperVelocityLimits;
     getStateLimits(stateLowerLimits, stateUpperLimits);
     for (size_t i = 0; i < stateLowerLimits.size() / 2; i++) {
-	lowerVelocityLimits.push_back(stateLowerLimits[i + stateLowerLimits.size() / 2]);
-	upperVelocityLimits.push_back(stateUpperLimits[i + stateUpperLimits.size() / 2]);
+        lowerVelocityLimits.push_back(stateLowerLimits[i + stateLowerLimits.size() / 2]);
+        upperVelocityLimits.push_back(stateUpperLimits[i + stateUpperLimits.size() / 2]);
     }
 
     kinematics_->setJointOrigins(joint_origins_);
     kinematics_->setLinkDimensions(active_link_dimensions_);
     static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setJointDamping(joint_dampings_);
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setVelocityLimits(lowerVelocityLimits, upperVelocityLimits);
+    //static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setVelocityLimits(lowerVelocityLimits, upperVelocityLimits);
     lowerStateLimits_ = active_lower_joint_limits_;
     upperStateLimits_ = active_upper_joint_limits_;
     for (size_t i = 0; i < active_joint_velocity_limits_.size(); i++) {
@@ -443,77 +443,77 @@ bool ManipulatorRobot::makeObservationSpace(std::string& observationType)
         observationSpace_->setLimits(lowerLimits, upperLimits);
     } else {
         observationSpace_->setDimension(3 + getStateSpaceDimension() / 2);
-        std::vector<double> r_state(getStateSpaceDimension() / 2, 0.0);	
-	std::vector<double> end_effector_position;	
-	getEndEffectorPosition(r_state, end_effector_position);
-	double radius = 0.0;
-	for (size_t i = 0; i < end_effector_position.size(); i++) {	     
- 	    radius += std::pow(joint_origins_[0][i] - end_effector_position[i], 2);
-	}
-	
-	radius = sqrt(radius);
-	getStateLimits(lowerLimits, upperLimits);
-	std::vector<double> lowerObservationLimits;
-	std::vector<double> upperObservationLimits;
-	for (size_t i = 0; i < 3; i++) {
-	    lowerObservationLimits.push_back(-radius);
-	    upperObservationLimits.push_back(radius);
-	}
-	
-	for (size_t i = 0; i < lowerLimits.size() / 2; i++) {
-	    lowerObservationLimits.push_back(lowerLimits[i + lowerLimits.size() / 2]);
-	    upperObservationLimits.push_back(upperLimits[i + upperLimits.size() / 2]);
-	}
-	
-	observationSpace_->setLimits(lowerObservationLimits, upperObservationLimits);
+        std::vector<double> r_state(getStateSpaceDimension() / 2, 0.0);
+        std::vector<double> end_effector_position;
+        getEndEffectorPosition(r_state, end_effector_position);
+        double radius = 0.0;
+        for (size_t i = 0; i < end_effector_position.size(); i++) {
+            radius += std::pow(joint_origins_[0][i] - end_effector_position[i], 2);
+        }
+
+        radius = sqrt(radius);
+        getStateLimits(lowerLimits, upperLimits);
+        std::vector<double> lowerObservationLimits;
+        std::vector<double> upperObservationLimits;
+        for (size_t i = 0; i < 3; i++) {
+            lowerObservationLimits.push_back(-radius);
+            upperObservationLimits.push_back(radius);
+        }
+
+        for (size_t i = 0; i < lowerLimits.size() / 2; i++) {
+            lowerObservationLimits.push_back(lowerLimits[i + lowerLimits.size() / 2]);
+            upperObservationLimits.push_back(upperLimits[i + upperLimits.size() / 2]);
+        }
+
+        observationSpace_->setLimits(lowerObservationLimits, upperObservationLimits);
     }
 }
 
 bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
 {
     observation.clear();
-    if (observationType_ == "linear") {        
-        Eigen::MatrixXd sample = observation_distribution_->samples(1);
+    if (observationType_ == "linear") {
+        Eigen::MatrixXd sample = observation_distribution_->samples(1);	
         for (size_t i = 0; i < state.size(); i++) {
             observation.push_back(state[i] + sample(i, 0));
         }
-    } else {        
+    } else {
         std::vector<double> end_effector_position;
-        getEndEffectorPosition(state, end_effector_position);        
-	unsigned int observationSpaceDimension = observationSpace_->getDimension();	
-        Eigen::MatrixXd sample = observation_distribution_->samples(1);        	
-        observation = std::vector<double>(observationSpaceDimension);	
-        for (size_t i = 0; i < 3; i++) {            
-	    observation[i] = end_effector_position[i] + sample(i, 0);
+        getEndEffectorPosition(state, end_effector_position);
+        unsigned int observationSpaceDimension = observationSpace_->getDimension();
+        Eigen::MatrixXd sample = observation_distribution_->samples(1);
+        observation = std::vector<double>(observationSpaceDimension);
+        for (size_t i = 0; i < 3; i++) {
+            observation[i] = end_effector_position[i] + sample(i, 0);
         }
-        
+
         unsigned int stateSizeHalf = state.size() / 2;
         for (size_t i = 0; i < stateSizeHalf; i++) {
-	    observation[i + 3] = state[i + stateSizeHalf] + sample(i + 3, 0);
-	}
+            observation[i + 3] = state[i + stateSizeHalf] + sample(i + 3, 0);
+        }
     }
 
     return true;
 }
 
-void ManipulatorRobot::transformToObservationSpace(std::vector<double> &state, std::vector<double> &res) {
+void ManipulatorRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res)
+{
     res.clear();
     if (observationType_ == "linear") {
-	res = state;
-    }
-    else {
-	std::vector<double> end_effector_position;
-	unsigned int observationSpaceDimension = observationSpace_->getDimension();	
-	res = std::vector<double>(observationSpaceDimension);	
-	getEndEffectorPosition(state, end_effector_position);
-	for (size_t i = 0; i < 3; i++) {
-	    res[i] = end_effector_position[i];
-	}
-	
-	unsigned int stateSizeHalf = state.size() / 2;
+        res = state;
+    } else {
+        std::vector<double> end_effector_position;
+        unsigned int observationSpaceDimension = observationSpace_->getDimension();
+        res = std::vector<double>(observationSpaceDimension);
+        getEndEffectorPosition(state, end_effector_position);
+        for (size_t i = 0; i < 3; i++) {
+            res[i] = end_effector_position[i];
+        }
+
+        unsigned int stateSizeHalf = state.size() / 2;
         for (size_t i = 0; i < stateSizeHalf; i++) {
-	    res[i + 3] = state[i + stateSizeHalf];
-	}
+            res[i + 3] = state[i + stateSizeHalf];
+        }
     }
 }
 
@@ -614,14 +614,14 @@ bool ManipulatorRobot::checkSelfCollision(std::vector<std::shared_ptr<fcl::Colli
 
 void ManipulatorRobot::getLinearProcessMatrices(const std::vector<double>& state,
         std::vector<double>& control,
-        double& duration,	
+        double& duration,
         std::vector<Eigen::MatrixXd>& matrices) const
 {
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(state, 
-													control, 
-													duration, 
-													observationType_, 
-													matrices);
+    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(state,
+            control,
+            duration,
+            observationType_,
+            matrices);
 }
 
 bool ManipulatorRobot::checkSelfCollision(const std::vector<double>& state) const
@@ -1155,10 +1155,10 @@ std::vector<double> ManipulatorRobot::getProcessMatrices(std::vector<double>& x,
         std::vector<double>& rho,
         double t_e)
 {
-    return static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatricesVec(x, 
-														  rho, 
-														  t_e,
-														  observationType_);
+    return static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatricesVec(x,
+            rho,
+            t_e
+                                                                                                                 );
 }
 
 std::shared_ptr<shared::Robot> makeManipulatorRobot(std::string model_file)

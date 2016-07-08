@@ -55,10 +55,6 @@ public:
      * Set the joint acceleration limit
      */
     void setAccelerationLimit(double& accelerationLimit);
-    
-    void setVelocityLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits);
-    
-    void enforceVelocityLimits(std::vector<double> &stateDeriv) const;
 
     /**
      * Sets the viscous joint damping constants
@@ -103,8 +99,7 @@ public:
 
     std::vector<double> getProcessMatricesVec(std::vector<double>& x,
             std::vector<double>& rho,
-            double t_e,
-            std::string observationType) const;
+            double t_e) const;
 
     void ode_first_order(const state_type& x , state_type& dxdt , double t) const;
 
@@ -128,6 +123,7 @@ MatrixXd getM0(const state_type &x, const state_type &rho, const state_type &zet
 MatrixXd getV0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
 MatrixXd getB0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
 MatrixXd getA0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+
 
     // A fuction type of he form MatrixXd function(const state_type&) const
     typedef MatrixXd ABFuncType(const state_type&, const state_type&, const state_type&) const;
@@ -166,10 +162,6 @@ MatrixXd getA0(const state_type &x, const state_type &rho, const state_type &zet
      * The joint acceleration limit
      */
     mutable double acceleration_limit_;
-    
-    mutable std::vector<double> lowerVelocityLimits_;
-    
-    mutable std::vector<double> upperVelocityLimits_;
 
     /**
      * Viscous joint dampings
@@ -209,14 +201,6 @@ MatrixXd getA0(const state_type &x, const state_type &rho, const state_type &zet
     mutable VectorXd vel_;
 
     std::shared_ptr<shared::RBDLInterface> rbdl_interface_;
-    
-    MatrixXd getNumA0(const state_type &x, const state_type &rho, const state_type &zeta) const;
-    
-    MatrixXd getNumA2(const state_type &x, const state_type &rho, const state_type &zeta) const;
-    
-    MatrixXd getNumB0(const state_type &x, const state_type &rho, const state_type &zeta) const;
-    
-    MatrixXd getNumV0(const state_type &x, const state_type &rho, const state_type &zeta) const;
 
 };
 

@@ -31,8 +31,6 @@ Integrate::Integrate():
 	viscous_(),
 	acceleration_limit_(10000.0),
 	xstar(),
-	lowerVelocityLimits_(),
-	upperVelocityLimits_(),
 	rbdl_interface_(nullptr){
 	setupSteadyStates();
 	rho_vec_ = VectorXd(3);
@@ -68,22 +66,6 @@ void Integrate::setExternalForce(double &f_x,
 
 void Integrate::setAccelerationLimit(double &accelerationLimit) {
 	acceleration_limit_ = accelerationLimit;
-}
-
-void Integrate::setVelocityLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) {
-    lowerVelocityLimits_ = lowerLimits;
-    upperVelocityLimits_ = upperLimits;
-}
-
-void Integrate::enforceVelocityLimits(std::vector<double> &stateDeriv) const{
-    for (size_t i = 0; i < stateDeriv.size() / 2; i++) {
-        if (stateDeriv[i] > upperVelocityLimits_[i]) {
-            stateDeriv[i] = upperVelocityLimits_[i];
-        }
-        else if (stateDeriv[i] < lowerVelocityLimits_[i]) {
-            stateDeriv[i] = lowerVelocityLimits_[i];
-        }
-    }
 }
 
 void Integrate::setJointDamping(std::vector<double> &viscous) {	
@@ -129,13 +111,17 @@ void Integrate::getProcessMatrices(const std::vector<double> &x,
 	std::vector<double> zeta_nil;
 	MatrixXd M = getM0(x, rho, zeta_nil);
 	calc_inverse_inertia_matrix(M);
-	MatrixXd AMatrix = getNumA2(x, rho, zeta_nil);
-	MatrixXd BMatrix = getNumB0(x, rho, zeta_nil);	
-	MatrixXd VMatrix = getNumV0(x, rho, zeta_nil);
-	matrices.push_back(AMatrix);
-    matrices.push_back(BMatrix);
-	matrices.push_back(VMatrix);
-	if (observationType == "linear") {
+	MatrixXd AMatrix = getA0(x, rho, zeta_nil);
+	MatrixXd BMatrix = getB0(x, rho, zeta_nil);	
+	MatrixXd VMatrix = getV0(x, rho, zeta_nil);
+	MatrixXd A_matrx1 = (t_e * AMatrix).exp();	
+	MatrixXd integral = power_series_(AMatrix, t_e, 20);	
+	MatrixXd B_matrx = A_matrx1 * integral * BMatrix;
+	MatrixXd V_matrx = A_matrx1 * integral * VMatrix;
+	matrices.push_back(A_matrx1);
+    matrices.push_back(B_matrx);
+	matrices.push_back(V_matrx);
+	if (observationType == "linear") {	    
 	    Eigen::MatrixXd H = Eigen::MatrixXd::Identity(x.size(), x.size());
 	    Eigen::MatrixXd W = Eigen::MatrixXd::Identity(x.size(), x.size());
 	    matrices.push_back(H);
@@ -151,10 +137,9 @@ void Integrate::getProcessMatrices(const std::vector<double> &x,
 
 std::vector<double> Integrate::getProcessMatricesVec(std::vector<double> &x, 
 		                                             std::vector<double> &rho, 
-												     double t_e,
-												     std::string observationType) const {
+												     double t_e) const {
 	std::vector<MatrixXd> matrices;	
-	getProcessMatrices(x, rho, t_e, observationType, matrices);
+	getProcessMatrices(x, rho, t_e, "", matrices);
 	std::vector<double> res;
 	
 	for (size_t i = 0; i < matrices[0].size(); i++) {		
@@ -398,16 +383,14 @@ void Integrate::ode(const state_type &x , state_type &dxdt , double t) const {
 			qdot[i] = x[i + s];
 			dxdt.push_back(x[i + s]);
 			rho[i] = rho_[i] + zeta_[i];			
-		}	
-		
+		}
 			
 		rbdl_interface_->forward_dynamics(q, qdot, rho, res);
 		for (size_t i = 0; i < x.size() / 2; i++) {
 			dxdt.push_back(res(i));
 		}
-		
-		//enforceVelocityLimits(dxdt);
-        return;
+
+                return;
 	}
 	
 	dxdt.clear();	
@@ -433,166 +416,6 @@ void Integrate::odeDelta(const state_type &x, state_type& dxdt, double t) const 
     
 }
 
-MatrixXd Integrate::getNumV0(const state_type &x, const state_type &rho, const state_type &zeta) const{ 
-MatrixXd m(8, 4);
-double h = 0.0007;
-
-std::vector<double> x2 = x;
-std::vector<double> rho2 = rho;
-std::vector<double> zeta2(rho.size(), 0.0);
-std::vector<double> zetah;
-std::vector<double> zetah2;
-std::vector<double> resh;
-std::vector<double> resh2;
-double duration = 0.1;
-std::vector<double> intTimes({0.0, h, duration});
-for (size_t i = 0; i < x.size(); i++) {
-    for(size_t j = 0; j < zeta2.size(); j++) {
-        zetah = zeta2;
-        zetah2 = zeta2;
-        zetah[j] += duration;
-        zetah2[j] -= duration;
-        do_integration(x2, rho2, zetah, intTimes, resh);
-        do_integration(x2, rho2, zetah2, intTimes, resh2);
-        //enforceVelocityLimits(resh);
-        //enforceVelocityLimits(resh2);
-        m(i, j) = (resh[i] - resh2[i]) / (2.0 * duration);
-    }
-}
-
-return m;
-}
-
-MatrixXd Integrate::getNumB0(const state_type &x, const state_type &rho, const state_type &zeta) const{ 
-MatrixXd m(8, 4);
-double h = 0.0007;
-double duration = 0.1;
-std::vector<double> x2 = x;
-std::vector<double> zeta2(rho.size(), 0.0);
-std::vector<double> rhoh;
-std::vector<double> rhoh2;
-std::vector<double> resh;
-std::vector<double> resh2;
-std::vector<double> intTimes({0.0, h, duration});
-for (size_t i = 0; i < x.size(); i++) {
-    for(size_t j = 0; j < rho.size(); j++) {
-        rhoh = rho;
-        rhoh2 = rho;
-        rhoh[j] += duration;
-        rhoh2[j] -= duration;
-        do_integration(x2, rhoh, zeta2, intTimes, resh);
-        do_integration(x2, rhoh2, zeta2, intTimes, resh2);
-        //enforceVelocityLimits(resh);
-        //enforceVelocityLimits(resh2);
-        m(i, j) = (resh[i] - resh2[i]) / (2.0 * duration);
-    }
-}
-
-return m;
-}
-
-MatrixXd Integrate::getNumA2(const state_type &x, const state_type &rho, const state_type &zeta) const{
-MatrixXd m(8, 8);
-state_type xh;
-state_type xh2;
-double h = 0.0007;
-double duration = 0.1;
-std::vector<double> zeta2(rho.size(), 0.0);
-std::vector<double> rho2 = rho;
-std::vector<double> intTimes({0.0, h, duration});
-std::vector<double> resh;
-std::vector<double> resh2;
-unsigned int x_size_half = x.size() / 2;
-for (size_t i = 0; i < x.size(); i++) {
-    for (size_t j = 0; j < x.size(); j++) {
-        xh = x;
-        xh2 = x;
-        xh[j] += duration;
-        xh2[j] -= duration;
-        if (std::isnan(xh[0])) {
-            cout << "WHAT THE FUCK!!!!" << endl;
-        }
-        if (std::isnan(xh2[0])) {
-            cout << "WHAT THE FUCK!!!!2" << endl;
-        }
-              
-        do_integration(xh, rho2, zeta2, intTimes, resh);
-        do_integration(xh2, rho2, zeta2, intTimes, resh2);
-        //enforceVelocityLimits(resh);
-        //enforceVelocityLimits(resh2);              
-        m(i, j) = (resh[i] - resh2[i]) / (2.0 * duration);
-        if (std::isnan(m(i, j))) {
-            cout << "WHAAAAAAAAAAT" << endl;
-            cout << "resh " << resh[i] << endl;
-            cout << "resh2 " << resh2[i] << endl;
-            cout << "xh: ";
-            for (size_t i = 0; i < xh.size(); i++) {
-                cout << xh[i] << ", ";
-            }
-            cout << endl;
-            cout << "xh2: ";
-            for (size_t i = 0; i < xh2.size(); i++) {
-                cout << xh2[i] << ", ";
-            }
-            cout << endl;
-            cout << "x: ";
-            for (size_t i = 0; i < x.size(); i++) {
-                cout << x[i] << ", ";
-            }
-            cout << endl;
-            sleep(10);
-        }       
-        
-    }
-}
-
-return m;
-}
-
-MatrixXd Integrate::getNumA0(const state_type &x, const state_type &rho, const state_type &zeta) const{
-MatrixXd m(8, 8);
-state_type xh;
-state_type xh2;
-double h = 0.0007;
-
-const std::vector<double> zeta2(rho.size(), 0.0);
-std::vector<double> qh(x.size() / 2);
-std::vector<double> qdoth(x.size() / 2);
-std::vector<double> qh2(x.size() / 2);
-std::vector<double> qdoth2(x.size() / 2);
-std::vector<double> rho2(x.size() / 2);
-for (size_t i = 0; i < x.size() / 2; i++) {
-     rho2[i] = rho[i];
-}
-
-VectorXd res = VectorXd::Zero(x.size() / 2);
-VectorXd res2 = VectorXd::Zero(x.size() / 2);
-unsigned int x_size_half = x.size() / 2;
-for (size_t i = 0; i < x.size(); i++) {
-    for (size_t j = 0; j < x.size(); j++) {
-        xh = x;
-        xh2 = x;
-        xh[j] += h;
-        xh2[j] -= h;
-        for(size_t k = 0; k < x_size_half; k++) {
-            qh[k] = xh[k];
-            qdoth[k] = xh[k + x_size_half];
-            qh2[k] = xh2[k];
-            qdoth2[k] = xh2[k + x_size_half]; 
-        }
-        rbdl_interface_->forward_dynamics(qh, qdoth, rho2, res);
-        rbdl_interface_->forward_dynamics(qh2, qdoth2, rho2, res2);
-        m(i, j) = (res(i - x_size_half) - res2(i - x_size_half)) / (2.0 * h);
-    }
-}
-if (std::isnan(m(0, 0))) {
-   cout << "WHAAAAT" << endl;
-}
-cout << m << endl << endl;
-sleep(1);
-return m;
-}
-
 BOOST_PYTHON_MODULE(libintegrate) {
     using namespace boost::python;
     
@@ -610,7 +433,7 @@ BOOST_PYTHON_MODULE(libintegrate) {
 
 MatrixXd Integrate::getA0(const state_type &x, const state_type &rho, const state_type &zeta) const{ 
 MatrixXd m(8, 8); 
-/**m(0, 0) = 0; 
+m(0, 0) = 0; 
 m(0, 1) = 0; 
 m(0, 2) = 0; 
 m(0, 3) = 0; 
@@ -673,7 +496,7 @@ m(7, 3) = M_inv_(3, 0)*(-x[4]*(-x[5]*(-0.25*cos(x[1] + x[2] - x[3]) + 0.25*cos(x
 m(7, 4) = M_inv_(3, 0)*(-viscous_[0] - 2*x[4]*(-0.0075*sin(2*x[0]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - x[5]*(-2.0*sin(x[1]) - 1.5*sin(x[1] + x[2]) - 0.5*sin(x[1] + 2*x[2]) - 0.4875*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.25*sin(x[1] + x[2] - x[3]) - 0.25*sin(x[1] + x[2] + x[3])) + x[5]*(2.0*sin(x[1]) + 1.5*sin(x[1] + x[2]) + 0.5*sin(x[1] + 2*x[2]) + 0.4875*sin(2*x[1] + 2*x[2]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) + 0.25*sin(x[1] + x[2] - x[3]) + 0.25*sin(x[1] + x[2] + x[3])) - x[6]*(-1.5*sin(x[2]) - 0.5*sin(2*x[2]) - 1.5*sin(x[1] + x[2]) - 1.0*sin(x[1] + 2*x[2]) - 0.4875*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.25*sin(x[1] + x[2] - x[3]) - 0.25*sin(x[1] + x[2] + x[3])) + x[6]*(1.5*sin(x[2]) + 0.5*sin(2*x[2]) + 1.5*sin(x[1] + x[2]) + 1.0*sin(x[1] + 2*x[2]) + 0.4875*sin(2*x[1] + 2*x[2]) + 0.25*sin(x[2] - x[3]) + 0.25*sin(x[2] + x[3]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) + 0.25*sin(x[1] + x[2] - x[3]) + 0.25*sin(x[1] + x[2] + x[3])) + 1.0*x[7]*(cos(x[2]) + cos(x[1] + x[2]) + 1)*sin(x[3])) + M_inv_(3, 1)*(-2*x[4]*(-0.015*sin(2*x[0]) + 2.0*sin(x[1]) + 1.5*sin(x[1] + x[2]) + 0.5*sin(x[1] + 2*x[2]) + 0.4875*sin(2*x[1] + 2*x[2]) + 0.00375*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) + 0.25*sin(x[1] + x[2] - x[3]) + 0.25*sin(x[1] + x[2] + x[3])) - 2*x[5]*(-0.0075*sin(2*x[0]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(-0.0025*sin(2*x[0]) - 1.5*sin(x[2]) - 0.5*sin(2*x[2]) - 0.5*sin(x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[7]*(-0.25*(2*cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.125*sin(x[1] + x[2] - x[3]) + 0.125*sin(x[1] + x[2] + x[3]))) + M_inv_(3, 2)*(-2*x[4]*(-0.005*sin(2*x[0]) + 1.5*sin(x[2]) + 0.5*sin(2*x[2]) + 1.5*sin(x[1] + x[2]) + 1.0*sin(x[1] + 2*x[2]) + 0.4875*sin(2*x[1] + 2*x[2]) + 0.25*sin(x[2] - x[3]) + 0.25*sin(x[2] + x[3]) + 0.00375*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) + 0.25*sin(x[1] + x[2] - x[3]) + 0.25*sin(x[1] + x[2] + x[3])) - 2*x[5]*(-0.0025*sin(2*x[0]) + 1.5*sin(x[2]) + 0.5*sin(2*x[2]) + 0.5*sin(x[1] + 2*x[2]) + 0.25*sin(x[2] - x[3]) + 0.25*sin(x[2] + x[3]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(-0.0025*sin(2*x[0]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[7]*(-0.25*(cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.125*sin(x[2] - x[3]) + 0.125*sin(x[2] + x[3]) + 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.125*sin(x[1] + x[2] - x[3]) + 0.125*sin(x[1] + x[2] + x[3]))) + M_inv_(3, 3)*(-2*x[4]*(0.5*(cos(x[2]) + cos(x[1] + x[2]) + 1)*sin(x[3]) + 0.005*sin(2*x[0]) + 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[5]*(0.25*(2*cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3])) - 2*x[6]*(0.25*(cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.125*sin(x[2] - x[3]) - 0.125*sin(x[2] + x[3]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3])) - 2*x[7]*(0.0025*sin(2*x[0]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))); 
 m(7, 5) = M_inv_(3, 0)*(-x[4]*(-2.0*sin(x[1]) - 1.5*sin(x[1] + x[2]) - 0.5*sin(x[1] + 2*x[2]) - 0.4875*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.25*sin(x[1] + x[2] - x[3]) - 0.25*sin(x[1] + x[2] + x[3])) + x[4]*(2.0*sin(x[1]) + 1.5*sin(x[1] + x[2]) + 0.5*sin(x[1] + 2*x[2]) + 0.4875*sin(2*x[1] + 2*x[2]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) + 0.25*sin(x[1] + x[2] - x[3]) + 0.25*sin(x[1] + x[2] + x[3])) - 2*x[5]*(0.0075*sin(2*x[0]) - 2.0*sin(x[1]) - 1.5*sin(x[1] + x[2]) - 0.5*sin(x[1] + 2*x[2]) + 0.025*sin(2*x[1] + 2*x[2]) - 0.00375*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.25*sin(x[1] + x[2] - x[3]) - 0.25*sin(x[1] + x[2] + x[3])) - 2*x[6]*(0.0025*sin(2*x[0]) - 1.5*sin(x[2]) - 0.5*sin(2*x[2]) - 1.5*sin(x[1] + x[2]) - 0.5*sin(x[1] + 2*x[2]) + 0.025*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) - 0.00375*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.25*sin(x[1] + x[2] - x[3]) - 0.25*sin(x[1] + x[2] + x[3])) - 2*x[7]*(-0.25*(2*cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) - 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3]))) + M_inv_(3, 1)*(-viscous_[1] - 2*x[4]*(-0.0075*sin(2*x[0]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[5]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(-1.5*sin(x[2]) - 0.5*sin(2*x[2]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) + 1.0*x[7]*(cos(x[2]) + 1)*sin(x[3])) + M_inv_(3, 2)*(-2*x[4]*(-0.0025*sin(2*x[0]) + 1.5*sin(x[2]) + 0.5*sin(2*x[2]) + 0.5*sin(x[1] + 2*x[2]) + 0.25*sin(x[2] - x[3]) + 0.25*sin(x[2] + x[3]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[5]*(1.5*sin(x[2]) + 0.5*sin(2*x[2]) + 0.0125*sin(2*x[1] + 2*x[2]) + 0.25*sin(x[2] - x[3]) + 0.25*sin(x[2] + x[3]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[7]*(-0.5*sin(x[3]) + 0.25*sin(x[2] - x[3]))) + M_inv_(3, 3)*(-2*x[4]*(0.25*(2*cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3])) - 2*x[5]*(0.5*(cos(x[2]) + 1)*sin(x[3]) + 0.025*sin(2*x[1] + 2*x[2]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(0.5*sin(x[3]) + 0.025*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[7]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))); 
 m(7, 6) = M_inv_(3, 0)*(-x[4]*(-1.5*sin(x[2]) - 0.5*sin(2*x[2]) - 1.5*sin(x[1] + x[2]) - 1.0*sin(x[1] + 2*x[2]) - 0.4875*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.25*sin(x[1] + x[2] - x[3]) - 0.25*sin(x[1] + x[2] + x[3])) + x[4]*(1.5*sin(x[2]) + 0.5*sin(2*x[2]) + 1.5*sin(x[1] + x[2]) + 1.0*sin(x[1] + 2*x[2]) + 0.4875*sin(2*x[1] + 2*x[2]) + 0.25*sin(x[2] - x[3]) + 0.25*sin(x[2] + x[3]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) + 0.25*sin(x[1] + x[2] - x[3]) + 0.25*sin(x[1] + x[2] + x[3])) - 2*x[5]*(0.0025*sin(2*x[0]) - 1.5*sin(x[2]) - 0.5*sin(2*x[2]) - 1.5*sin(x[1] + x[2]) - 0.5*sin(x[1] + 2*x[2]) + 0.025*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) - 0.00375*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.25*sin(x[1] + x[2] - x[3]) - 0.25*sin(x[1] + x[2] + x[3])) - 2*x[6]*(0.0025*sin(2*x[0]) - 1.5*sin(x[2]) - 1.5*sin(x[1] + x[2]) + 0.025*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) - 0.00375*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.25*sin(x[1] + x[2] - x[3]) - 0.25*sin(x[1] + x[2] + x[3])) - 2*x[7]*(-0.25*(cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) - 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.125*sin(x[2] - x[3]) - 0.125*sin(x[2] + x[3]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3]))) + M_inv_(3, 1)*(-2*x[4]*(-0.0025*sin(2*x[0]) - 1.5*sin(x[2]) - 0.5*sin(2*x[2]) - 0.5*sin(x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[5]*(-1.5*sin(x[2]) - 0.5*sin(2*x[2]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(-1.5*sin(x[2]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.25*sin(x[2] + x[3]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - x[7]*(-0.5*sin(x[3]) - 0.25*sin(x[2] + x[3])) + x[7]*(0.5*sin(x[3]) + 0.25*sin(x[2] + x[3]))) + M_inv_(3, 2)*(-viscous_[2] - 2*x[4]*(-0.0025*sin(2*x[0]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[5]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) + 1.0*x[7]*sin(x[3])) + M_inv_(3, 3)*(-2*x[4]*(0.25*(cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.125*sin(x[2] - x[3]) - 0.125*sin(x[2] + x[3]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3])) - 2*x[5]*(0.5*sin(x[3]) + 0.025*sin(2*x[1] + 2*x[2]) - 0.25*sin(x[2] - x[3]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(0.5*sin(x[3]) + 0.025*sin(2*x[1] + 2*x[2]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.0025*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[7]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))); 
-m(7, 7) = M_inv_(3, 0)*(1.0*x[4]*(cos(x[2]) + cos(x[1] + x[2]) + 1)*sin(x[3]) - 2*x[5]*(-0.25*(2*cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) - 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3])) - 2*x[6]*(-0.25*(cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) - 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.125*sin(x[2] - x[3]) - 0.125*sin(x[2] + x[3]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3])) - 2*x[7]*(-0.5*(cos(x[2]) + cos(x[1] + x[2]) + 1)*sin(x[3]) - 0.0025*sin(2*x[0]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))) + M_inv_(3, 1)*(-2*x[4]*(-0.25*(2*cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.125*sin(x[1] + x[2] - x[3]) + 0.125*sin(x[1] + x[2] + x[3])) + 1.0*x[5]*(cos(x[2]) + 1)*sin(x[3]) - x[6]*(-0.5*sin(x[3]) - 0.25*sin(x[2] + x[3])) + x[6]*(0.5*sin(x[3]) + 0.25*sin(x[2] + x[3])) - 2*x[7]*(-0.5*(cos(x[2]) + 1)*sin(x[3]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))) + M_inv_(3, 2)*(-2*x[4]*(-0.25*(cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.125*sin(x[2] - x[3]) + 0.125*sin(x[2] + x[3]) + 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.125*sin(x[1] + x[2] - x[3]) + 0.125*sin(x[1] + x[2] + x[3])) - 2*x[5]*(-0.5*sin(x[3]) + 0.25*sin(x[2] - x[3])) + 1.0*x[6]*sin(x[3]) - 2*x[7]*(-0.5*sin(x[3]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))) + M_inv_(3, 3)*(-viscous_[3] - 2*x[4]*(0.0025*sin(2*x[0]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[5]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))); */
+m(7, 7) = M_inv_(3, 0)*(1.0*x[4]*(cos(x[2]) + cos(x[1] + x[2]) + 1)*sin(x[3]) - 2*x[5]*(-0.25*(2*cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) - 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3])) - 2*x[6]*(-0.25*(cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) - 0.0025*sin(2*x[0]) + 0.0125*sin(2*x[1] + 2*x[2]) - 0.125*sin(x[2] - x[3]) - 0.125*sin(x[2] + x[3]) - 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.125*sin(x[1] + x[2] - x[3]) - 0.125*sin(x[1] + x[2] + x[3])) - 2*x[7]*(-0.5*(cos(x[2]) + cos(x[1] + x[2]) + 1)*sin(x[3]) - 0.0025*sin(2*x[0]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))) + M_inv_(3, 1)*(-2*x[4]*(-0.25*(2*cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.125*sin(x[1] + x[2] - x[3]) + 0.125*sin(x[1] + x[2] + x[3])) + 1.0*x[5]*(cos(x[2]) + 1)*sin(x[3]) - x[6]*(-0.5*sin(x[3]) - 0.25*sin(x[2] + x[3])) + x[6]*(0.5*sin(x[3]) + 0.25*sin(x[2] + x[3])) - 2*x[7]*(-0.5*(cos(x[2]) + 1)*sin(x[3]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))) + M_inv_(3, 2)*(-2*x[4]*(-0.25*(cos(x[2]) + cos(x[1] + x[2]) + 2)*sin(x[3]) + 0.0025*sin(2*x[0]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.125*sin(x[2] - x[3]) + 0.125*sin(x[2] + x[3]) + 0.0025*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.125*sin(x[1] + x[2] - x[3]) + 0.125*sin(x[1] + x[2] + x[3])) - 2*x[5]*(-0.5*sin(x[3]) + 0.25*sin(x[2] - x[3])) + 1.0*x[6]*sin(x[3]) - 2*x[7]*(-0.5*sin(x[3]) - 0.0125*sin(2*x[1] + 2*x[2]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) + 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))) + M_inv_(3, 3)*(-viscous_[3] - 2*x[4]*(0.0025*sin(2*x[0]) + 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[5]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2])) - 2*x[6]*(0.0125*sin(2*x[1] + 2*x[2]) - 0.00125*sin(-2*x[0] + 2*x[1] + 2*x[2]) - 0.00125*sin(2*x[0] + 2*x[1] + 2*x[2]))); 
 return m; 
 
 } 
@@ -771,7 +594,7 @@ m(3, 2) = -1.0L/400.0L*cos(2*x[0]) + (1.0L/2.0L)*cos(x[3]) - 1.0L/80.0L*cos(2*(x
 m(3, 3) = -1.0L/400.0L*cos(2*x[0]) - 1.0L/80.0L*cos(2*(x[1] + x[2])) + (1.0L/800.0L)*cos(-2*x[0] + 2*x[1] + 2*x[2]) + (1.0L/800.0L)*cos(2*(x[0] + x[1] + x[2])) + 117.0L/400.0L; 
 return m; 
 
-} 
+}
 MatrixXd Integrate::getF0(const state_type &x, const state_type &rho, const state_type &zeta) const{ 
 VectorXd m(8); 
 m(0, 0) = x[4]; 

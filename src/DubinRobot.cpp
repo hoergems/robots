@@ -79,8 +79,8 @@ void DubinRobot::createRobotCollisionObjects(const std::vector<double>& state,
 }
 
 bool DubinRobot::makeObservationSpace(std::string& observationType)
-{
-    observationSpace_ = std::make_shared<shared::ObservationSpace>();
+{    
+    observationSpace_ = std::make_shared<shared::ObservationSpace>(observationType);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
     if (observationType == "linear") {
@@ -93,6 +93,15 @@ bool DubinRobot::makeObservationSpace(std::string& observationType)
         upperLimits = std::vector<double>( {1.0, 1.0, 1.2});
         observationSpace_->setLimits(lowerLimits, upperLimits);
     }
+}
+
+bool DubinRobot::getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const {
+    std::vector<double> res;
+    transformToObservationSpace(state, res);
+    observation = std::vector<double>(observationSpace_->getDimension());
+    observation[0] = res[0] + observationError[0];
+    observation[1] = res[1] + observationError[1];
+    observation[2] = res[2] + observationError[2];
 }
 
 bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
@@ -116,7 +125,7 @@ bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>&
     return true;
 }
 
-void DubinRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res)
+void DubinRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const
 {
     if (observationType_ == "linear") {
         res = state;
@@ -146,7 +155,7 @@ int DubinRobot::getDOF() const
 void DubinRobot::makeNextStateAfterCollision(std::vector<double>& previous_state,
         std::vector<double>& colliding_state,
         std::vector<double>& next_state)
-{
+{    
     next_state = previous_state;
     next_state[3] = 0.0;
 }

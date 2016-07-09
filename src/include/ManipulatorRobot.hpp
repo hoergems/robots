@@ -121,10 +121,12 @@ public:
             std::vector<double>& next_state) override;
 
     virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) override;
+    
+    virtual bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const override;
 
     virtual bool makeObservationSpace(std::string& observationType) override;
 
-    virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) override;
+    virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const override;
 
     virtual void getLinearObservationDynamics(const std::vector<double>& state,
             Eigen::MatrixXd& H,

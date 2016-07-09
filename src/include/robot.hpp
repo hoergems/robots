@@ -39,6 +39,8 @@ public:
     virtual bool makeObservationSpace(std::string& observationType) = 0;
 
     virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) = 0;
+    
+    virtual bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const = 0;
 
     virtual void createRobotCollisionObjects(const std::vector<double>& state,
             std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const = 0;
@@ -115,7 +117,7 @@ public:
 
     shared::ObservationSpace* getObservationSpace() const;
 
-    virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) = 0;
+    virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const = 0;
 
 protected:
     bool constraints_enforced_;
@@ -275,7 +277,7 @@ public:
         this->get_override("makeObservationSpace")(observationType);
     }
 
-    void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) {
+    void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const{
         this->get_override("transformToObservationSpace")(state, res);
     }
 
@@ -283,6 +285,10 @@ public:
                                       Eigen::MatrixXd& H,
 				      Eigen::MatrixXd& W) const {
 	this->get_override("getLinearObservationDynamics")(state, H, W);
+    }
+    
+    bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const {
+	this->get_override("getObservation")(state, observationError, observation);
     }
 
 };

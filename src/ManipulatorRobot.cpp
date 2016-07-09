@@ -434,7 +434,7 @@ ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& 
 
 bool ManipulatorRobot::makeObservationSpace(std::string& observationType)
 {
-    observationSpace_ = std::make_shared<shared::ObservationSpace>();
+    observationSpace_ = std::make_shared<shared::ObservationSpace>(observationType);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
     if (observationType == "linear") {
@@ -496,7 +496,19 @@ bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<do
     return true;
 }
 
-void ManipulatorRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res)
+bool ManipulatorRobot::getObservation(std::vector<double>& state,
+                                      std::vector<double>& observationError,
+                                      std::vector<double>& observation) const
+{
+    std::vector<double> res;
+    observation = std::vector<double>(observationSpace_->getDimension());    
+    transformToObservationSpace(state, res);
+    for (size_t i = 0; i < observationSpace_->getDimension(); i++) {
+        observation[i] = res[i] + observationError[i];
+    }
+}
+
+void ManipulatorRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const
 {
     res.clear();
     if (observationType_ == "linear") {
@@ -626,7 +638,7 @@ void ManipulatorRobot::getLinearProcessMatrices(const std::vector<double>& state
 
 void ManipulatorRobot::getLinearObservationDynamics(const std::vector<double>& state,
         Eigen::MatrixXd& H,
-	Eigen::MatrixXd& W) const
+        Eigen::MatrixXd& W) const
 {
     static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getLinearObservationDynamics(state, observationType_, H, W);
 }

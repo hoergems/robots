@@ -61,8 +61,10 @@ public:
     double distanceGoal(std::vector<double>& state) const override;
 
     bool getObservation(std::vector<double>& state, std::vector<double>& observation) override;
+    
+    bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const override;
 
-    void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) override;
+    void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const override;
 
     bool makeObservationSpace(std::string& observationType) override;
 

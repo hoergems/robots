@@ -98,18 +98,18 @@ bool DubinRobot::makeObservationSpace(std::string& observationType)
 bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
 {
     if (observationType_ == "linear") {
-        observation.clear();        
-	Eigen::MatrixXd sample = observation_distribution_->samples(1);        
+        observation.clear();
+        Eigen::MatrixXd sample = observation_distribution_->samples(1);
         for (size_t i = 0; i < state.size(); i++) {
             observation.push_back(state[i] + sample(i, 0));
         }
     } else {
-	observation = std::vector<double>(3);
-	unsigned int observationSpaceDimension = observationSpace_->getDimension();	
-        Eigen::MatrixXd sample = observation_distribution_->samples(1);        
-	observation[0] = (1.0 / (std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0)) + sample(0, 0);
-	observation[1] = (1.0 / (std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0)) + sample(1, 0);
-	observation[2] = state[3] + sample(2, 0);
+        observation = std::vector<double>(3);
+        unsigned int observationSpaceDimension = observationSpace_->getDimension();
+        Eigen::MatrixXd sample = observation_distribution_->samples(1);
+        observation[0] = (1.0 / (std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0)) + sample(0, 0);
+        observation[1] = (1.0 / (std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0)) + sample(1, 0);
+        observation[2] = state[3] + sample(2, 0);
 
     }
 
@@ -121,10 +121,10 @@ void DubinRobot::transformToObservationSpace(std::vector<double>& state, std::ve
     if (observationType_ == "linear") {
         res = state;
     } else {
-	res = std::vector<double>(3);
-	res[0] = (1.0 / (std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0));
-	res[1] = (1.0 / (std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0));
-	res[2] = state[3];
+        res = std::vector<double>(3);
+        res[0] = (1.0 / (std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0));
+        res[1] = (1.0 / (std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0));
+        res[2] = state[3];
     }
 }
 
@@ -179,6 +179,32 @@ void DubinRobot::setGravityConstant(double gravity_constant)
 
 }
 
+void DubinRobot::getLinearObservationDynamics(const std::vector<double>& state,
+        Eigen::MatrixXd& H,
+        Eigen::MatrixXd& W) const
+{
+    if (observationType_ == "linear") {
+        H = Eigen::MatrixXd::Identity(4, 4);
+        W = Eigen::MatrixXd::Identity(4, 4);        
+    } else {
+	H = Eigen::MatrixXd(3, 4);       
+        H(0, 0) = 1.0 * (-2 * state[0] - 14.0) / std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
+        H(0, 1) = 1.0 * (-2.0 * state[1] + 14.0) / std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
+        H(0, 2) = 0.0;
+        H(0, 3) = 0.0;
+        H(1, 0) = 1.0 * (-2.0 * state[0] + 14.0) / std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
+        H(1, 1) = 1.0 * (-2.0 * state[1] - 14.0) / std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
+        H(1, 2) = 0.0;
+        H(1, 3) = 0.0;
+        H(2, 0) = 0.0;
+        H(2, 1) = 0.0;
+        H(2, 2) = 0.0;
+        H(2, 3) = 1.0;
+        W = Eigen::MatrixXd::Identity(3, 3);
+        
+    }
+}
+
 void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
         std::vector<double>& control,
         double& duration,
@@ -212,12 +238,12 @@ void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
         matrices.push_back(W);
     } else {
         Eigen::MatrixXd H(3, 4);
-	H(0, 0) = 1.0*(-2 * state[0] - 14.0)/std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);        
-        H(0, 1) = 1.0*(-2.0*state[1] + 14.0)/std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
+        H(0, 0) = 1.0 * (-2 * state[0] - 14.0) / std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
+        H(0, 1) = 1.0 * (-2.0 * state[1] + 14.0) / std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
         H(0, 2) = 0.0;
         H(0, 3) = 0.0;
-        H(1, 0) = 1.0*(-2.0*state[0] + 14.0)/std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
-        H(1, 1) = 1.0*(-2.0*state[1] - 14.0)/std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
+        H(1, 0) = 1.0 * (-2.0 * state[0] + 14.0) / std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
+        H(1, 1) = 1.0 * (-2.0 * state[1] - 14.0) / std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
         H(1, 2) = 0.0;
         H(1, 3) = 0.0;
         H(2, 0) = 0.0;

@@ -135,6 +135,22 @@ void Integrate::getProcessMatrices(const std::vector<double> &x,
 	}
 }
 
+void Integrate::getLinearObservationDynamics(const std::vector<double>& state,
+                                      const std::string &observationType,
+                                      Eigen::MatrixXd& H,
+                                      Eigen::MatrixXd& W) const {
+    if (observationType == "linear") {	    
+	    H = Eigen::MatrixXd::Identity(state.size(), state.size());
+	    W = Eigen::MatrixXd::Identity(state.size(), state.size());	   
+	}
+	else {
+	    std::vector<double> rho_zero;
+	    std::vector<double> zeta_zero;
+	    H = getH0(state, rho_zero, zeta_zero);
+	    W = getW0(state, rho_zero, zeta_zero);	    
+	}                              
+}
+
 std::vector<double> Integrate::getProcessMatricesVec(std::vector<double> &x, 
 		                                             std::vector<double> &rho, 
 												     double t_e) const {

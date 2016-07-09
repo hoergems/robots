@@ -119,12 +119,16 @@ public:
     virtual void makeNextStateAfterCollision(std::vector<double>& previous_state,
             std::vector<double>& colliding_state,
             std::vector<double>& next_state) override;
-	    
-    virtual bool getObservation(std::vector<double> &state, std::vector<double> &observation) override;
-    
-    virtual bool makeObservationSpace(std::string &observationType) override;
-    
-    virtual void transformToObservationSpace(std::vector<double> &state, std::vector<double> &res) override;
+
+    virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) override;
+
+    virtual bool makeObservationSpace(std::string& observationType) override;
+
+    virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) override;
+
+    virtual void getLinearObservationDynamics(const std::vector<double>& state,
+            Eigen::MatrixXd& H,
+            Eigen::MatrixXd& W) const override;
 
     bool propagate_first_order(std::vector<double>& current_state,
                                std::vector<double>& control_input,
@@ -214,8 +218,8 @@ public:
 
     void updateViewer(std::vector<double>& state,
                       std::vector<std::vector<double>>& particles,
-                      std::vector<std::vector<double>>& particle_colors) override;		
-    
+                      std::vector<std::vector<double>>& particle_colors) override;
+
 
 #ifdef USE_OPENRAVE
     /**

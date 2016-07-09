@@ -71,6 +71,10 @@ public:
                                   double& duration,
                                   std::vector<Eigen::MatrixXd>& matrices) const override;
 
+    void getLinearObservationDynamics(const std::vector<double>& state,
+                                      Eigen::MatrixXd& H,
+                                      Eigen::MatrixXd& W) const override;
+
     void makeNextStateAfterCollision(std::vector<double>& previous_state,
                                      std::vector<double>& colliding_state,
                                      std::vector<double>& next_state) override;

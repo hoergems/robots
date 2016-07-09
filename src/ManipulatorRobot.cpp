@@ -473,7 +473,7 @@ bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<do
 {
     observation.clear();
     if (observationType_ == "linear") {
-        Eigen::MatrixXd sample = observation_distribution_->samples(1);	
+        Eigen::MatrixXd sample = observation_distribution_->samples(1);
         for (size_t i = 0; i < state.size(); i++) {
             observation.push_back(state[i] + sample(i, 0));
         }
@@ -622,6 +622,13 @@ void ManipulatorRobot::getLinearProcessMatrices(const std::vector<double>& state
             duration,
             observationType_,
             matrices);
+}
+
+void ManipulatorRobot::getLinearObservationDynamics(const std::vector<double>& state,
+        Eigen::MatrixXd& H,
+	Eigen::MatrixXd& W) const
+{
+    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getLinearObservationDynamics(state, observationType_, H, W);
 }
 
 bool ManipulatorRobot::checkSelfCollision(const std::vector<double>& state) const

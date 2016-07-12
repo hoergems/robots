@@ -89,13 +89,14 @@ public:
     void setGravityConstant(double gravity_constant) override;
 
 private:
+    
     double dim_x_;
     double dim_y_;
     double dim_z_;
-
     std::vector<shared::Beacon> beacons_;
-
     double d_;
+    
+    void getLinearObservationMatrix(const std::vector<double>& state, Eigen::MatrixXd &H) const;
 
 };
 

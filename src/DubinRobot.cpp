@@ -12,12 +12,12 @@ DubinRobot::DubinRobot(std::string robot_file):
     beacons_()
 {
     //Dimensions
-    dim_x_ = 0.5;
-    dim_y_ = 0.3;
-    dim_z_ = 0.05;
+    dim_x_ = 0.05;
+    dim_y_ = 0.03;
+    dim_z_ = 0.005;
 
     //Distance between axels
-    d_ = 0.45;
+    d_ = 0.045;
 
     propagator_ = std::make_shared<shared::DubinPropagator>();
     static_cast<shared::DubinPropagator*>(propagator_.get())->setD(d_);
@@ -26,29 +26,29 @@ DubinRobot::DubinRobot(std::string robot_file):
     lowerStateLimits_.clear();
     upperStateLimits_.clear();
 
-    lowerStateLimits_.push_back(-9.0);
-    lowerStateLimits_.push_back(-9.0);
+    lowerStateLimits_.push_back(-1.0);
+    lowerStateLimits_.push_back(-1.0);
     lowerStateLimits_.push_back(-3.14);
-    lowerStateLimits_.push_back(-1.2);
+    lowerStateLimits_.push_back(-0.12);
 
-    upperStateLimits_.push_back(9.0);
-    upperStateLimits_.push_back(9.0);
+    upperStateLimits_.push_back(1.0);
+    upperStateLimits_.push_back(1.0);
     upperStateLimits_.push_back(3.14);
-    upperStateLimits_.push_back(1.2);
+    upperStateLimits_.push_back(0.12);
 
     //make the control limits
     lowerControlLimits_.clear();
     upperControlLimits_.clear();
 
-    lowerControlLimits_.push_back(-50.0);
+    lowerControlLimits_.push_back(-1.0);
     lowerControlLimits_.push_back(-0.65);
 
-    upperControlLimits_.push_back(50.0);
+    upperControlLimits_.push_back(1.0);
     upperControlLimits_.push_back(0.65);
 
     // put the beacons in the evironment
-    shared::Beacon b0(-7.0, 7.0);
-    shared::Beacon b1(7.0, -7.0);
+    shared::Beacon b0(-0.7, 0.40);
+    shared::Beacon b1(0.2, -0.45);
     beacons_ = std::vector<shared::Beacon>( {b0, b1});
 }
 
@@ -89,7 +89,7 @@ bool DubinRobot::makeObservationSpace(std::string& observationType)
         observationSpace_->setLimits(lowerLimits, upperLimits);
     } else {
         observationSpace_->setDimension(3);
-        lowerLimits = std::vector<double>( {0.0019, 0.0019, -1.2});
+        lowerLimits = std::vector<double>( {0.0, 0.0, -1.2});
         upperLimits = std::vector<double>( {1.0, 1.0, 1.2});
         observationSpace_->setLimits(lowerLimits, upperLimits);
     }
@@ -116,8 +116,9 @@ bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>&
         observation = std::vector<double>(3);
         unsigned int observationSpaceDimension = observationSpace_->getDimension();
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
-        observation[0] = (1.0 / (std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0)) + sample(0, 0);
-        observation[1] = (1.0 / (std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0)) + sample(1, 0);
+	
+        observation[0] = sample(0, 0) + 1.0/(std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0);
+        observation[1] = sample(1, 0) + 1.0/(std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0);
         observation[2] = state[3] + sample(2, 0);
 
     }
@@ -131,8 +132,8 @@ void DubinRobot::transformToObservationSpace(std::vector<double>& state, std::ve
         res = state;
     } else {
         res = std::vector<double>(3);
-        res[0] = (1.0 / (std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0));
-        res[1] = (1.0 / (std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0));
+        res[0] = 1.0/(std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0);
+        res[1] = 1.0/(std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0);
         res[2] = state[3];
     }
 }
@@ -188,6 +189,23 @@ void DubinRobot::setGravityConstant(double gravity_constant)
 
 }
 
+void DubinRobot::getLinearObservationMatrix(const std::vector<double>& state, Eigen::MatrixXd &H) const{
+    H = Eigen::MatrixXd(3, 4);
+    
+    H(0, 0) = (2.0 * beacons_[0].x_ - 2.0 * state[0]) / std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
+    H(0, 1) = (2.0 * beacons_[0].y_ - 2.0 * state[1]) / std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
+    H(0, 2) = 0.0;
+    H(0, 3) = 0.0;
+    H(1, 0) = (2.0 * beacons_[1].x_ - 2.0 * state[0]) / std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
+    H(1, 1) = (2.0 * beacons_[1].y_ - 2.0 * state[1]) / std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
+    H(1, 2) = 0.0;
+    H(1, 3) = 0.0;
+    H(2, 0) = 0.0;
+    H(2, 1) = 0.0;
+    H(2, 2) = 0.0;
+    H(2, 3) = 1.0;
+}
+
 void DubinRobot::getLinearObservationDynamics(const std::vector<double>& state,
         Eigen::MatrixXd& H,
         Eigen::MatrixXd& W) const
@@ -195,22 +213,9 @@ void DubinRobot::getLinearObservationDynamics(const std::vector<double>& state,
     if (observationType_ == "linear") {
         H = Eigen::MatrixXd::Identity(4, 4);
         W = Eigen::MatrixXd::Identity(4, 4);        
-    } else {
-	H = Eigen::MatrixXd(3, 4);       
-        H(0, 0) = 1.0 * (-2 * state[0] - 14.0) / std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
-        H(0, 1) = 1.0 * (-2.0 * state[1] + 14.0) / std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
-        H(0, 2) = 0.0;
-        H(0, 3) = 0.0;
-        H(1, 0) = 1.0 * (-2.0 * state[0] + 14.0) / std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
-        H(1, 1) = 1.0 * (-2.0 * state[1] - 14.0) / std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
-        H(1, 2) = 0.0;
-        H(1, 3) = 0.0;
-        H(2, 0) = 0.0;
-        H(2, 1) = 0.0;
-        H(2, 2) = 0.0;
-        H(2, 3) = 1.0;
-        W = Eigen::MatrixXd::Identity(3, 3);
-        
+    } else {	
+	getLinearObservationMatrix(state, H);       
+        W = Eigen::MatrixXd::Identity(3, 3);        
     }
 }
 
@@ -246,19 +251,8 @@ void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
         matrices.push_back(H);
         matrices.push_back(W);
     } else {
-        Eigen::MatrixXd H(3, 4);
-        H(0, 0) = 1.0 * (-2 * state[0] - 14.0) / std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
-        H(0, 1) = 1.0 * (-2.0 * state[1] + 14.0) / std::pow(std::pow(state[0] + 7.0, 2) + std::pow(state[1] - 7.0, 2) + 1.0, 2);
-        H(0, 2) = 0.0;
-        H(0, 3) = 0.0;
-        H(1, 0) = 1.0 * (-2.0 * state[0] + 14.0) / std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
-        H(1, 1) = 1.0 * (-2.0 * state[1] - 14.0) / std::pow(std::pow(state[0] - 7.0, 2) + std::pow(state[1] + 7.0, 2) + 1.0, 2);
-        H(1, 2) = 0.0;
-        H(1, 3) = 0.0;
-        H(2, 0) = 0.0;
-        H(2, 1) = 0.0;
-        H(2, 2) = 0.0;
-        H(2, 3) = 1.0;
+        Eigen::MatrixXd H;
+        getLinearObservationMatrix(state, H);
         Eigen::MatrixXd W = Eigen::MatrixXd::Identity(3, 3);
         matrices.push_back(H);
         matrices.push_back(W);

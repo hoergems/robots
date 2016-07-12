@@ -192,12 +192,12 @@ void DubinRobot::setGravityConstant(double gravity_constant)
 void DubinRobot::getLinearObservationMatrix(const std::vector<double>& state, Eigen::MatrixXd &H) const{
     H = Eigen::MatrixXd(3, 4);
     
-    H(0, 0) = (2.0 * beacons_[0].x_ - 2.0 * state[0]) / std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
-    H(0, 1) = (2.0 * beacons_[0].y_ - 2.0 * state[1]) / std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
+    H(0, 0) = 1.0*(2*beacons_[0].x_ - 2*state[0])/std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
+    H(0, 1) = 1.0*(2*beacons_[0].y_ - 2*state[1])/std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
     H(0, 2) = 0.0;
     H(0, 3) = 0.0;
-    H(1, 0) = (2.0 * beacons_[1].x_ - 2.0 * state[0]) / std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
-    H(1, 1) = (2.0 * beacons_[1].y_ - 2.0 * state[1]) / std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
+    H(1, 0) = 1.0*(2*beacons_[1].x_ - 2*state[0])/std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
+    H(1, 1) = 1.0*(2*beacons_[1].y_ - 2*state[1])/std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
     H(1, 2) = 0.0;
     H(1, 3) = 0.0;
     H(2, 0) = 0.0;

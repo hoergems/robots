@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 
-project (robots)
+project (robotsmanip)
 
 if (NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)
@@ -118,7 +118,7 @@ if(PKG_CONFIG_FOUND)
     link_directories(${EIGEN_LIBRARY_DIRS})    
 endif()
 
-add_library(robots SHARED 
+add_library(robotsmanip SHARED 
             ${CMAKE_CURRENT_SOURCE_DIR}/src/robot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorRobot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinRobot.cpp
@@ -129,7 +129,7 @@ add_library(robots SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/integrate.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ObservationSpace.cpp)
             
-target_link_libraries (robots
+target_link_libraries (robotsmanip
                        ${Boost_LIBRARIES}
                        ${PYTHON_LIBRARIES}
                        ${TINYXML_LIBRARIES}
@@ -137,22 +137,22 @@ target_link_libraries (robots
                        ${RBDL_INTERFACE_LIBRARIES}
                        ${VIEWER_LIBRARIES})
                        
-set(pkg_conf_file_in "${CMAKE_CURRENT_SOURCE_DIR}/robots.pc.in")
-set(pkg_conf_file_out "${CMAKE_CURRENT_BINARY_DIR}/robots.pc")
+set(pkg_conf_file_in "${CMAKE_CURRENT_SOURCE_DIR}/robotsmanip.pc.in")
+set(pkg_conf_file_out "${CMAKE_CURRENT_BINARY_DIR}/robotsmanip.pc")
 configure_file("${pkg_conf_file_in}" "${pkg_conf_file_out}" @ONLY)
 
-install(TARGETS robots DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS robotsmanip DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(FILES ${INCLUDE_DIR}/robot.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/propagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/integrate.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/Kinematics.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/propagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ManipulatorPropagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ManipulatorRobot.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/DubinPropagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/DubinRobot.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ObservationSpace.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/utils.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/MultNormal.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/robot.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/propagator.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/integrate.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/Kinematics.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/propagator.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/ManipulatorPropagator.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/ManipulatorRobot.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/DubinPropagator.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/DubinRobot.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/ObservationSpace.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/utils.hpp  DESTINATION include/robotsmanip)
+install(FILES ${INCLUDE_DIR}/MultNormal.hpp  DESTINATION include/robotsmanip)
 install(FILES "${pkg_conf_file_out}" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/ COMPONENT pkgconfig)

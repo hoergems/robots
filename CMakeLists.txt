@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 
-project (robotsmanip2)
+project (robots)
 
 if (NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE Release)
@@ -118,7 +118,7 @@ if(PKG_CONFIG_FOUND)
     link_directories(${EIGEN_LIBRARY_DIRS})    
 endif()
 
-add_library(robotsmanip2 SHARED 
+add_library(robots SHARED 
             ${CMAKE_CURRENT_SOURCE_DIR}/src/robot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorRobot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinRobot.cpp
@@ -129,7 +129,7 @@ add_library(robotsmanip2 SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/integrate.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ObservationSpace.cpp)
             
-target_link_libraries (robotsmanip2
+target_link_libraries (robots
                        ${Boost_LIBRARIES}
                        ${PYTHON_LIBRARIES}
                        ${TINYXML_LIBRARIES}
@@ -141,7 +141,7 @@ set(pkg_conf_file_in "${CMAKE_CURRENT_SOURCE_DIR}/robots.pc.in")
 set(pkg_conf_file_out "${CMAKE_CURRENT_BINARY_DIR}/robots.pc")
 configure_file("${pkg_conf_file_in}" "${pkg_conf_file_out}" @ONLY)
 
-install(TARGETS robotsmanip2 DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS robots DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(FILES ${INCLUDE_DIR}/robot.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/propagator.hpp  DESTINATION include/robots)

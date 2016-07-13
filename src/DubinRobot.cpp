@@ -12,12 +12,12 @@ DubinRobot::DubinRobot(std::string robot_file):
     beacons_()
 {
     //Dimensions
-    dim_x_ = 0.05;
-    dim_y_ = 0.03;
+    dim_x_ = 0.06;
+    dim_y_ = 0.035;
     dim_z_ = 0.005;
 
     //Distance between axels
-    d_ = 0.045;
+    d_ = 0.11;
 
     propagator_ = std::make_shared<shared::DubinPropagator>();
     static_cast<shared::DubinPropagator*>(propagator_.get())->setD(d_);
@@ -29,12 +29,12 @@ DubinRobot::DubinRobot(std::string robot_file):
     lowerStateLimits_.push_back(-1.0);
     lowerStateLimits_.push_back(-1.0);
     lowerStateLimits_.push_back(-3.14);
-    lowerStateLimits_.push_back(-0.12);
+    lowerStateLimits_.push_back(-0.2);
 
     upperStateLimits_.push_back(1.0);
     upperStateLimits_.push_back(1.0);
     upperStateLimits_.push_back(3.14);
-    upperStateLimits_.push_back(0.12);
+    upperStateLimits_.push_back(0.2);
 
     //make the control limits
     lowerControlLimits_.clear();
@@ -47,8 +47,8 @@ DubinRobot::DubinRobot(std::string robot_file):
     upperControlLimits_.push_back(0.65);
 
     // put the beacons in the evironment
-    shared::Beacon b0(-0.7, 0.40);
-    shared::Beacon b1(0.2, -0.45);
+    shared::Beacon b0(-0.7, -0.7);
+    shared::Beacon b1(0.7, -0.7);
     beacons_ = std::vector<shared::Beacon>( {b0, b1});
 }
 

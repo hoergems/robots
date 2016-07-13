@@ -9,5 +9,5 @@ Name: @PROJECT_NAME@
 Description: @PKG_DESC@
 Version: @ROBOTS_VERSION@
 Requires: @PKG_EXTERNAL_DEPS@
-Libs: -L${libdir} -lrobotsmanip2
+Libs: -L${libdir} -lrobots
 Cflags: -I${includedir}

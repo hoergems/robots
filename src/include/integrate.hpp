@@ -122,13 +122,13 @@ public:
     std::shared_ptr<shared::RBDLInterface> getRBDLInterface();
 
 private:
-    MatrixXd getW0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getH0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getF0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getM0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getV0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getB0(const state_type& x, const state_type& rho, const state_type& zeta) const;
-    MatrixXd getA0(const state_type& x, const state_type& rho, const state_type& zeta) const;
+MatrixXd getW0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getH0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getF0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getM0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getV0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getB0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+MatrixXd getA0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
 
 
     // A fuction type of he form MatrixXd function(const state_type&) const

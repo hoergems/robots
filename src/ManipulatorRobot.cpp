@@ -24,6 +24,7 @@ bool ManipulatorRobot::initJoints(TiXmlElement* robot_xml)
         // Joint Names
         std::string joint_name(joint_xml->Attribute("name"));
         joint_names_.push_back(joint_name);
+	cout << "joint name " << joint_name << endl;
 
         // Joint origin
         std::vector<double> origin = process_origin_(joint_xml);
@@ -350,7 +351,7 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
     std::vector<double> stateUpperLimits;
     std::vector<double> lowerVelocityLimits;
     std::vector<double> upperVelocityLimits;
-    getStateLimits(stateLowerLimits, stateUpperLimits);
+    getStateLimits(stateLowerLimits, stateUpperLimits);    
     for (size_t i = 0; i < stateLowerLimits.size() / 2; i++) {
         lowerVelocityLimits.push_back(stateLowerLimits[i + stateLowerLimits.size() / 2]);
         upperVelocityLimits.push_back(stateUpperLimits[i + stateUpperLimits.size() / 2]);

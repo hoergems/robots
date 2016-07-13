@@ -43,7 +43,7 @@ bool Robot::propagateState(const std::vector<double>& current_state,
                                 control_error,
                                 duration,
                                 simulation_step_size,
-                                result);
+                                result);    
     if (constraints_enforced_) {
         enforceConstraints(result);
     }
@@ -129,12 +129,27 @@ bool Robot::enforceControlConstraints(std::vector<double>& control) const
     }
 }
 
-void Robot::sampleRandomControl(std::vector<double> &control, std::default_random_engine* randGen) {    
-    control = std::vector<double>(lowerControlLimits_.size());    
-    for (size_t i = 0; i < lowerControlLimits_.size(); i++) {
-	std::uniform_real_distribution<double> uniform_dist(lowerControlLimits_[i], upperControlLimits_[i]);
-	double rand_num = uniform_dist(*randGen);
-	control[i] = rand_num;
+void Robot::sampleRandomControl(std::vector<double> &control, 
+				std::default_random_engine* randGen, 
+				std::string &actionSamplingStrategy) {    
+    control = std::vector<double>(lowerControlLimits_.size());
+    if (actionSamplingStrategy == "continuous") {    
+	for (size_t i = 0; i < lowerControlLimits_.size(); i++) {	    
+	    std::uniform_real_distribution<double> uniform_dist(lowerControlLimits_[i], upperControlLimits_[i]);
+	    double rand_num = uniform_dist(*randGen);
+	    control[i] = rand_num;
+	}
+    }
+    else {
+	for (size_t i = 0; i < lowerControlLimits_.size(); i++) {
+	    unsigned int rand_num = std::uniform_int_distribution<long>(0, 1)(*randGen);	    
+	    if (rand_num == 0) {
+		control[i] = lowerControlLimits_[i];
+	    }
+	    else {
+		control[i] = upperControlLimits_[i];
+	    }
+	}
     }
 }
 

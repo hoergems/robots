@@ -73,7 +73,7 @@ public:
 
     virtual void getControlLimits(std::vector<double>& lowerLimits, std::vector<double>& upperLimits) const;
 
-    virtual void sampleRandomControl(std::vector<double>& control, std::default_random_engine* randGen);
+    virtual void sampleRandomControl(std::vector<double>& control, std::default_random_engine* randGen, std::string &actionSamplingStrategy);
 
     virtual void getLinearProcessMatrices(const std::vector<double>& state,
                                           std::vector<double>& control,

@@ -117,6 +117,7 @@ public:
     std::vector<double> getResult();
 
     void setRBDLInterface(std::shared_ptr<shared::RBDLInterface>& rbdl_interface);
+    
 
     std::shared_ptr<shared::RBDLInterface> getRBDLInterface();
 

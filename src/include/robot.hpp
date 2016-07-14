@@ -105,6 +105,8 @@ public:
 
     virtual void setupViewer(std::string model_file, std::string environment_file);
 
+    void getCameraImage(std::vector<uint8_t>& image, int width, int height);
+
     virtual void setParticlePlotLimit(unsigned int particle_plot_limit);
 
     virtual void addBox(std::string name, std::vector<double> dims);
@@ -289,6 +291,10 @@ public:
     
     bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const {
 	this->get_override("getObservation")(state, observationError, observation);
+    }
+    
+    void getCameraImage(std::vector<uint8_t>& image, int width, int height) {
+	this->get_override("getCameraImage")(image, width, height);
     }
 
 };

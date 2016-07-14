@@ -205,6 +205,11 @@ void Robot::addBox(std::string name, std::vector<double> dims) {
 #endif    
 }
 
+void Robot::getCameraImage(std::vector<uint8_t>& image, int width, int height) {
+#ifdef USE_OPENRAVE    
+    viewer_->getCameraImage(image, width, height);
+#endif      
+}
 
 void Robot::setParticlePlotLimit(unsigned int particle_plot_limit)
 {

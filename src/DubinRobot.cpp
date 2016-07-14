@@ -40,14 +40,14 @@ DubinRobot::DubinRobot(std::string robot_file):
     lowerControlLimits_.clear();
     upperControlLimits_.clear();
 
-    lowerControlLimits_.push_back(-1.0);
+    lowerControlLimits_.push_back(0.0);
     lowerControlLimits_.push_back(-0.65);
 
     upperControlLimits_.push_back(1.0);
     upperControlLimits_.push_back(0.65);
 
     // put the beacons in the evironment
-    shared::Beacon b0(-0.7, -0.7);
+    shared::Beacon b0(-0.7, 0.7);
     shared::Beacon b1(0.7, -0.7);
     beacons_ = std::vector<shared::Beacon>( {b0, b1});
 }

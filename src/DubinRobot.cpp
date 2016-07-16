@@ -40,7 +40,7 @@ DubinRobot::DubinRobot(std::string robot_file):
     lowerControlLimits_.clear();
     upperControlLimits_.clear();
 
-    lowerControlLimits_.push_back(-1.0);
+    lowerControlLimits_.push_back(0.0);
     lowerControlLimits_.push_back(-0.65);
 
     upperControlLimits_.push_back(1.0);

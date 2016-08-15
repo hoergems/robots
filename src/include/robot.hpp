@@ -99,18 +99,6 @@ public:
 
     virtual void getObservationCovarianceMatrix(Eigen::MatrixXd& observation_covariance_matrix) const;
 
-    virtual void updateViewer(std::vector<double>& state,
-                              std::vector<std::vector<double>>& particles,
-                              std::vector<std::vector<double>>& particle_colors) = 0;
-
-    virtual void setupViewer(std::string model_file, std::string environment_file);
-
-    void getCameraImage(std::vector<uint8_t>& image, int width, int height);
-
-    virtual void setParticlePlotLimit(unsigned int particle_plot_limit);
-
-    virtual void addBox(std::string name, std::vector<double> dims);
-
     void setProcessDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution);
 
     void setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution);
@@ -120,6 +108,22 @@ public:
     shared::ObservationSpace* getObservationSpace() const;
 
     virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const = 0;
+    
+    /*** Methods for viewer interface ***/
+    virtual void setupViewer(std::string model_file, std::string environment_file);
+    
+    virtual void updateViewer(std::vector<double>& state,
+                              std::vector<std::vector<double>>& particles,
+                              std::vector<std::vector<double>>& particle_colors) = 0;
+    
+
+    void getCameraImage(std::vector<uint8_t>& image, int width, int height);
+
+    virtual void setParticlePlotLimit(unsigned int particle_plot_limit);
+
+    virtual void addBox(std::string name, std::vector<double> dims);
+    
+    virtual void removeBox(std::string name);
 
 protected:
     bool constraints_enforced_;
@@ -181,6 +185,10 @@ public:
 
     void addBox(std::string name, std::vector<double> dims) {
         this->get_override("addBox")(name, dims);
+    }
+    
+    void removeBox(std::string name) {
+	this->get_override("removeBox")(name);
     }
 
     void createRobotCollisionObjects(const std::vector<double>& state,

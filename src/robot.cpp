@@ -205,6 +205,12 @@ void Robot::addBox(std::string name, std::vector<double> dims) {
 #endif    
 }
 
+void Robot::removeBox(std::string name) {
+#ifdef USE_OPENRAVE    
+    viewer_->removeObstacle(name);
+#endif    
+}
+
 void Robot::getCameraImage(std::vector<uint8_t>& image, int width, int height) {
 #ifdef USE_OPENRAVE    
     viewer_->getCameraImage(image, width, height);

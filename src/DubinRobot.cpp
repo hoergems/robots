@@ -179,8 +179,7 @@ double DubinRobot::distanceGoal(std::vector<double>& state) const
     double y = state[1];
 
     double dist = std::pow(goal_position_[0] - x, 2);
-    dist += std::pow(goal_position_[1] - y, 2);
-    //cout << "dist: " << std::sqrt(dist) << endl;
+    dist += std::pow(goal_position_[1] - y, 2);    
     return std::sqrt(dist);
 }
 

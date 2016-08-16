@@ -112,6 +112,8 @@ public:
     /*** Methods for viewer interface ***/
     virtual void setupViewer(std::string model_file, std::string environment_file);
     
+    virtual void resetViewer(std::string model_file, std::string environment_file);
+    
     virtual void updateViewer(std::vector<double>& state,
                               std::vector<std::vector<double>>& particles,
                               std::vector<std::vector<double>>& particle_colors) = 0;

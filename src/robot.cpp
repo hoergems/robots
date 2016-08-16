@@ -191,6 +191,11 @@ void Robot::setNewtonModel() {
     
 }
 
+void Robot::resetViewer(std::string model_file, std::string environment_file) {
+#ifdef USE_OPENRAVE
+    viewer_->resetViewer(model_file, environment_file);
+#endif
+}
 
 void Robot::setupViewer(std::string model_file, std::string environment_file)
 {

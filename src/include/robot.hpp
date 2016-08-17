@@ -10,7 +10,8 @@
 #include "propagator.hpp"
 #include <random>
 #include "MultNormal.hpp"
-#include "ObservationSpace.hpp"
+#include "DiscreteObservationSpace.hpp"
+#include "ContinuousObservationSpace.hpp"
 
 #ifdef USE_OPENRAVE
 #include <viewer_interface/viewer_interface.hpp>
@@ -36,7 +37,7 @@ public:
                         double simulation_step_size,
                         std::vector<double>& result);
 
-    virtual bool makeObservationSpace(std::string& observationType) = 0;
+    virtual bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) = 0;
 
     virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) = 0;
     
@@ -103,8 +104,6 @@ public:
 
     void setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution);
 
-    void setObservationType(std::string observationType);
-
     shared::ObservationSpace* getObservationSpace() const;
 
     virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const = 0;
@@ -152,9 +151,7 @@ protected:
 
     std::shared_ptr<Eigen::EigenMultivariateNormal<double>> process_distribution_;
 
-    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> observation_distribution_;
-
-    std::string observationType_;
+    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> observation_distribution_;    
 
     std::shared_ptr<shared::ObservationSpace> observationSpace_;
 
@@ -281,12 +278,8 @@ public:
         this->get_override("setObservationDistribution")(distribution);
     }
 
-    void setObservationType(std::string observationType) {
-        this->get_override("setObservationType")(observationType);
-    }
-
-    bool makeObservationSpace(std::string& observationType) {
-        this->get_override("makeObservationSpace")(observationType);
+    bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) {
+        this->get_override("makeObservationSpace")(observationSpaceInfo);
     }
 
     void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const{

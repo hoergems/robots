@@ -78,20 +78,22 @@ void DubinRobot::createRobotCollisionObjects(const std::vector<double>& state,
     collision_objects.push_back(coll_obj);
 }
 
-bool DubinRobot::makeObservationSpace(std::string& observationType)
+bool DubinRobot::makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo)
 {    
-    observationSpace_ = std::make_shared<shared::ObservationSpace>(observationType);
+    observationSpace_ = std::make_shared<shared::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
-    if (observationType == "linear") {
+    if (observationSpaceInfo.observationType == "linear") {
         observationSpace_->setDimension(getStateSpaceDimension());
         getStateLimits(lowerLimits, upperLimits);
-        observationSpace_->setLimits(lowerLimits, upperLimits);
+        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerLimits, 
+                                                                                              upperLimits);
     } else {
         observationSpace_->setDimension(3);
         lowerLimits = std::vector<double>( {0.0, 0.0, -1.2});
         upperLimits = std::vector<double>( {1.0, 1.0, 1.2});
-        observationSpace_->setLimits(lowerLimits, upperLimits);
+        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerLimits, 
+                                                                                              upperLimits);
     }
 }
 
@@ -106,7 +108,7 @@ bool DubinRobot::getObservation(std::vector<double> &state, std::vector<double> 
 
 bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
 {
-    if (observationType_ == "linear") {
+    if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         observation.clear();
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
         for (size_t i = 0; i < state.size(); i++) {
@@ -128,7 +130,7 @@ bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>&
 
 void DubinRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const
 {
-    if (observationType_ == "linear") {
+    if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         res = state;
     } else {
         res = std::vector<double>(3);
@@ -209,7 +211,7 @@ void DubinRobot::getLinearObservationDynamics(const std::vector<double>& state,
         Eigen::MatrixXd& H,
         Eigen::MatrixXd& W) const
 {
-    if (observationType_ == "linear") {
+    if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         H = Eigen::MatrixXd::Identity(4, 4);
         W = Eigen::MatrixXd::Identity(4, 4);        
     } else {	
@@ -244,7 +246,7 @@ void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
     matrices.push_back(A);
     matrices.push_back(B);
     matrices.push_back(V);
-    if (observationType_ == "linear") {
+    if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         Eigen::MatrixXd H = Eigen::MatrixXd::Identity(4, 4);
         Eigen::MatrixXd W = Eigen::MatrixXd::Identity(4, 4);
         matrices.push_back(H);

@@ -5,32 +5,33 @@
 
 namespace shared
 {
+    
+struct ObservationSpaceInfo {
+public:
+    ObservationSpaceInfo() {}
+    
+    // The observation type ('discrete' or 'continuous')
+    std::string observationType;
+    
+    // Contains additional information (e.g. 'linear' or 'nonlinear')
+    std::string observationModelInfo;
+};
+
 class ObservationSpace
 {
 public:
-    ObservationSpace(std::string &observationType);
+    ObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo);
     
     void setDimension(unsigned int dimension);
     
     unsigned int getDimension() const;
     
-    std::string getObservationType() const;
-    
-    void setLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits);
-    
-    void getLimits(std::vector<double> &lowerLimits, std::vector<double> &upperLimits) const;
+    const shared::ObservationSpaceInfo getObservationSpaceInfo() const;
     
 private:
     unsigned int dimension_;
     
-    std::vector<double> lowerLimits_;
-    
-    std::vector<double> upperLimits_;
-    
-    std::string observationType_;
-    
-    
-
+    shared::ObservationSpaceInfo observationSpaceInfo_;
 };
 
 }

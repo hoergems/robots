@@ -124,7 +124,7 @@ public:
     
     virtual bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const override;
 
-    virtual bool makeObservationSpace(std::string& observationType) override;
+    virtual bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) override;
 
     virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const override;
 

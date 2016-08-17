@@ -20,8 +20,7 @@ Robot::Robot(std::string robot_file):
     lowerControlLimits_(),
     upperControlLimits_(),
     process_distribution_(nullptr),
-    observation_distribution_(nullptr),
-    observationType_("linear"),
+    observation_distribution_(nullptr),    
     observationSpace_(nullptr)
 {    
 #ifdef USE_OPENRAVE
@@ -57,11 +56,6 @@ void Robot::setProcessDistribution(std::shared_ptr<Eigen::EigenMultivariateNorma
     
 void Robot::setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution) {
     observation_distribution_ = distribution;
-}
-
-void Robot::setObservationType(std::string observationType) {
-    observationType_ = observationType;
-    makeObservationSpace(observationType);
 }
 
 shared::ObservationSpace* Robot::getObservationSpace() const {

@@ -1,51 +1,16 @@
-#ifndef _DUBIN_ROBOT_HPP_
-#define _DUBIN_ROBOT_HPP_
+#ifndef _UAV_ROBOT_
+#define _UAV_ROBOT_
 #include <string>
 #include <iostream>
 #include <assert.h>
-#include <boost/python.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/make_shared.hpp>
-#include "fcl/BV/BV.h"
-#include "fcl/collision_object.h"
-#include "fcl/collision_data.h"
-#include "fcl/collision.h"
-#include "fcl/shape/geometric_shapes.h"
-#include "fcl/shape/geometric_shapes_utility.h"
-#include <tinyxml.h>
-#include <rbdl_interface/rbdl_interface.hpp>
 #include "robot.hpp"
-#include "DubinPropagator.hpp"
-
-using std::cout;
-using std::endl;
 
 namespace shared
 {
-
-struct Beacon {
-public:
-    Beacon():
-        x_(0.0),
-        y_(0.0) {
-
-    }
-
-    Beacon(double x, double y):
-        x_(x),
-        y_(y) {
-
-    }
-
-    double x_;
-    double y_;
-};
-
-class DubinRobot: public Robot
+class UAV: public Robot
 {
 public:
-    DubinRobot(std::string robot_file);
+    UAV(std::string robot_file);
 
     void createRobotCollisionObjects(const std::vector<double>& state,
                                      std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const override;
@@ -53,9 +18,9 @@ public:
     int getStateSpaceDimension() const override;
 
     int getControlSpaceDimension() const override;
-
+    
     int getDOF() const override;
-
+    
     bool isTerminal(std::vector<double>& state) const override;
 
     double distanceGoal(std::vector<double>& state) const override;
@@ -88,18 +53,7 @@ public:
 
     void setGravityConstant(double gravity_constant) override;
 
-private:
-    
-    double dim_x_;
-    double dim_y_;
-    double dim_z_;
-    std::vector<shared::Beacon> beacons_;
-    double d_;
-    
-    void getLinearObservationMatrix(const std::vector<double>& state, Eigen::MatrixXd &H) const;
-
 };
-
 }
 
 #endif

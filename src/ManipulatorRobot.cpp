@@ -24,7 +24,7 @@ bool ManipulatorRobot::initJoints(TiXmlElement* robot_xml)
         // Joint Names
         std::string joint_name(joint_xml->Attribute("name"));
         joint_names_.push_back(joint_name);
-	cout << "joint name " << joint_name << endl;
+        cout << "joint name " << joint_name << endl;
 
         // Joint origin
         std::vector<double> origin = process_origin_(joint_xml);
@@ -351,7 +351,7 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
     std::vector<double> stateUpperLimits;
     std::vector<double> lowerVelocityLimits;
     std::vector<double> upperVelocityLimits;
-    getStateLimits(stateLowerLimits, stateUpperLimits);    
+    getStateLimits(stateLowerLimits, stateUpperLimits);
     for (size_t i = 0; i < stateLowerLimits.size() / 2; i++) {
         lowerVelocityLimits.push_back(stateLowerLimits[i + stateLowerLimits.size() / 2]);
         upperVelocityLimits.push_back(stateUpperLimits[i + stateUpperLimits.size() / 2]);
@@ -433,15 +433,17 @@ ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& 
     return collision_objects;
 }
 
-bool ManipulatorRobot::makeObservationSpace(std::string& observationType)
+bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo)
 {
-    observationSpace_ = std::make_shared<shared::ObservationSpace>(observationType);
+    observationSpace_ = std::make_shared<shared::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
-    if (observationType == "linear") {
+    if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         observationSpace_->setDimension(getStateSpaceDimension());
         getStateLimits(lowerLimits, upperLimits);
-        observationSpace_->setLimits(lowerLimits, upperLimits);
+        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerLimits, 
+                                                                                              upperLimits);
+        
     } else {
         observationSpace_->setDimension(3 + getStateSpaceDimension() / 2);
         std::vector<double> r_state(getStateSpaceDimension() / 2, 0.0);
@@ -466,14 +468,15 @@ bool ManipulatorRobot::makeObservationSpace(std::string& observationType)
             upperObservationLimits.push_back(upperLimits[i + upperLimits.size() / 2]);
         }
 
-        observationSpace_->setLimits(lowerObservationLimits, upperObservationLimits);
+        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerLimits, 
+                                                                                              upperLimits);
     }
 }
 
 bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
 {
     observation.clear();
-    if (observationType_ == "linear") {
+    if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
         for (size_t i = 0; i < state.size(); i++) {
             observation.push_back(state[i] + sample(i, 0));
@@ -502,7 +505,7 @@ bool ManipulatorRobot::getObservation(std::vector<double>& state,
                                       std::vector<double>& observation) const
 {
     std::vector<double> res;
-    observation = std::vector<double>(observationSpace_->getDimension());    
+    observation = std::vector<double>(observationSpace_->getDimension());
     transformToObservationSpace(state, res);
     for (size_t i = 0; i < observationSpace_->getDimension(); i++) {
         observation[i] = res[i] + observationError[i];
@@ -512,7 +515,7 @@ bool ManipulatorRobot::getObservation(std::vector<double>& state,
 void ManipulatorRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const
 {
     res.clear();
-    if (observationType_ == "linear") {
+    if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         res = state;
     } else {
         std::vector<double> end_effector_position;
@@ -633,7 +636,7 @@ void ManipulatorRobot::getLinearProcessMatrices(const std::vector<double>& state
     static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(state,
             control,
             duration,
-            observationType_,
+            observationSpace_->getObservationSpaceInfo().observationType,
             matrices);
 }
 
@@ -641,7 +644,11 @@ void ManipulatorRobot::getLinearObservationDynamics(const std::vector<double>& s
         Eigen::MatrixXd& H,
         Eigen::MatrixXd& W) const
 {
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getLinearObservationDynamics(state, observationType_, H, W);
+    shared::ManipulatorPropagator* p = static_cast<shared::ManipulatorPropagator*>(propagator_.get());
+    p->getIntegrator()->getLinearObservationDynamics(state,
+            observationSpace_->getObservationSpaceInfo().observationType,
+            H,
+            W);
 }
 
 bool ManipulatorRobot::checkSelfCollision(const std::vector<double>& state) const

@@ -62,6 +62,10 @@ shared::ObservationSpace* Robot::getObservationSpace() const {
     return observationSpace_.get();
 }
 
+shared::ActionSpace* Robot::getActionSpace() const {
+    return actionSpace_.get();
+}
+
 void Robot::setGoalArea(std::vector<double>& goal_position, double& goal_radius)
 {
     goal_position_.clear();

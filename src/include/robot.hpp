@@ -109,6 +109,8 @@ public:
     void setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution);
 
     shared::ObservationSpace* getObservationSpace() const;
+    
+    shared::ActionSpace* getActionSpace() const;
 
     virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const = 0;
     

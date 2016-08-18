@@ -78,26 +78,33 @@ void DubinRobot::createRobotCollisionObjects(const std::vector<double>& state,
     collision_objects.push_back(coll_obj);
 }
 
-bool DubinRobot::makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo)
-{    
+bool DubinRobot::makeActionSpace() {
+    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>();
+    unsigned int numDimensions = 2;
+    actionSpace_->setNumDimensions(numDimensions);
+}
+
+bool DubinRobot::makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo)
+{
     observationSpace_ = std::make_shared<shared::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
     if (observationSpaceInfo.observationType == "linear") {
         observationSpace_->setDimension(getStateSpaceDimension());
         getStateLimits(lowerLimits, upperLimits);
-        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerLimits, 
-                                                                                              upperLimits);
+        static_cast<shared::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerLimits,
+                upperLimits);
     } else {
         observationSpace_->setDimension(3);
         lowerLimits = std::vector<double>( {0.0, 0.0, -1.2});
         upperLimits = std::vector<double>( {1.0, 1.0, 1.2});
-        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerLimits, 
-                                                                                              upperLimits);
+        static_cast<shared::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerLimits,
+                upperLimits);
     }
 }
 
-bool DubinRobot::getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const {
+bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const
+{
     std::vector<double> res;
     transformToObservationSpace(state, res);
     observation = std::vector<double>(observationSpace_->getDimension());
@@ -106,7 +113,7 @@ bool DubinRobot::getObservation(std::vector<double> &state, std::vector<double> 
     observation[2] = res[2] + observationError[2];
 }
 
-bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
+bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observation) const
 {
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         observation.clear();
@@ -118,9 +125,9 @@ bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>&
         observation = std::vector<double>(3);
         unsigned int observationSpaceDimension = observationSpace_->getDimension();
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
-	
-        observation[0] = sample(0, 0) + 1.0/(std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0);
-        observation[1] = sample(1, 0) + 1.0/(std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0);
+
+        observation[0] = sample(0, 0) + 1.0 / (std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0);
+        observation[1] = sample(1, 0) + 1.0 / (std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0);
         observation[2] = state[3] + sample(2, 0);
 
     }
@@ -134,8 +141,8 @@ void DubinRobot::transformToObservationSpace(std::vector<double>& state, std::ve
         res = state;
     } else {
         res = std::vector<double>(3);
-        res[0] = 1.0/(std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0);
-        res[1] = 1.0/(std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0);
+        res[0] = 1.0 / (std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0);
+        res[1] = 1.0 / (std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0);
         res[2] = state[3];
     }
 }
@@ -143,11 +150,6 @@ void DubinRobot::transformToObservationSpace(std::vector<double>& state, std::ve
 int DubinRobot::getStateSpaceDimension() const
 {
     return 4;
-}
-
-int DubinRobot::getControlSpaceDimension() const
-{
-    return 2;
 }
 
 int DubinRobot::getDOF() const
@@ -158,7 +160,7 @@ int DubinRobot::getDOF() const
 void DubinRobot::makeNextStateAfterCollision(std::vector<double>& previous_state,
         std::vector<double>& colliding_state,
         std::vector<double>& next_state)
-{    
+{
     next_state = previous_state;
     next_state[3] = 0.0;
 }
@@ -181,7 +183,7 @@ double DubinRobot::distanceGoal(std::vector<double>& state) const
     double y = state[1];
 
     double dist = std::pow(goal_position_[0] - x, 2);
-    dist += std::pow(goal_position_[1] - y, 2);    
+    dist += std::pow(goal_position_[1] - y, 2);
     return std::sqrt(dist);
 }
 
@@ -190,15 +192,16 @@ void DubinRobot::setGravityConstant(double gravity_constant)
 
 }
 
-void DubinRobot::getLinearObservationMatrix(const std::vector<double>& state, Eigen::MatrixXd &H) const{
+void DubinRobot::getLinearObservationMatrix(const std::vector<double>& state, Eigen::MatrixXd& H) const
+{
     H = Eigen::MatrixXd(3, 4);
-    
-    H(0, 0) = 1.0*(2*beacons_[0].x_ - 2*state[0])/std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
-    H(0, 1) = 1.0*(2*beacons_[0].y_ - 2*state[1])/std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
+
+    H(0, 0) = 1.0 * (2 * beacons_[0].x_ - 2 * state[0]) / std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
+    H(0, 1) = 1.0 * (2 * beacons_[0].y_ - 2 * state[1]) / std::pow(std::pow(-beacons_[0].x_ + state[0], 2) + std::pow(-beacons_[0].y_ + state[1], 2) + 1.0, 2);
     H(0, 2) = 0.0;
     H(0, 3) = 0.0;
-    H(1, 0) = 1.0*(2*beacons_[1].x_ - 2*state[0])/std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
-    H(1, 1) = 1.0*(2*beacons_[1].y_ - 2*state[1])/std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
+    H(1, 0) = 1.0 * (2 * beacons_[1].x_ - 2 * state[0]) / std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
+    H(1, 1) = 1.0 * (2 * beacons_[1].y_ - 2 * state[1]) / std::pow(std::pow(-beacons_[1].x_ + state[0], 2) + std::pow(-beacons_[1].y_ + state[1], 2) + 1.0, 2);
     H(1, 2) = 0.0;
     H(1, 3) = 0.0;
     H(2, 0) = 0.0;
@@ -213,10 +216,10 @@ void DubinRobot::getLinearObservationDynamics(const std::vector<double>& state,
 {
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         H = Eigen::MatrixXd::Identity(4, 4);
-        W = Eigen::MatrixXd::Identity(4, 4);        
-    } else {	
-	getLinearObservationMatrix(state, H);       
-        W = Eigen::MatrixXd::Identity(3, 3);        
+        W = Eigen::MatrixXd::Identity(4, 4);
+    } else {
+        getLinearObservationMatrix(state, H);
+        W = Eigen::MatrixXd::Identity(3, 3);
     }
 }
 

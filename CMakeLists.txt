@@ -128,6 +128,9 @@ add_library(robots SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorPropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinPropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/integrate.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSpace.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteActionSpace.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ObservationSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteObservationSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousObservationSpace.cpp)
@@ -156,6 +159,9 @@ install(FILES ${INCLUDE_DIR}/ManipulatorRobot.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DubinPropagator.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DubinRobot.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/uav.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/ActionSpace.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/DiscreteActionSpace.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/ContinuousActionSpace.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/ObservationSpace.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DiscreteObservationSpace.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/ContinuousObservationSpace.hpp  DESTINATION include/robots)

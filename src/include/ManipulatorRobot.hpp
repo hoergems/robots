@@ -107,12 +107,7 @@ public:
     void getEndEffectorJacobian(const std::vector<double>& joint_angles,
                                 std::vector<std::vector<double>>& ee_jacobian);
 
-
-
-
     virtual int getStateSpaceDimension() const override;
-
-    virtual int getControlSpaceDimension() const override;
 
     virtual int getDOF() const override;
 
@@ -120,9 +115,11 @@ public:
             std::vector<double>& colliding_state,
             std::vector<double>& next_state) override;
 
-    virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) override;
+    virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) const override;
     
     virtual bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const override;
+    
+    bool makeActionSpace() override;
 
     virtual bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) override;
 

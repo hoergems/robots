@@ -147,6 +147,10 @@ void Robot::sampleRandomControl(std::vector<double> &control,
     }
 }
 
+unsigned int Robot::getControlSpaceDimension() const {
+    return actionSpace_->getNumDimensions();
+}
+
 void Robot::getStateLimits(std::vector<double>& lowerLimits, std::vector<double>& upperLimits) const
 {
     lowerLimits = lowerStateLimits_;

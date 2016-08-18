@@ -433,11 +433,20 @@ ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& 
     return collision_objects;
 }
 
+bool ManipulatorRobot::makeActionSpace() {
+    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>();
+    unsigned int numDimensions = active_joints_.size();
+    cout << "active joints size " << active_joints_.size() << endl;
+    actionSpace_->setNumDimensions(numDimensions);
+    cout << "num dimensions set" << endl;
+   
+}
+
 bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo)
 {
     observationSpace_ = std::make_shared<shared::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
-    std::vector<double> upperLimits;
+    std::vector<double> upperLimits;    
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         observationSpace_->setDimension(getStateSpaceDimension());
         getStateLimits(lowerLimits, upperLimits);
@@ -468,12 +477,12 @@ bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& 
             upperObservationLimits.push_back(upperLimits[i + upperLimits.size() / 2]);
         }
 
-        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerLimits, 
-                                                                                              upperLimits);
+        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerObservationLimits, 
+                                                                                              upperObservationLimits);
     }
 }
 
-bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<double>& observation)
+bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<double>& observation) const
 {
     observation.clear();
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
@@ -1134,10 +1143,10 @@ int ManipulatorRobot::getStateSpaceDimension() const
     return active_joints_.size() * 2;
 }
 
-int ManipulatorRobot::getControlSpaceDimension() const
+/**int ManipulatorRobot::getControlSpaceDimension() const
 {
     return active_joints_.size();
-}
+}*/
 
 int ManipulatorRobot::getDOF() const
 {

@@ -12,6 +12,8 @@
 #include "MultNormal.hpp"
 #include "DiscreteObservationSpace.hpp"
 #include "ContinuousObservationSpace.hpp"
+#include "DiscreteActionSpace.hpp"
+#include "ContinuousActionSpace.hpp"
 
 #ifdef USE_OPENRAVE
 #include <viewer_interface/viewer_interface.hpp>
@@ -36,10 +38,12 @@ public:
                         double duration,
                         double simulation_step_size,
                         std::vector<double>& result);
+    
+    virtual bool makeActionSpace() = 0;
 
     virtual bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) = 0;
 
-    virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) = 0;
+    virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) const = 0;
     
     virtual bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const = 0;
 
@@ -48,7 +52,7 @@ public:
 
     virtual int getStateSpaceDimension() const = 0;
 
-    virtual int getControlSpaceDimension() const = 0;
+    virtual unsigned int getControlSpaceDimension() const;
 
     virtual int getDOF() const = 0;
 
@@ -154,6 +158,8 @@ protected:
     std::shared_ptr<Eigen::EigenMultivariateNormal<double>> observation_distribution_;    
 
     std::shared_ptr<shared::ObservationSpace> observationSpace_;
+    
+    std::shared_ptr<shared::ActionSpace> actionSpace_;
 
 #ifdef USE_OPENRAVE
     std::shared_ptr<shared::ViewerInterface> viewer_;
@@ -178,7 +184,7 @@ public:
         return this->get_override("getStateSpaceDimension")();
     }
 
-    int getControlSpaceDimension() const {
+    unsigned int getControlSpaceDimension() const {
         return this->get_override("getControlSpaceDimension")();
     }
 
@@ -226,7 +232,7 @@ public:
         this->get_override("getObservationCovarianceMatrix")(observation_covariance_matrix);
     }
 
-    bool getObservation(std::vector<double>& state, std::vector<double>& observation) {
+    bool getObservation(std::vector<double>& state, std::vector<double>& observation) const {
         this->get_override("getObservation")(state, observation);
     }
 
@@ -276,6 +282,10 @@ public:
 
     void setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution) {
         this->get_override("setObservationDistribution")(distribution);
+    }
+    
+    bool makeActionSpace() {
+	this->get_override("makeActionSpace")();
     }
 
     bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) {

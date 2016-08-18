@@ -52,19 +52,19 @@ public:
 
     int getStateSpaceDimension() const override;
 
-    int getControlSpaceDimension() const override;
-
     int getDOF() const override;
 
     bool isTerminal(std::vector<double>& state) const override;
 
     double distanceGoal(std::vector<double>& state) const override;
 
-    bool getObservation(std::vector<double>& state, std::vector<double>& observation) override;
+    bool getObservation(std::vector<double>& state, std::vector<double>& observation) const override;
     
     bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const override;
 
     void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const override;
+    
+    bool makeActionSpace() override;
 
     bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) override;
 

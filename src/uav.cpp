@@ -36,6 +36,7 @@ bool UAV::makeActionSpace() {
     actionSpace_ = std::make_shared<shared::DiscreteActionSpace>();
     unsigned int numDimensions = 1;
     actionSpace_->setNumDimensions(numDimensions);
+    actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);
 }
 
 bool UAV::makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo)

@@ -82,6 +82,7 @@ bool DubinRobot::makeActionSpace() {
     actionSpace_ = std::make_shared<shared::DiscreteActionSpace>();
     unsigned int numDimensions = 2;
     actionSpace_->setNumDimensions(numDimensions);
+    actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);
 }
 
 bool DubinRobot::makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo)

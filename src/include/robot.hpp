@@ -128,7 +128,7 @@ public:
 
     shared::ObservationSpace* getObservationSpace() const;
 
-    shared::ActionSpace* getActionSpace() const;
+    std::shared_ptr<shared::ActionSpace> getActionSpace() const;
 
     virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const = 0;
 

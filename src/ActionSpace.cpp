@@ -1,5 +1,8 @@
 #include "include/ActionSpace.hpp"
 
+using std::cout;
+using std::endl;
+
 namespace shared
 {
 ActionSpace::ActionSpace():
@@ -41,9 +44,9 @@ void ActionSpace::denormalizeAction(std::vector<double>& normalizedAction,
                                     std::vector<double>& action)
 {
     action.clear();
-    action.resize(action.size());
+    action.resize(normalizedAction.size());    
     for (size_t i = 0; i < lowerActionLimits_.size(); i++) {
-        action[i] = normalizedAction[i] * (upperActionLimits_[i] - lowerActionLimits_[i]) + lowerActionLimits_[i];
+        action[i] = normalizedAction[i] * (upperActionLimits_[i] - lowerActionLimits_[i]) + lowerActionLimits_[i];	
     }
 }
 

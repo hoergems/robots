@@ -93,9 +93,12 @@ shared::ObservationSpace* Robot::getObservationSpace() const
     return observationSpace_.get();
 }
 
-shared::ActionSpace* Robot::getActionSpace() const
+std::shared_ptr<shared::ActionSpace> Robot::getActionSpace() const
 {
-    return actionSpace_.get();
+    if (!actionSpace_) {
+	assert(false && "ACTION SPACE IS NULL");
+    }
+    return actionSpace_;
 }
 
 void Robot::setGoalArea(std::vector<double>& goal_position, double& goal_radius)

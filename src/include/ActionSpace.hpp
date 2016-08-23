@@ -2,6 +2,7 @@
 #define __ACT_SPACE_HPP__
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace shared
 {

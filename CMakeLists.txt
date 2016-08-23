@@ -122,11 +122,12 @@ add_library(robots SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/robot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorRobot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinRobot.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/uav.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/auv.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/propagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Kinematics.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorPropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinPropagator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/AUVPropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/integrate.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteActionSpace.cpp
@@ -158,7 +159,8 @@ install(FILES ${INCLUDE_DIR}/ManipulatorPropagator.hpp  DESTINATION include/robo
 install(FILES ${INCLUDE_DIR}/ManipulatorRobot.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DubinPropagator.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DubinRobot.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/uav.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/auv.hpp  DESTINATION include/robots)
+install(FILES ${INCLUDE_DIR}/AUVPropagator.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/ActionSpace.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/DiscreteActionSpace.hpp  DESTINATION include/robots)
 install(FILES ${INCLUDE_DIR}/ContinuousActionSpace.hpp  DESTINATION include/robots)

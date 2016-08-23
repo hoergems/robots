@@ -116,18 +116,26 @@ public:
             std::vector<double>& next_state) override;
 
     virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) const override;
-    
-    virtual bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const override;
-    
+
+    virtual bool getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const override;
+
     bool makeActionSpace() override;
 
-    virtual bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) override;
+    virtual bool makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo) override;
 
     virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const override;
 
     virtual void getLinearObservationDynamics(const std::vector<double>& state,
             Eigen::MatrixXd& H,
             Eigen::MatrixXd& W) const override;
+
+    virtual void makeProcessDistribution(Eigen::MatrixXd& mean,
+                                         Eigen::MatrixXd& covariance_matrix,
+                                         unsigned long seed) override;
+
+    virtual void makeObservationDistribution(Eigen::MatrixXd& mean,
+                                             Eigen::MatrixXd& covariance_matrix,
+                                             unsigned long seed) override;
 
     bool propagate_first_order(std::vector<double>& current_state,
                                std::vector<double>& control_input,

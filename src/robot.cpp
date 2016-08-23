@@ -20,11 +20,11 @@ Robot::Robot(std::string robot_file):
     lowerControlLimits_(),
     upperControlLimits_(),
     process_distribution_(nullptr),
-    observation_distribution_(nullptr),    
+    observation_distribution_(nullptr),
     observationSpace_(nullptr)
-{    
+{
 #ifdef USE_OPENRAVE
-    viewer_ = std::make_shared<shared::ViewerInterface>();    
+    viewer_ = std::make_shared<shared::ViewerInterface>();
 #endif
 }
 
@@ -42,7 +42,7 @@ bool Robot::propagateState(const std::vector<double>& current_state,
                                 control_error,
                                 duration,
                                 simulation_step_size,
-                                result);    
+                                result);
     if (constraints_enforced_) {
         enforceConstraints(result);
     }
@@ -50,19 +50,51 @@ bool Robot::propagateState(const std::vector<double>& current_state,
     return true;
 }
 
-void Robot::setProcessDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution) {
-    process_distribution_ = distribution;
-}
-    
-void Robot::setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>> &distribution) {
-    observation_distribution_ = distribution;
+bool Robot::propagateState(const std::vector<double>& current_state,
+                           std::vector<double>& control_input,
+                           double duration,
+                           double simulation_step_size,
+                           std::vector<double>& result)
+{
+    boost::this_thread::interruption_point();
+    result.clear();
+    std::vector<double> control_error(control_input.size());
+    Eigen::MatrixXd sample = process_distribution_->samples(1);
+    for (size_t i = 0; i < control_error.size(); i++) {
+        control_error[i] = sample(i, 0);
+    }
+
+    propagator_->propagateState(current_state,
+                                control_input,
+                                control_error,
+                                duration,
+                                simulation_step_size,
+                                result);
+
+    if (constraints_enforced_) {
+        enforceConstraints(result);
+    }
+
+    return true;
 }
 
-shared::ObservationSpace* Robot::getObservationSpace() const {
+std::shared_ptr<Eigen::Distribution<double>> Robot::getProcessDistribution() const
+{
+    return process_distribution_;
+}
+
+std::shared_ptr<Eigen::Distribution<double>> Robot::getObservationDistribution() const
+{
+    return observation_distribution_;
+}
+
+shared::ObservationSpace* Robot::getObservationSpace() const
+{
     return observationSpace_.get();
 }
 
-shared::ActionSpace* Robot::getActionSpace() const {
+shared::ActionSpace* Robot::getActionSpace() const
+{
     return actionSpace_.get();
 }
 
@@ -127,31 +159,31 @@ bool Robot::enforceControlConstraints(std::vector<double>& control) const
     }
 }
 
-void Robot::sampleRandomControl(std::vector<double> &control, 
-				std::default_random_engine* randGen, 
-				std::string &actionSamplingStrategy) {    
+void Robot::sampleRandomControl(std::vector<double>& control,
+                                std::default_random_engine* randGen,
+                                std::string& actionSamplingStrategy)
+{
     control = std::vector<double>(lowerControlLimits_.size());
-    if (actionSamplingStrategy == "continuous") {    
-	for (size_t i = 0; i < lowerControlLimits_.size(); i++) {	    
-	    std::uniform_real_distribution<double> uniform_dist(lowerControlLimits_[i], upperControlLimits_[i]);
-	    double rand_num = uniform_dist(*randGen);
-	    control[i] = rand_num;
-	}
-    }
-    else {
-	for (size_t i = 0; i < lowerControlLimits_.size(); i++) {
-	    unsigned int rand_num = std::uniform_int_distribution<long>(0, 1)(*randGen);	    
-	    if (rand_num == 0) {
-		control[i] = lowerControlLimits_[i];
-	    }
-	    else {
-		control[i] = upperControlLimits_[i];
-	    }
-	}
+    if (actionSamplingStrategy == "continuous") {
+        for (size_t i = 0; i < lowerControlLimits_.size(); i++) {
+            std::uniform_real_distribution<double> uniform_dist(lowerControlLimits_[i], upperControlLimits_[i]);
+            double rand_num = uniform_dist(*randGen);
+            control[i] = rand_num;
+        }
+    } else {
+        for (size_t i = 0; i < lowerControlLimits_.size(); i++) {
+            unsigned int rand_num = std::uniform_int_distribution<long>(0, 1)(*randGen);
+            if (rand_num == 0) {
+                control[i] = lowerControlLimits_[i];
+            } else {
+                control[i] = upperControlLimits_[i];
+            }
+        }
     }
 }
 
-unsigned int Robot::getControlSpaceDimension() const {
+unsigned int Robot::getControlSpaceDimension() const
+{
     return actionSpace_->getNumDimensions();
 }
 
@@ -189,11 +221,13 @@ void Robot::getObservationCovarianceMatrix(Eigen::MatrixXd& observation_covarian
     observation_covariance_matrix = observation_covariance_matrix_;
 }
 
-void Robot::setNewtonModel() {
-    
+void Robot::setNewtonModel()
+{
+
 }
 
-void Robot::resetViewer(std::string model_file, std::string environment_file) {
+void Robot::resetViewer(std::string model_file, std::string environment_file)
+{
 #ifdef USE_OPENRAVE
     viewer_->resetViewer(model_file, environment_file);
 #endif
@@ -206,22 +240,25 @@ void Robot::setupViewer(std::string model_file, std::string environment_file)
 #endif
 }
 
-void Robot::addBox(std::string name, std::vector<double> dims) {
-#ifdef USE_OPENRAVE    
+void Robot::addBox(std::string name, std::vector<double> dims)
+{
+#ifdef USE_OPENRAVE
     viewer_->addObstacle(name, dims);
-#endif    
+#endif
 }
 
-void Robot::removeBox(std::string name) {
-#ifdef USE_OPENRAVE    
+void Robot::removeBox(std::string name)
+{
+#ifdef USE_OPENRAVE
     viewer_->removeObstacle(name);
-#endif    
+#endif
 }
 
-void Robot::getCameraImage(std::vector<uint8_t>& image, int width, int height) {
-#ifdef USE_OPENRAVE    
+void Robot::getCameraImage(std::vector<uint8_t>& image, int width, int height)
+{
+#ifdef USE_OPENRAVE
     viewer_->getCameraImage(image, width, height);
-#endif      
+#endif
 }
 
 void Robot::setParticlePlotLimit(unsigned int particle_plot_limit)

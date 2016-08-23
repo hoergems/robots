@@ -59,14 +59,14 @@ public:
     double distanceGoal(std::vector<double>& state) const override;
 
     bool getObservation(std::vector<double>& state, std::vector<double>& observation) const override;
-    
-    bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const override;
+
+    bool getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const override;
 
     void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const override;
-    
+
     bool makeActionSpace() override;
 
-    bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) override;
+    bool makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo) override;
 
     void getLinearProcessMatrices(const std::vector<double>& state,
                                   std::vector<double>& control,
@@ -88,15 +88,23 @@ public:
 
     void setGravityConstant(double gravity_constant) override;
 
+    virtual void makeProcessDistribution(Eigen::MatrixXd& mean,
+                                         Eigen::MatrixXd& covariance_matrix,
+                                         unsigned long seed) override;
+
+    virtual void makeObservationDistribution(Eigen::MatrixXd& mean,
+            Eigen::MatrixXd& covariance_matrix,
+            unsigned long seed) override;
+
 private:
-    
+
     double dim_x_;
     double dim_y_;
     double dim_z_;
     std::vector<shared::Beacon> beacons_;
     double d_;
-    
-    void getLinearObservationMatrix(const std::vector<double>& state, Eigen::MatrixXd &H) const;
+
+    void getLinearObservationMatrix(const std::vector<double>& state, Eigen::MatrixXd& H) const;
 
 };
 

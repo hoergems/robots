@@ -38,14 +38,24 @@ public:
                         double duration,
                         double simulation_step_size,
                         std::vector<double>& result);
-    
+
+    /**
+     * Propagate the state without explicitly passing the control error.
+     * The control error has to be sampled inside this method instead.
+     */
+    bool propagateState(const std::vector<double>& current_state,
+                        std::vector<double>& control_input,
+                        double duration,
+                        double simulation_step_size,
+                        std::vector<double>& result);
+
     virtual bool makeActionSpace() = 0;
 
-    virtual bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) = 0;
+    virtual bool makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo) = 0;
 
     virtual bool getObservation(std::vector<double>& state, std::vector<double>& observation) const = 0;
-    
-    virtual bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const = 0;
+
+    virtual bool getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const = 0;
 
     virtual void createRobotCollisionObjects(const std::vector<double>& state,
             std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const = 0;
@@ -78,7 +88,7 @@ public:
 
     virtual void getControlLimits(std::vector<double>& lowerLimits, std::vector<double>& upperLimits) const;
 
-    virtual void sampleRandomControl(std::vector<double>& control, std::default_random_engine* randGen, std::string &actionSamplingStrategy);
+    virtual void sampleRandomControl(std::vector<double>& control, std::default_random_engine* randGen, std::string& actionSamplingStrategy);
 
     virtual void getLinearProcessMatrices(const std::vector<double>& state,
                                           std::vector<double>& control,
@@ -86,7 +96,7 @@ public:
                                           std::vector<Eigen::MatrixXd>& matrices) const = 0;
     virtual void getLinearObservationDynamics(const std::vector<double>& state,
             Eigen::MatrixXd& H,
-	    Eigen::MatrixXd& W) const = 0;
+            Eigen::MatrixXd& W) const = 0;
 
     virtual bool isTerminal(std::vector<double>& state) const = 0;
 
@@ -104,32 +114,40 @@ public:
 
     virtual void getObservationCovarianceMatrix(Eigen::MatrixXd& observation_covariance_matrix) const;
 
-    void setProcessDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution);
+    virtual void makeProcessDistribution(Eigen::MatrixXd& mean,
+                                         Eigen::MatrixXd& covariance_matrix,
+                                         unsigned long seed) = 0;
 
-    void setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution);
+    virtual void makeObservationDistribution(Eigen::MatrixXd& mean,
+            Eigen::MatrixXd& covariance_matrix,
+            unsigned long seed) = 0;
+
+    std::shared_ptr<Eigen::Distribution<double>> getProcessDistribution() const;
+
+    std::shared_ptr<Eigen::Distribution<double>> getObservationDistribution() const;
 
     shared::ObservationSpace* getObservationSpace() const;
-    
+
     shared::ActionSpace* getActionSpace() const;
 
     virtual void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const = 0;
-    
+
     /*** Methods for viewer interface ***/
     virtual void setupViewer(std::string model_file, std::string environment_file);
-    
+
     virtual void resetViewer(std::string model_file, std::string environment_file);
-    
+
     virtual void updateViewer(std::vector<double>& state,
                               std::vector<std::vector<double>>& particles,
                               std::vector<std::vector<double>>& particle_colors) = 0;
-    
+
 
     void getCameraImage(std::vector<uint8_t>& image, int width, int height);
 
     virtual void setParticlePlotLimit(unsigned int particle_plot_limit);
 
     virtual void addBox(std::string name, std::vector<double> dims);
-    
+
     virtual void removeBox(std::string name);
 
 protected:
@@ -155,12 +173,12 @@ protected:
 
     std::vector<double> upperControlLimits_;
 
-    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> process_distribution_;
+    std::shared_ptr<Eigen::Distribution<double>> process_distribution_;
 
-    std::shared_ptr<Eigen::EigenMultivariateNormal<double>> observation_distribution_;    
+    std::shared_ptr<Eigen::Distribution<double>> observation_distribution_;
 
     std::shared_ptr<shared::ObservationSpace> observationSpace_;
-    
+
     std::shared_ptr<shared::ActionSpace> actionSpace_;
 
 #ifdef USE_OPENRAVE
@@ -193,9 +211,9 @@ public:
     void addBox(std::string name, std::vector<double> dims) {
         this->get_override("addBox")(name, dims);
     }
-    
+
     void removeBox(std::string name) {
-	this->get_override("removeBox")(name);
+        this->get_override("removeBox")(name);
     }
 
     void createRobotCollisionObjects(const std::vector<double>& state,
@@ -278,38 +296,42 @@ public:
         this->get_override("setNewtonModel")();
     }
 
-    void setProcessDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution) {
-        this->get_override("setProcessDistribution")(distribution);
-    }
-
-    void setObservationDistribution(std::shared_ptr<Eigen::EigenMultivariateNormal<double>>& distribution) {
-        this->get_override("setObservationDistribution")(distribution);
-    }
-    
     bool makeActionSpace() {
-	this->get_override("makeActionSpace")();
+        this->get_override("makeActionSpace")();
     }
 
-    bool makeObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo) {
+    bool makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo) {
         this->get_override("makeObservationSpace")(observationSpaceInfo);
     }
 
-    void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const{
+    void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const {
         this->get_override("transformToObservationSpace")(state, res);
     }
 
     void getLinearObservationDynamics(const std::vector<double>& state,
                                       Eigen::MatrixXd& H,
-				      Eigen::MatrixXd& W) const {
-	this->get_override("getLinearObservationDynamics")(state, H, W);
+                                      Eigen::MatrixXd& W) const {
+        this->get_override("getLinearObservationDynamics")(state, H, W);
     }
-    
-    bool getObservation(std::vector<double> &state, std::vector<double> &observationError, std::vector<double>& observation) const {
-	this->get_override("getObservation")(state, observationError, observation);
+
+    bool getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const {
+        this->get_override("getObservation")(state, observationError, observation);
     }
-    
+
     void getCameraImage(std::vector<uint8_t>& image, int width, int height) {
-	this->get_override("getCameraImage")(image, width, height);
+        this->get_override("getCameraImage")(image, width, height);
+    }
+
+    void makeProcessDistribution(Eigen::MatrixXd& mean,
+                                 Eigen::MatrixXd& covariance_matrix,
+                                 unsigned long seed) {
+        this->get_override("makeProcessDistribution")(mean, covariance_matrix, seed);
+    }
+
+    void makeObservationDistribution(Eigen::MatrixXd& mean,
+                                     Eigen::MatrixXd& covariance_matrix,
+                                     unsigned long seed) {
+        this->get_override("makeObservationDistribution")(mean, covariance_matrix, seed);
     }
 
 };

@@ -265,6 +265,22 @@ void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
 
 }
 
+void DubinRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
+        Eigen::MatrixXd& covariance_matrix,
+        unsigned long seed)
+{
+    process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
+    setStateCovarianceMatrix(process_distribution_->_covar);
+}
+
+void DubinRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
+        Eigen::MatrixXd& covariance_matrix,
+        unsigned long seed)
+{   
+    observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
+    setObservationCovarianceMatrix(observation_distribution_->_covar);
+}
+
 void DubinRobot::updateViewer(std::vector<double>& state,
                               std::vector<std::vector<double>>& particles,
                               std::vector<std::vector<double>>& particle_colors)

@@ -433,9 +433,10 @@ ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& 
     return collision_objects;
 }
 
-bool ManipulatorRobot::makeActionSpace() {
+bool ManipulatorRobot::makeActionSpace()
+{
     actionSpace_ = std::make_shared<shared::DiscreteActionSpace>();
-    unsigned int numDimensions = active_joints_.size();    
+    unsigned int numDimensions = active_joints_.size();
     actionSpace_->setNumDimensions(numDimensions);
     actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);
 }
@@ -444,13 +445,13 @@ bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& 
 {
     observationSpace_ = std::make_shared<shared::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
-    std::vector<double> upperLimits;    
+    std::vector<double> upperLimits;
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         observationSpace_->setDimension(getStateSpaceDimension());
         getStateLimits(lowerLimits, upperLimits);
-        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerLimits, 
-                                                                                              upperLimits);
-        
+        static_cast<shared::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerLimits,
+                upperLimits);
+
     } else {
         observationSpace_->setDimension(3 + getStateSpaceDimension() / 2);
         std::vector<double> r_state(getStateSpaceDimension() / 2, 0.0);
@@ -475,8 +476,8 @@ bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& 
             upperObservationLimits.push_back(upperLimits[i + upperLimits.size() / 2]);
         }
 
-        static_cast<shared::ContinuousObservationSpace *>(observationSpace_.get())->setLimits(lowerObservationLimits, 
-                                                                                              upperObservationLimits);
+        static_cast<shared::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerObservationLimits,
+                upperObservationLimits);
     }
 }
 
@@ -1201,7 +1202,25 @@ std::shared_ptr<shared::Robot> makeManipulatorRobot(std::string model_file)
     return robot_ptr;
 }
 
-BOOST_PYTHON_MODULE(librobots)
+void ManipulatorRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
+        Eigen::MatrixXd& covariance_matrix,
+        unsigned long seed)
+{
+    process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
+    setStateCovarianceMatrix(process_distribution_->_covar);
+}
+
+void ManipulatorRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
+        Eigen::MatrixXd& covariance_matrix,
+        unsigned long seed)
+{   
+    cout << "obs matrix: (" << covariance_matrix.rows() << ", " << covariance_matrix.cols() << ")" << endl;
+    observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
+    cout << "covar: " << observation_distribution_->_covar << endl;    
+    setObservationCovarianceMatrix(observation_distribution_->_covar);
+}
+
+/**BOOST_PYTHON_MODULE(librobots)
 {
     using namespace boost::python;
 
@@ -1312,9 +1331,7 @@ BOOST_PYTHON_MODULE(librobots)
     //.def("setup", &Integrate::setup)
     ;
 
-    /**def("makeManipulatorRobot", &makeManipulatorRobot,
-      return_value_policy<manage_new_object>());*/
     def("makeManipulatorRobot", &makeManipulatorRobot);
-}
+}*/
 
 }

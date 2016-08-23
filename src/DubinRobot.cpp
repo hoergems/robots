@@ -78,8 +78,8 @@ void DubinRobot::createRobotCollisionObjects(const std::vector<double>& state,
     collision_objects.push_back(coll_obj);
 }
 
-bool DubinRobot::makeActionSpace() {
-    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>();
+bool DubinRobot::makeActionSpace(bool normalizedActionSpace) {
+    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>(normalizedActionSpace);
     unsigned int numDimensions = 2;
     actionSpace_->setNumDimensions(numDimensions);
     actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);

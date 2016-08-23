@@ -32,9 +32,9 @@ void AUV::createRobotCollisionObjects(const std::vector<double>& state,
     collision_objects.push_back(coll_obj);
 }
 
-bool AUV::makeActionSpace()
+bool AUV::makeActionSpace(bool normalizedActionSpace)
 {
-    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>();
+    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>(normalizedActionSpace);
     unsigned int numDimensions = 1;
     actionSpace_->setNumDimensions(numDimensions);
     actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);

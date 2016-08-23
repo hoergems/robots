@@ -2,8 +2,8 @@
 
 namespace shared
 {
-DiscreteActionSpace::DiscreteActionSpace():
-    shared::ActionSpace()
+DiscreteActionSpace::DiscreteActionSpace(bool normalizedActionSpace):
+    shared::ActionSpace(normalizedActionSpace)
 {
 
 }

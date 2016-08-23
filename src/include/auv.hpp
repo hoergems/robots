@@ -30,7 +30,7 @@ public:
 
     void transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const override;
 
-    bool makeActionSpace() override;
+    bool makeActionSpace(bool normalizedActionSpace) override;
 
     bool makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo) override;
 

@@ -119,7 +119,7 @@ public:
 
     virtual bool getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const override;
 
-    bool makeActionSpace() override;
+    bool makeActionSpace(bool normalizedActionSpace) override;
 
     virtual bool makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo) override;
 

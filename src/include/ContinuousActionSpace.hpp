@@ -7,7 +7,7 @@ namespace shared
 class ContinuousActionSpace: public shared::ActionSpace
 {
 public:
-    ContinuousActionSpace();
+    ContinuousActionSpace(bool normalizedActionSpace);
     
     virtual std::string getType() const override;
 

@@ -433,9 +433,9 @@ ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& 
     return collision_objects;
 }
 
-bool ManipulatorRobot::makeActionSpace()
+bool ManipulatorRobot::makeActionSpace(bool normalizedActionSpace)
 {
-    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>();
+    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>(normalizedActionSpace);
     unsigned int numDimensions = active_joints_.size();
     actionSpace_->setNumDimensions(numDimensions);
     actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);

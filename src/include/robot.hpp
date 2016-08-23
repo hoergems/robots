@@ -49,7 +49,7 @@ public:
                         double simulation_step_size,
                         std::vector<double>& result);
 
-    virtual bool makeActionSpace() = 0;
+    virtual bool makeActionSpace(bool normalizedActionSpace) = 0;
 
     virtual bool makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo) = 0;
 
@@ -296,8 +296,8 @@ public:
         this->get_override("setNewtonModel")();
     }
 
-    bool makeActionSpace() {
-        this->get_override("makeActionSpace")();
+    bool makeActionSpace(bool normalizedActionSpace) {
+        this->get_override("makeActionSpace")(normalizedActionSpace);
     }
 
     bool makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo) {

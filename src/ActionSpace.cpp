@@ -1,15 +1,26 @@
 #include "include/ActionSpace.hpp"
+#include <memory>
 
 using std::cout;
 using std::endl;
 
 namespace shared
 {
-ActionSpace::ActionSpace():
+ActionSpace::ActionSpace(bool normalizedActionSpace):
     numDimensions_(),
     lowerActionLimits_(),
-    upperActionLimits_()
+    upperActionLimits_(),
+    actionNormalizer_(nullptr),
+    normalizedActionSpace_(normalizedActionSpace)
 {
+    if (normalizedActionSpace) {
+	actionNormalizer_ = std::unique_ptr<shared::standardNormalize>(new standardNormalize(lowerActionLimits_, upperActionLimits_));
+	//actionNormalizer_ = std::make_unique<shared::standardNormalize>(lowerActionLimits_, upperActionLimits_);
+    }
+    else {
+	actionNormalizer_ = std::unique_ptr<shared::nullNormalize>(new nullNormalize(lowerActionLimits_, upperActionLimits_));
+	//actionNormalizer_ = std::make_unique<shared::nullNormalize>(lowerActionLimits_, upperActionLimits_);
+    }
 
 }
 
@@ -33,21 +44,27 @@ void ActionSpace::setActionLimits(std::vector<double>& lowerActionLimits,
 void ActionSpace::normalizeAction(std::vector<double>& action,
                                   std::vector<double>& normalizedAction)
 {
-    normalizedAction.clear();
+    actionNormalizer_->operator()(action, normalizedAction);    
+    /**normalizedAction.clear();
     normalizedAction.resize(action.size());
     for (size_t i = 0; i < lowerActionLimits_.size(); i++) {
         normalizedAction[i] = (action[i] - lowerActionLimits_[i]) / (upperActionLimits_[i] - lowerActionLimits_[i]);
-    }
+    }*/
 }
 
 void ActionSpace::denormalizeAction(std::vector<double>& normalizedAction,
                                     std::vector<double>& action)
 {
-    action.clear();
+    actionNormalizer_->denormalizeAction(normalizedAction, action);
+    /**action.clear();
     action.resize(normalizedAction.size());    
     for (size_t i = 0; i < lowerActionLimits_.size(); i++) {
         action[i] = normalizedAction[i] * (upperActionLimits_[i] - lowerActionLimits_[i]) + lowerActionLimits_[i];	
-    }
+    }*/
+}
+
+bool ActionSpace::isNormalized() const {
+    return normalizedActionSpace_;
 }
 
 }

@@ -7,7 +7,7 @@ namespace shared
 class DiscreteActionSpace: public shared::ActionSpace
 {
 public:
-    DiscreteActionSpace();
+    DiscreteActionSpace(bool normalizedActionSpace);
     
     virtual std::string getType() const override;
 

@@ -5,16 +5,18 @@
 #include <iostream>
 #include <memory>
 
+using std::cout;
+using std::endl;
+
 namespace shared
 {
 
 // Normalization functor
 struct normalize {
 public:
-    normalize(std::vector<double>& lowerActionLimits,
-              std::vector<double>& upperActionLimits):
-        lowerActionLimits_(lowerActionLimits),
-        upperActionLimits_(upperActionLimits) {
+    normalize():
+        lowerActionLimits_(),
+        upperActionLimits_() {
 
     }
 
@@ -23,6 +25,11 @@ public:
 
     virtual void operator()(std::vector<double>& a1,
                             std::vector<double>& a2) = 0;
+			    
+    void setActionLimits(std::vector<double> &lowerActionLimits, std::vector<double> upperActionLimits) {
+	lowerActionLimits_ = lowerActionLimits;
+	upperActionLimits_ = upperActionLimits;
+    }
 
 protected:
     std::vector<double> lowerActionLimits_;
@@ -31,9 +38,8 @@ protected:
 
 struct standardNormalize: public normalize {
 public:
-    standardNormalize(std::vector< double >& lowerActionLimits,
-                      std::vector< double >& upperActionLimits):
-        normalize(lowerActionLimits, upperActionLimits) {
+    standardNormalize():
+        normalize() {
 
     }
 
@@ -58,9 +64,8 @@ public:
 
 struct nullNormalize: public normalize {
 public:
-    nullNormalize(std::vector< double >& lowerActionLimits,
-                  std::vector< double >& upperActionLimits):
-        normalize(lowerActionLimits, upperActionLimits) {
+    nullNormalize():
+        normalize() {
 
     }
     

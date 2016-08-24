@@ -14,11 +14,11 @@ ActionSpace::ActionSpace(bool normalizedActionSpace):
     normalizedActionSpace_(normalizedActionSpace)
 {
     if (normalizedActionSpace) {
-	actionNormalizer_ = std::unique_ptr<shared::standardNormalize>(new standardNormalize(lowerActionLimits_, upperActionLimits_));
+	actionNormalizer_ = std::unique_ptr<shared::standardNormalize>(new standardNormalize());
 	//actionNormalizer_ = std::make_unique<shared::standardNormalize>(lowerActionLimits_, upperActionLimits_);
     }
     else {
-	actionNormalizer_ = std::unique_ptr<shared::nullNormalize>(new nullNormalize(lowerActionLimits_, upperActionLimits_));
+	actionNormalizer_ = std::unique_ptr<shared::nullNormalize>(new nullNormalize());
 	//actionNormalizer_ = std::make_unique<shared::nullNormalize>(lowerActionLimits_, upperActionLimits_);
     }
 
@@ -39,6 +39,7 @@ void ActionSpace::setActionLimits(std::vector<double>& lowerActionLimits,
 {
     lowerActionLimits_ = lowerActionLimits;
     upperActionLimits_ = upperActionLimits;
+    actionNormalizer_->setActionLimits(lowerActionLimits, upperActionLimits);
 }
 
 void ActionSpace::normalizeAction(std::vector<double>& action,

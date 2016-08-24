@@ -36,6 +36,7 @@
 #include <Eigen/Dense>
 #include <random>
 #include <memory>
+#include <cmath>
 
 /*
   We need a functor that can pretend it's const,
@@ -56,9 +57,11 @@ struct scalar_dist_op {
     EIGEN_EMPTY_STRUCT_CTOR(scalar_dist_op)
 
     template<typename Index>
+
     inline const Scalar operator()(Index, Index = 0) const {
         return norm(rng);
     }
+
     inline void seed(const uint64_t& s) {
         rng.seed(s);
     }
@@ -67,10 +70,10 @@ struct scalar_dist_op {
 template<typename Scalar>
 std::mt19937 scalar_dist_op<Scalar>::rng;
 
-template<typename Scalar>
+/**template<typename Scalar>
 struct functor_traits<scalar_dist_op<Scalar> > {
     enum { Cost = 50 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = false };
-};
+};*/
 
 } // end namespace internal
 }
@@ -88,12 +91,23 @@ public:
 
     Matrix<Scalar, Dynamic, Dynamic> _covar;
 
+    Matrix<Scalar, Dynamic, Dynamic> _covar_inverse;
+
     uint64_t _seed;
 
     Distribution() {};
+
     virtual Eigen::Matrix < Scalar, Eigen::Dynamic, -1 > samples(int nn) = 0;
 
-    virtual std::shared_ptr<Eigen::Distribution<Scalar>> clone() = 0;
+    virtual double calcPdf(std::vector<double>& x, std::vector<double>& mean) = 0;
+
+    virtual void setCovar(const Matrix<Scalar, Dynamic, Dynamic>& covar) {
+        _covar = covar;
+    }
+
+    void setMean(const Matrix<Scalar, Dynamic, 1>& mean) {
+        _mean = mean;
+    }
 
 protected:
     internal::scalar_dist_op<Scalar> randN; // Gaussian functor
@@ -124,6 +138,7 @@ template<typename Scalar>
 class EigenMultivariateNormal: public Distribution<Scalar>
 {
 
+    double normal_dist_term1_;
     Matrix<Scalar, Dynamic, Dynamic> _transform;
     bool _use_cholesky;
     SelfAdjointEigenSolver<Matrix<Scalar, Dynamic, Dynamic> > _eigenSolver; // drawback: this creates a useless eigenSolver when using Cholesky decomposition, but it yields access to eigenvalues and vectors
@@ -132,18 +147,33 @@ public:
     EigenMultivariateNormal(const Matrix<Scalar, Dynamic, 1>& mean, const Matrix<Scalar, Dynamic, Dynamic>& covar,
                             const bool use_cholesky = false, const uint64_t& seed = std::mt19937::default_seed):
         Distribution<Scalar>(),
+        normal_dist_term1_(0.0),
         _use_cholesky(use_cholesky) {
         this->randN.seed(seed);
-        setMean(mean);
+        this->setMean(mean);
         setCovar(covar);
         this->_seed = seed;
+
+        double det = covar.determinant();
+        normal_dist_term1_ = 1.0 / std::sqrt(std::pow(2.0 * M_PI, covar.rows()) * det);
     }
 
-    void setMean(const Matrix<Scalar, Dynamic, 1>& mean) {
-        this->_mean = mean;
+    double calcPdf(std::vector<double>& x, std::vector<double>& mean) override {
+	VectorXd mu(mean.size());
+	VectorXd s(x.size());	
+	for (size_t i = 0; i < x.size(); i++) {
+	    mu(i) = mean[i];
+	    s(i) = x[i];
+	}
+
+        double term2 = std::exp((-1.0 / 2.0) * (s - mu).transpose() * this->_covar_inverse * (s - mu));
+        double pdf = normal_dist_term1_ * term2;
+        return pdf;
     }
-    void setCovar(const Matrix<Scalar, Dynamic, Dynamic>& covar) {
+
+    void setCovar(const Matrix<Scalar, Dynamic, Dynamic>& covar) override {
         this->_covar = covar;
+        this->_covar_inverse = this->_covar.inverse();
 
         // Assuming that we'll be using this repeatedly,
         // compute the transformation matrix that will
@@ -171,12 +201,6 @@ public:
     /// as columns in a Dynamic by nn matrix
     Matrix < Scalar, Dynamic, -1 > samples(int nn) {
         return (_transform * Matrix < Scalar, Dynamic, -1 >::NullaryExpr(this->_covar.rows(), nn, this->randN)).colwise() + this->_mean;
-    }
-
-    std::shared_ptr<Eigen::Distribution<Scalar>> clone() override {
-        std::shared_ptr<Eigen::Distribution<Scalar>> cloned =
-            std::make_shared<EigenMultivariateNormal<Scalar>>(this->_mean, this->_covar, _use_cholesky);
-        return cloned;
     }
 }; // end class EigenMultivariateNormal
 } // end namespace Eigen

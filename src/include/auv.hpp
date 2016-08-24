@@ -61,6 +61,11 @@ public:
     virtual void makeObservationDistribution(Eigen::MatrixXd& mean,
             Eigen::MatrixXd& covariance_matrix,
             unsigned long seed) override;
+	    
+private:
+    double dim_x_;
+    double dim_y_;
+    double dim_z_;
 
 };
 }

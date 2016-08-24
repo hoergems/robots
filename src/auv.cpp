@@ -3,9 +3,15 @@
 namespace shared
 {
 AUV::AUV(std::string robot_file):
-    Robot(robot_file)
+    Robot(robot_file),
+    dim_x_(0.0),
+    dim_y_(0.0),
+    dim_z_(0.0)
 {
     propagator_ = std::make_shared<shared::AUVPropagator>();
+    dim_x_ = 0.5;
+    dim_y_ = 0.5;
+    dim_z_ = 0.5;
 }
 
 void AUV::createRobotCollisionObjects(const std::vector<double>& state,
@@ -125,7 +131,13 @@ void AUV::makeProcessDistribution(Eigen::MatrixXd& mean,
                                   Eigen::MatrixXd& covariance_matrix,
                                   unsigned long seed)
 {
-
+    process_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
+    std::vector<std::pair<double, double>> elements;
+    elements.push_back(std::make_pair<double, double>(-1.0, 0.1));
+    elements.push_back(std::make_pair<double, double>(0.0, 0.8));
+    elements.push_back(std::make_pair<double, double>(1.0, 0.1));
+    static_cast<Eigen::WeightedDiscreteDistribution<double> *>(process_distribution_.get())->setElements(elements);
+    setStateCovarianceMatrix(covariance_matrix);
 }
 
 void AUV::makeObservationDistribution(Eigen::MatrixXd& mean,
@@ -140,6 +152,33 @@ void AUV::updateViewer(std::vector<double>& state,
                        std::vector<std::vector<double>>& particle_colors)
 {
 #ifdef USE_OPENRAVE
+    std::vector<std::string> names;
+    std::vector<std::vector<double>> dims;
+    std::vector<std::vector<double>> colors;
+    std::string name = "auv";
+    names.push_back(name);
+    std::vector<double> main_dims( {state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});
+    dims.push_back(main_dims);
+    std::vector<double> main_color( {1.0, 0.0, 0.0, 0.5});
+    colors.push_back(main_color);
+    for (size_t i = 0; i < particles.size(); i++) {
+        std::string p_name = "particle_dubin" + std::to_string(i);
+        names.push_back(p_name);
+
+        std::vector<double> p_dims( {particles[i][0],
+                                     particles[i][1],
+                                     0.025,
+                                     dim_x_,
+                                     dim_y_,
+                                     dim_z_,
+                                     particles[i][2]
+                                    });
+        dims.push_back(p_dims);
+        //std::vector<double> c({0.0, 1.0, 0.0, 0.5});
+        colors.push_back(particle_colors[i]);
+    }
+
+    viewer_->addBoxes(names, dims, colors);
 #endif
 }
 

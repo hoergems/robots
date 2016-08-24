@@ -17,7 +17,10 @@ bool AUVPropagator::propagateState(const std::vector<double>& currentState,
                                    const double& simulation_step_size,
                                    std::vector<double>& result)
 {
-    
+    result = currentState;
+    result[0] += control[0];
+    result[1] += control[1];    
+    result[0] += control_error[0];    
 }
 
 void AUVPropagator::setActionSpace(std::shared_ptr<shared::ActionSpace> &actionSpace) {

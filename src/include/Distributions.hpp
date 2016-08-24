@@ -53,17 +53,21 @@ template<typename Scalar>
 struct scalar_dist_op {
     static std::mt19937 rng;                        // The uniform pseudo-random algorithm
     mutable std::normal_distribution<Scalar> norm; // gaussian combinator
+    mutable std::uniform_real_distribution<double> real_distr;
 
     EIGEN_EMPTY_STRUCT_CTOR(scalar_dist_op)
 
     template<typename Index>
-
     inline const Scalar operator()(Index, Index = 0) const {
         return norm(rng);
     }
 
     inline void seed(const uint64_t& s) {
         rng.seed(s);
+    }
+
+    inline double sampleUniform() {
+        return real_distr(rng);
     }
 };
 
@@ -123,7 +127,68 @@ public:
         Distribution<Scalar>() {
 
     }
+};
 
+template<typename Scalar>
+class WeightedDiscreteDistribution: public Distribution<Scalar>
+{
+public:
+    WeightedDiscreteDistribution():
+        Distribution<Scalar>(),
+        weightedElements_(),
+        weights_() {
+
+    }
+
+    void setElements(std::vector<std::pair<Scalar, double>>& elements) {
+        double weight_sum = 0.0;
+        weights_ = std::vector<double>(elements.size());
+        for (size_t i = 0; i < elements.size(); i++) {
+            weight_sum += elements[i].second;
+            weights_[i] = elements[i].second;
+        }
+
+        weightedElements_ = elements;
+        for (size_t i = 0; i < elements.size(); i++) {
+            weightedElements_[i].second /= weight_sum;
+        }
+    }
+
+    Matrix < Scalar, Eigen::Dynamic, -1 > samples(int nn) override {
+        Matrix < Scalar, Eigen::Dynamic, -1 > sampleMatrix(1, nn);
+        for (size_t i = 0; i < nn; i++) {
+            double rand_num = this->randN.sampleUniform();
+            unsigned int index = 0;
+            for (size_t j = 0; j < weights_.size(); j++) {
+                if (rand_num < weights_[j]) {
+                    index = j;
+                    break;
+                }
+
+                rand_num -= weights_[j];
+            }
+
+            sampleMatrix(1, i) = weightedElements_[index].first;
+        }
+
+        return sampleMatrix;
+    }
+
+    double calcPdf(std::vector<double>& x, std::vector<double>& mean) override {
+        double value = x[0];
+        for (auto & k : weightedElements_) {
+            if (k.first == value) {
+                return k.second;
+            }
+        }
+
+        return 0.0;
+    }
+
+private:
+    std::vector<std::pair<Scalar, double>> weightedElements_;
+
+    std::vector<double> weights_;
 };
 
 }
@@ -159,12 +224,12 @@ public:
     }
 
     double calcPdf(std::vector<double>& x, std::vector<double>& mean) override {
-	VectorXd mu(mean.size());
-	VectorXd s(x.size());	
-	for (size_t i = 0; i < x.size(); i++) {
-	    mu(i) = mean[i];
-	    s(i) = x[i];
-	}
+        VectorXd mu(mean.size());
+        VectorXd s(x.size());
+        for (size_t i = 0; i < x.size(); i++) {
+            mu(i) = mean[i];
+            s(i) = x[i];
+        }
 
         double term2 = std::exp((-1.0 / 2.0) * (s - mu).transpose() * this->_covar_inverse * (s - mu));
         double pdf = normal_dist_term1_ * term2;

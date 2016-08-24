@@ -286,15 +286,9 @@ void DubinRobot::updateViewer(std::vector<double>& state,
                               std::vector<std::vector<double>>& particle_colors)
 {
 #ifdef USE_OPENRAVE
-
-    /**std::vector<double> dims( {state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});
-    std::string name = "dubin";
-    viewer_->addBox(name, dims);*/
-
     std::vector<std::string> names;
     std::vector<std::vector<double>> dims;
     std::vector<std::vector<double>> colors;
-
     std::string name = "dubin";
     names.push_back(name);
     std::vector<double> main_dims( {state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});

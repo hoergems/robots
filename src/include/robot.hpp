@@ -9,7 +9,7 @@
 #include "fcl/shape/geometric_shapes_utility.h"
 #include "propagator.hpp"
 #include <random>
-#include "MultNormal.hpp"
+#include "Distributions.hpp"
 #include "DiscreteObservationSpace.hpp"
 #include "ContinuousObservationSpace.hpp"
 #include "DiscreteActionSpace.hpp"

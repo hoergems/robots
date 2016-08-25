@@ -39,12 +39,6 @@ private:
     std::map<std::size_t, std::vector<double>> observationMap_;
     
     /**
-     * A hash function to calulate a hash value for a given observation which serves
-     * as the key for observationMap_
-     */
-    void hashCombine_(std::size_t &seed, double const &v) const;
-    
-    /**
      * Calculate the hash value for a particular observation
      */
     size_t calcHashValue_(const std::vector<double> &observation) const;

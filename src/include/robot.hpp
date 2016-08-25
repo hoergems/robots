@@ -125,6 +125,11 @@ public:
     std::shared_ptr<Eigen::Distribution<double>> getProcessDistribution() const;
 
     std::shared_ptr<Eigen::Distribution<double>> getObservationDistribution() const;
+    
+    /**
+     * Calculates the likelihood of 'observation' given 'state'
+     */
+    virtual double calcLikelihood(std::vector<double> &state, std::vector<double> &observation);
 
     shared::ObservationSpace* getObservationSpace() const;
 
@@ -332,6 +337,10 @@ public:
                                      Eigen::MatrixXd& covariance_matrix,
                                      unsigned long seed) {
         this->get_override("makeObservationDistribution")(mean, covariance_matrix, seed);
+    }
+    
+    double calcLikelihood(std::vector<double> &state, std::vector<double> &observation) {
+	this->get_override("calcLikelihood")(state, observation);
     }
 
 };

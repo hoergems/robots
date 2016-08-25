@@ -33,10 +33,13 @@
 #ifndef __EIGENMULTIVARIATENORMAL_HPP_
 #define __EIGENMULTIVARIATENORMAL_HPP_
 
+#include "utils.hpp"
 #include <Eigen/Dense>
 #include <random>
 #include <memory>
 #include <cmath>
+#include <assert.h>
+
 
 /*
   We need a functor that can pretend it's const,
@@ -103,7 +106,7 @@ public:
 
     virtual Eigen::Matrix < Scalar, Eigen::Dynamic, -1 > samples(int nn) = 0;
 
-    virtual double calcPdf(std::vector<double>& x, std::vector<double>& mean) = 0;
+    virtual double calcPdf(std::vector<Scalar>& x, std::vector<Scalar>& mean) = 0;
 
     virtual void setCovar(const Matrix<Scalar, Dynamic, Dynamic>& covar) {
         _covar = covar;
@@ -136,26 +139,40 @@ public:
     WeightedDiscreteDistribution():
         Distribution<Scalar>(),
         weightedElements_(),
-        weights_() {
+        weights_(),
+        hashValues_() {
 
     }
 
-    void setElements(std::vector<std::pair<Scalar, double>>& elements) {
+    void setElements(std::vector<std::pair<std::vector<Scalar>, double>>& elements) {
         double weight_sum = 0.0;
-        weights_ = std::vector<double>(elements.size());
+	size_t dim = elements[0].first.size();
+        weights_ = std::vector<Scalar>(elements.size());
+	hashValues_ = std::vector<size_t>(elements.size());
         for (size_t i = 0; i < elements.size(); i++) {
             weight_sum += elements[i].second;
             weights_[i] = elements[i].second;
         }
 
         weightedElements_ = elements;
+	size_t hashValue;
         for (size_t i = 0; i < elements.size(); i++) {
             weightedElements_[i].second /= weight_sum;
+	    
+	    hashValue = 0;
+	    for (auto &k: elements[i].first) {
+		robotutils::hash_combine(hashValue, k);
+	    }
+	    
+	    hashValues_[i] = hashValue;
         }
     }
 
     Matrix < Scalar, Eigen::Dynamic, -1 > samples(int nn) override {
-        Matrix < Scalar, Eigen::Dynamic, -1 > sampleMatrix(1, nn);
+	size_t numElements = weightedElements_.size();
+	assert(numElements > 0 && "WeightedDiscreteDistribution: No elements set!");
+	size_t dim = weightedElements_[0].first.size();
+        Matrix < Scalar, Eigen::Dynamic, -1 > sampleMatrix(dim, nn);
         for (size_t i = 0; i < nn; i++) {
             double rand_num = this->randN.sampleUniform();
             unsigned int index = 0;
@@ -167,28 +184,52 @@ public:
 
                 rand_num -= weights_[j];
             }
-
-            sampleMatrix(1, i) = weightedElements_[index].first;
+            
+            for (size_t j = 0; j < dim; j++) {
+		sampleMatrix(j, i) = weightedElements_[index].first[j];
+	    }
         }
 
         return sampleMatrix;
     }
 
-    double calcPdf(std::vector<double>& x, std::vector<double>& mean) override {
+    double calcPdf(std::vector<Scalar>& x, std::vector<Scalar>& mean) override {
         double value = x[0];
-        for (auto & k : weightedElements_) {
+	size_t hashValue = 0;
+	for (auto &k: x) {
+	    robotutils::hash_combine(hashValue, k);
+	}
+	
+	size_t index = 0;
+	bool indexFound = false;
+	for (size_t i = 0; i < hashValues_.size(); i++) {
+	    if (hashValue == hashValues_[i]) {
+		index = i;
+		indexFound = true;
+                break;		
+	    }
+	}
+	if (indexFound) {
+	    return weightedElements_[index].second;
+	}
+	
+	return 0.0;
+	
+        /**for (auto & k : weightedElements_) {
             if (k.first == value) {
                 return k.second;
             }
         }
 
-        return 0.0;
+        return 0.0;*/
     }
 
 private:
-    std::vector<std::pair<Scalar, double>> weightedElements_;
+    std::vector<std::pair<std::vector<Scalar>, double>> weightedElements_;
 
     std::vector<double> weights_;
+    
+    std::vector<size_t> hashValues_;
 };
 
 }
@@ -223,7 +264,7 @@ public:
         normal_dist_term1_ = 1.0 / std::sqrt(std::pow(2.0 * M_PI, covar.rows()) * det);
     }
 
-    double calcPdf(std::vector<double>& x, std::vector<double>& mean) override {
+    double calcPdf(std::vector<Scalar>& x, std::vector<Scalar>& mean) override {
         VectorXd mu(mean.size());
         VectorXd s(x.size());
         for (size_t i = 0; i < x.size(); i++) {

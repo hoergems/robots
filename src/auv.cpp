@@ -132,10 +132,13 @@ void AUV::makeProcessDistribution(Eigen::MatrixXd& mean,
                                   unsigned long seed)
 {
     process_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
-    std::vector<std::pair<double, double>> elements;
-    elements.push_back(std::make_pair<double, double>(-1.0, 0.1));
-    elements.push_back(std::make_pair<double, double>(0.0, 0.8));
-    elements.push_back(std::make_pair<double, double>(1.0, 0.1));
+    std::vector<std::pair<std::vector<double>, double>> elements;
+    std::vector<double> elem0({-1.0, 0.0});
+    std::vector<double> elem1({0.0, 0.0});
+    std::vector<double> elem2({1.0, 0.0});
+    elements.push_back(std::make_pair(elem0, 0.1));
+    elements.push_back(std::make_pair(elem1, 0.8));
+    elements.push_back(std::make_pair(elem2, 0.1));    
     static_cast<Eigen::WeightedDiscreteDistribution<double> *>(process_distribution_.get())->setElements(elements);
     setStateCovarianceMatrix(covariance_matrix);
 }
@@ -144,7 +147,7 @@ void AUV::makeObservationDistribution(Eigen::MatrixXd& mean,
                                       Eigen::MatrixXd& covariance_matrix,
                                       unsigned long seed)
 {
-
+    observation_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
 }
 
 void AUV::updateViewer(std::vector<double>& state,

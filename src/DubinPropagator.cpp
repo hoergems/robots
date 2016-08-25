@@ -1,7 +1,5 @@
 #include "include/DubinPropagator.hpp"
-#include "include/utils.hpp"
 
-using namespace robotutils;
 namespace shared
 {
 

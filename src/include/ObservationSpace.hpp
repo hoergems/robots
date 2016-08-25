@@ -2,6 +2,7 @@
 #define __OBSERVATION_SPACE_HPP_
 #include <vector>
 #include <string>
+#include "utils.hpp"
 
 namespace shared
 {

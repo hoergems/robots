@@ -88,6 +88,12 @@ std::shared_ptr<Eigen::Distribution<double>> Robot::getObservationDistribution()
     return observation_distribution_;
 }
 
+double Robot::calcLikelihood(std::vector<double> &state, std::vector<double> &observation) {
+    std::vector<double> transformedState;
+    transformToObservationSpace(state, transformedState);
+    return observation_distribution_->calcPdf(observation, transformedState);
+}
+
 shared::ObservationSpace* Robot::getObservationSpace() const
 {
     return observationSpace_.get();

@@ -159,25 +159,11 @@ set(pkg_conf_file_in "${CMAKE_CURRENT_SOURCE_DIR}/robots.pc.in")
 set(pkg_conf_file_out "${CMAKE_CURRENT_BINARY_DIR}/robots.pc")
 configure_file("${pkg_conf_file_in}" "${pkg_conf_file_out}" @ONLY)
 
-install(TARGETS robots DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(DIRECTORY ${INCLUDE_DIR}/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/robots
+  FILES_MATCHING PATTERN "*.h" PATTERN "*.hxx" PATTERN "*.hpp"
+  PATTERN ".DS_Store" EXCLUDE
+)
 
-install(FILES ${INCLUDE_DIR}/robot.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/propagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/integrate.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/Kinematics.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/propagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ManipulatorPropagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ManipulatorRobot.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/DubinPropagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/DubinRobot.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/auv.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/AUVPropagator.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ActionSpace.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/DiscreteActionSpace.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ContinuousActionSpace.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ObservationSpace.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/DiscreteObservationSpace.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/ContinuousObservationSpace.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/utils.hpp  DESTINATION include/robots)
-install(FILES ${INCLUDE_DIR}/Distributions.hpp  DESTINATION include/robots)
+install(TARGETS robots DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES "${pkg_conf_file_out}" DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/ COMPONENT pkgconfig)
+

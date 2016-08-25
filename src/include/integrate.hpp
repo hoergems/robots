@@ -75,11 +75,11 @@ public:
                                      std::vector<double>& int_times,
                                      std::vector<double>& result);
 
-    void do_integration(std::vector<double>& x,
-                        std::vector<double>& control,
-                        std::vector<double>& control_error,
-                        std::vector<double>& int_times,
-                        std::vector<double>& result) const;
+    virtual void do_integration(state_type& x,
+                                state_type& control,
+                                state_type& control_error,
+                                state_type& int_times,
+                                state_type& result) const override;
 
     void do_integration_delta(std::vector<double>& x,
                               std::vector<double>& control,
@@ -94,7 +94,7 @@ public:
                             std::vector<MatrixXd>& matrices) const;
 
     void getLinearObservationDynamics(const std::vector<double>& state,
-                                      const std::string &observationType,
+                                      const std::string& observationType,
                                       Eigen::MatrixXd& H,
                                       Eigen::MatrixXd& W) const;
 
@@ -115,18 +115,18 @@ public:
     std::vector<double> getResult();
 
     void setRBDLInterface(std::shared_ptr<shared::RBDLInterface>& rbdl_interface);
-    
+
 
     std::shared_ptr<shared::RBDLInterface> getRBDLInterface();
 
 private:
-MatrixXd getW0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
-MatrixXd getH0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
-MatrixXd getF0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
-MatrixXd getM0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
-MatrixXd getV0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
-MatrixXd getB0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
-MatrixXd getA0(const state_type &x, const state_type &rho, const state_type &zeta) const; 
+    MatrixXd getW0(const state_type& x, const state_type& rho, const state_type& zeta) const;
+    MatrixXd getH0(const state_type& x, const state_type& rho, const state_type& zeta) const;
+    MatrixXd getF0(const state_type& x, const state_type& rho, const state_type& zeta) const;
+    MatrixXd getM0(const state_type& x, const state_type& rho, const state_type& zeta) const;
+    MatrixXd getV0(const state_type& x, const state_type& rho, const state_type& zeta) const;
+    MatrixXd getB0(const state_type& x, const state_type& rho, const state_type& zeta) const;
+    MatrixXd getA0(const state_type& x, const state_type& rho, const state_type& zeta) const;
 
 
     // A fuction type of he form MatrixXd function(const state_type&) const

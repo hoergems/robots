@@ -71,8 +71,27 @@ bool AUV::getObservation(std::vector<double>& state, std::vector<double>& observ
     } else {
         observation.clear();
         observation.push_back(0);
+        observation.push_back(0);
     }
     return true;
+}
+
+double AUV::calcLikelihood(std::vector<double>& state, std::vector<double>& observation)
+{
+    std::vector<double> transformedState;
+    transformToObservationSpace(state, transformedState);
+    bool isSame = true;
+    for (size_t i = 0; i < observation.size(); i++) {
+        if (transformedState[i] != observation[i]) {
+            isSame = false;
+        }
+    }
+
+    if (isSame) {
+        return 1.0;
+    }
+
+    return 0.0;
 }
 
 void AUV::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const
@@ -99,12 +118,23 @@ void AUV::makeNextStateAfterCollision(std::vector<double>& previous_state,
 
 bool AUV::isTerminal(std::vector<double>& state) const
 {
+    double dist = distanceGoal(state);
+    if (dist < goal_radius_) {
+        return true;
+    }
+
     return false;
 }
 
 double AUV::distanceGoal(std::vector<double>& state) const
 {
+    assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
+    double x = state[0];
+    double y = state[1];
 
+    double dist = std::pow(goal_position_[0] - x, 2);
+    dist += std::pow(goal_position_[1] - y, 2);
+    return std::sqrt(dist);
 }
 
 void AUV::setGravityConstant(double gravity_constant)
@@ -133,12 +163,12 @@ void AUV::makeProcessDistribution(Eigen::MatrixXd& mean,
 {
     process_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
     std::vector<std::pair<std::vector<double>, double>> elements;
-    std::vector<double> elem0({-1.0, 0.0});
-    std::vector<double> elem1({0.0, 0.0});
-    std::vector<double> elem2({1.0, 0.0});
+    std::vector<double> elem0( { -1.0, 0.0});
+    std::vector<double> elem1( {0.0, 0.0});
+    std::vector<double> elem2( {1.0, 0.0});
     elements.push_back(std::make_pair(elem0, 0.1));
     elements.push_back(std::make_pair(elem1, 0.8));
-    elements.push_back(std::make_pair(elem2, 0.1));    
+    elements.push_back(std::make_pair(elem2, 0.1));
     static_cast<Eigen::WeightedDiscreteDistribution<double> *>(process_distribution_.get())->setElements(elements);
     setStateCovarianceMatrix(covariance_matrix);
 }

@@ -61,7 +61,9 @@ public:
     virtual void makeObservationDistribution(Eigen::MatrixXd& mean,
             Eigen::MatrixXd& covariance_matrix,
             unsigned long seed) override;
-	    
+
+    double calcLikelihood(std::vector<double>& state, std::vector<double>& observation) override;
+
 private:
     double dim_x_;
     double dim_y_;

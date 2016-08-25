@@ -16,14 +16,27 @@ bool AUVPropagator::propagateState(const std::vector<double>& currentState,
                                    const double& duration,
                                    const double& simulation_step_size,
                                    std::vector<double>& result)
-{
+{    
     result = currentState;
-    result[0] += control[0];
-    result[1] += control[1];    
+    if (control[0] == 1.0) {
+        result[1] += 1.0;
+    } else if (control[0] == 2.0) {
+        result[0] += 1.0;
+        result[1] += 1.0;
+    } else if (control[0] == 3.0) {
+        result[0] += 1.0;
+    } else if (control[0] == 4.0) {
+        result[0] += 1.0;
+        result[1] -= 1.0;
+    } else if (control[0] == 5.0) {
+        result[1] -= 1.0;
+    }    
+   
     result[0] += control_error[0];    
 }
 
-void AUVPropagator::setActionSpace(std::shared_ptr<shared::ActionSpace> &actionSpace) {
+void AUVPropagator::setActionSpace(std::shared_ptr<shared::ActionSpace>& actionSpace)
+{
     actionSpace_ = actionSpace;
 }
 

@@ -1,7 +1,7 @@
 #ifndef PROPAGATOR_HPP_
 #define PROPAGATOR_HPP_
-
 #include <vector>
+#include "utils.hpp"
 
 namespace shared {
 class Propagator {

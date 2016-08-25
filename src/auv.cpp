@@ -12,6 +12,23 @@ AUV::AUV(std::string robot_file):
     dim_x_ = 0.5;
     dim_y_ = 0.5;
     dim_z_ = 0.5;
+    
+    //make the state limits
+    lowerStateLimits_.clear();
+    upperStateLimits_.clear();
+
+    lowerStateLimits_.push_back(-100.0);
+    lowerStateLimits_.push_back(-100.0);
+    
+    upperStateLimits_.push_back(100.0);
+    upperStateLimits_.push_back(100.0);
+    
+    //make the control limits
+    lowerControlLimits_.clear();
+    upperControlLimits_.clear();
+
+    lowerControlLimits_.push_back(1.0);
+    upperControlLimits_.push_back(5.0);
 }
 
 void AUV::createRobotCollisionObjects(const std::vector<double>& state,

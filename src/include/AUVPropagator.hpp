@@ -1,6 +1,7 @@
 #ifndef __AUV_PROPAGATOR_HPP__
 #define __AUV_PROPAGATOR_HPP__
 #include <memory>
+#include <unistd.h>
 #include "propagator.hpp"
 #include "DiscreteActionSpace.hpp"
 

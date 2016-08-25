@@ -7,6 +7,7 @@ namespace shared
 {
 
 Robot::Robot(std::string robot_file):
+    InterfaceBase(),
     robot_file_(robot_file),
     constraints_enforced_(true),
     propagator_(nullptr),

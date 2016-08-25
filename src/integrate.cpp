@@ -20,6 +20,7 @@ struct VecToList
 };
 
 Integrate::Integrate():
+    Integrator(),
 	steady_states_setup_(false),
 	g_(0.0),
 	f_x_(0.0),

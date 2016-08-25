@@ -14,6 +14,7 @@
 #include "ContinuousObservationSpace.hpp"
 #include "DiscreteActionSpace.hpp"
 #include "ContinuousActionSpace.hpp"
+#include <interface_base/InterfaceBase.hpp>
 
 #ifdef USE_OPENRAVE
 #include <viewer_interface/viewer_interface.hpp>
@@ -25,7 +26,7 @@ using std::endl;
 namespace shared
 {
 
-class Robot
+class Robot: public InterfaceBase
 {
 public:
     Robot(std::string robot_file);

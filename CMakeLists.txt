@@ -17,6 +17,17 @@ set(USE_OPENRAVE True)
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 message("LIBDIR: ${CMAKE_INSTALL_LIBDIR}")
+
+############################# LOAD INTERFACE_BASE #############################
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(INTERFACE_BASE interface_base)
+    if(NOT INTERFACE_BASE_FOUND)
+       message(FATAL_ERROR "INTERFACE_BASE could not be found")
+    endif()
+    include_directories(${INTERFACE_BASE_INCLUDE_DIRS})
+    link_directories(${INTERFACE_BASE_LIBRARY_DIRS}) 
+    message("-- INTERFACE_BASE LIB DIRS ${INTERFACE_BASE_LIBRARY_DIRS}")    
+endif()
  
 ############################# LOAD OPENRAVE #############################
 if(PKG_CONFIG_FOUND)

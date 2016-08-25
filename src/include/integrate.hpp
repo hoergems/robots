@@ -6,6 +6,7 @@
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/numeric/odeint/integrate/integrate.hpp>
+#include <boost/numeric/odeint/integrate/integrate_const.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 #include <boost/numeric/odeint/stepper/adams_bashforth.hpp>
 #include <boost/numeric/odeint/stepper/adams_bashforth_moulton.hpp>
@@ -15,11 +16,10 @@
 #include <boost/numeric/odeint/stepper/euler.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp>
-
 #include <boost/numeric/odeint/stepper/bulirsch_stoer.hpp>
-#include <boost/numeric/odeint/integrate/integrate_const.hpp>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <rbdl_interface/rbdl_interface.hpp>
+#include "Integrator.hpp"
 
 namespace pl = std::placeholders;
 
@@ -28,9 +28,7 @@ using namespace Eigen;
 namespace shared
 {
 
-typedef std::vector<double> state_type;
-
-class Integrate
+class Integrate: public Integrator
 {
 public:
 
@@ -110,7 +108,7 @@ public:
 
     void ode_second_order(const state_type& x , state_type& dxdt , double t) const;
 
-    void ode(const state_type& x , state_type& dxdt , double t) const;
+    virtual void ode(const state_type& x , state_type& dxdt , double t) const override;
 
     void odeDelta(const state_type& x, state_type& dxdt, double t) const;
 

@@ -18,15 +18,15 @@ set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 message("LIBDIR: ${CMAKE_INSTALL_LIBDIR}")
 
-############################# LOAD INTERFACE_BASE #############################
+############################# LOAD FRAPU_CORE #############################
 if(PKG_CONFIG_FOUND)
-    pkg_check_modules(INTERFACE_BASE interface_base)
-    if(NOT INTERFACE_BASE_FOUND)
-       message(FATAL_ERROR "INTERFACE_BASE could not be found")
+    pkg_check_modules(FRAPU_CORE frapu_core)
+    if(NOT FRAPU_CORE_FOUND)
+       message(FATAL_ERROR "FRAPU_CORE could not be found")
     endif()
-    include_directories(${INTERFACE_BASE_INCLUDE_DIRS})
-    link_directories(${INTERFACE_BASE_LIBRARY_DIRS}) 
-    message("-- INTERFACE_BASE LIB DIRS ${INTERFACE_BASE_LIBRARY_DIRS}")    
+    include_directories(${FRAPU_CORE_INCLUDE_DIRS})
+    link_directories(${FRAPU_CORE_LIBRARY_DIRS}) 
+    message("-- FRAPU_CORE LIB DIRS ${FRAPU_CORE_LIBRARY_DIRS}")    
 endif()
  
 ############################# LOAD OPENRAVE #############################

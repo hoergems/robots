@@ -22,7 +22,8 @@ Robot::Robot(std::string robot_file):
     upperControlLimits_(),
     process_distribution_(nullptr),
     observation_distribution_(nullptr),
-    observationSpace_(nullptr)
+    observationSpace_(nullptr),
+    environmentInfo_(nullptr)
 {
 #ifdef USE_OPENRAVE
     viewer_ = std::make_shared<shared::ViewerInterface>();
@@ -234,6 +235,10 @@ void Robot::getObservationCovarianceMatrix(Eigen::MatrixXd& observation_covarian
 void Robot::setNewtonModel()
 {
 
+}
+
+void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr &environmentInfo) {
+    environmentInfo_ = environmentInfo;
 }
 
 void Robot::resetViewer(std::string model_file, std::string environment_file)

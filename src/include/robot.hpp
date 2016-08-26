@@ -14,7 +14,8 @@
 #include "ContinuousObservationSpace.hpp"
 #include "DiscreteActionSpace.hpp"
 #include "ContinuousActionSpace.hpp"
-#include <interface_base/InterfaceBase.hpp>
+#include <frapu_core/core.hpp>
+//#include <frapu_core/interface.hpp>
 
 #ifdef USE_OPENRAVE
 #include <viewer_interface/viewer_interface.hpp>
@@ -26,7 +27,7 @@ using std::endl;
 namespace shared
 {
 
-class Robot: public InterfaceBase
+class Robot: public frapu::InterfaceBase
 {
 public:
     Robot(std::string robot_file);
@@ -59,9 +60,11 @@ public:
     virtual bool getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const = 0;
 
     virtual void createRobotCollisionObjects(const std::vector<double>& state,
-            std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const = 0;
+            std::vector<frapu::CollisionObjectSharedPtr>& collision_objects) const = 0;
 
     virtual int getStateSpaceDimension() const = 0;
+    
+    void setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr &environmentInfo);
 
     virtual unsigned int getControlSpaceDimension() const;
 
@@ -103,7 +106,7 @@ public:
 
     virtual double distanceGoal(std::vector<double>& state) const = 0;
 
-    virtual bool checkSelfCollision(std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const;
+    virtual bool checkSelfCollision(std::vector<frapu::CollisionObjectSharedPtr>& collision_objects) const;
 
     virtual bool checkSelfCollision(const std::vector<double>& state) const;
 
@@ -186,6 +189,8 @@ protected:
     std::shared_ptr<shared::ObservationSpace> observationSpace_;
 
     std::shared_ptr<shared::ActionSpace> actionSpace_;
+    
+    frapu::EnvironmentInfoSharedPtr environmentInfo_;
 
 #ifdef USE_OPENRAVE
     std::shared_ptr<shared::ViewerInterface> viewer_;

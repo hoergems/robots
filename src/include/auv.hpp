@@ -63,6 +63,8 @@ public:
             unsigned long seed) override;
 
     double calcLikelihood(std::vector<double>& state, std::vector<double>& observation) override;
+    
+    void updateRobot(std::vector<double> &robotState) override;
 
 private:
     double dim_x_;

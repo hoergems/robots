@@ -19,17 +19,17 @@ bool AUVPropagator::propagateState(const std::vector<double>& currentState,
 {    
     result = currentState;
     if (control[0] == 1.0) {
-        result[1] += 1.0;
+        result[1] += 0.01;
     } else if (control[0] == 2.0) {
-        result[0] += 1.0;
-        result[1] += 1.0;
+        result[0] += 0.01;
+        result[1] += 0.01;
     } else if (control[0] == 3.0) {
-        result[0] += 1.0;
+        result[0] += 0.01;
     } else if (control[0] == 4.0) {
-        result[0] += 1.0;
-        result[1] -= 1.0;
+        result[0] += 0.01;
+        result[1] -= 0.01;
     } else if (control[0] == 5.0) {
-        result[1] -= 1.0;
+        result[1] -= 0.01;
     }    
    
     result[0] += control_error[0];    

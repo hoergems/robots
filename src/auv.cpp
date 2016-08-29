@@ -9,20 +9,20 @@ AUV::AUV(std::string robot_file):
     dim_z_(0.0)
 {
     propagator_ = std::make_shared<shared::AUVPropagator>();
-    dim_x_ = 0.5;
-    dim_y_ = 0.5;
-    dim_z_ = 0.5;
-    
+    dim_x_ = 0.005;
+    dim_y_ = 0.005;
+    dim_z_ = 0.005;
+
     //make the state limits
     lowerStateLimits_.clear();
     upperStateLimits_.clear();
 
-    lowerStateLimits_.push_back(-100.0);
-    lowerStateLimits_.push_back(-100.0);
-    
-    upperStateLimits_.push_back(100.0);
-    upperStateLimits_.push_back(100.0);
-    
+    lowerStateLimits_.push_back(-1.0);
+    lowerStateLimits_.push_back(-1.0);
+
+    upperStateLimits_.push_back(1.0);
+    upperStateLimits_.push_back(1.0);
+
     //make the control limits
     lowerControlLimits_.clear();
     upperControlLimits_.clear();
@@ -36,7 +36,7 @@ void AUV::createRobotCollisionObjects(const std::vector<double>& state,
 {
     double x = state[0];
     double y = state[1];
-    fcl::Vec3f trans_vec(x, y, 0.01);
+    fcl::Vec3f trans_vec(x, y, 0.001);
     fcl::Matrix3f rot_matrix(1.0, 0.0, 0.0,
                              0.0, 1.0, 0.0,
                              0.0, 0.0, 1.0);
@@ -83,13 +83,21 @@ bool AUV::getObservation(std::vector<double>& state, std::vector<double>& observ
 
 bool AUV::getObservation(std::vector<double>& state, std::vector<double>& observation) const
 {
-    if (static_cast<shared::DiscreteObservationSpace*>(observationSpace_.get())->observationExists(state)) {
-        observation = state;
-    } else {
-        observation.clear();
-        observation.push_back(0);
-        observation.push_back(0);
+    std::vector<frapu::CollisionObjectSharedPtr> collisionObjects;
+    createRobotCollisionObjects(state, collisionObjects);
+    for (auto & obstacle : environmentInfo_->obstacles) {
+        if (obstacle->getTerrain()->isObservable()) {
+            if (obstacle->inCollision(collisionObjects)) {
+                observation = state;
+                return true;
+            }
+        }
     }
+
+    observation.clear();
+    observation.push_back(-100);
+    observation.push_back(-100);
+
     return true;
 }
 
@@ -180,9 +188,9 @@ void AUV::makeProcessDistribution(Eigen::MatrixXd& mean,
 {
     process_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
     std::vector<std::pair<std::vector<double>, double>> elements;
-    std::vector<double> elem0( { -1.0, 0.0});
+    std::vector<double> elem0( { -0.01, 0.0});
     std::vector<double> elem1( {0.0, 0.0});
-    std::vector<double> elem2( {1.0, 0.0});
+    std::vector<double> elem2( {0.01, 0.0});
     elements.push_back(std::make_pair(elem0, 0.1));
     elements.push_back(std::make_pair(elem1, 0.8));
     elements.push_back(std::make_pair(elem2, 0.1));
@@ -197,6 +205,12 @@ void AUV::makeObservationDistribution(Eigen::MatrixXd& mean,
     observation_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
 }
 
+void AUV::updateRobot(std::vector<double>& robotState)
+{
+    cout << "UPDATE" << endl;
+    cout << "obstacles size: " << environmentInfo_->obstacles.size() << endl;
+}
+
 void AUV::updateViewer(std::vector<double>& state,
                        std::vector<std::vector<double>>& particles,
                        std::vector<std::vector<double>>& particle_colors)
@@ -207,21 +221,21 @@ void AUV::updateViewer(std::vector<double>& state,
     std::vector<std::vector<double>> colors;
     std::string name = "auv";
     names.push_back(name);
-    std::vector<double> main_dims( {state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});
+    std::vector<double> main_dims( {state[0], state[1], 0.001, dim_x_, dim_y_, dim_z_, 0.0});
     dims.push_back(main_dims);
     std::vector<double> main_color( {1.0, 0.0, 0.0, 0.5});
     colors.push_back(main_color);
     for (size_t i = 0; i < particles.size(); i++) {
-        std::string p_name = "particle_dubin" + std::to_string(i);
+        std::string p_name = "particle_auv" + std::to_string(i);
         names.push_back(p_name);
 
         std::vector<double> p_dims( {particles[i][0],
                                      particles[i][1],
-                                     0.025,
+                                     0.001,
                                      dim_x_,
                                      dim_y_,
                                      dim_z_,
-                                     particles[i][2]
+                                     0.0
                                     });
         dims.push_back(p_dims);
         //std::vector<double> c({0.0, 1.0, 0.0, 0.5});

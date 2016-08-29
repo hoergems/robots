@@ -28,6 +28,17 @@ if(PKG_CONFIG_FOUND)
     link_directories(${FRAPU_CORE_LIBRARY_DIRS}) 
     message("-- FRAPU_CORE LIB DIRS ${FRAPU_CORE_LIBRARY_DIRS}")    
 endif()
+
+############################# LOAD ROBOT_HEADERS #############################
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(ROBOT_HEADERS robot_headers)
+    if(NOT ROBOT_HEADERS_FOUND)
+       message(FATAL_ERROR "ROBOT_HEADERS could not be found")
+    endif()
+    include_directories(${ROBOT_HEADERS_INCLUDE_DIRS})
+    link_directories(${ROBOT_HEADERS_LIBRARY_DIRS}) 
+    message("-- ROBOT_HEADERS LIB DIRS ${ROBOT_HEADERS_LIBRARY_DIRS}")    
+endif()
  
 ############################# LOAD OPENRAVE #############################
 if(PKG_CONFIG_FOUND)
@@ -131,15 +142,15 @@ endif()
 
 add_library(robots SHARED 
             ${CMAKE_CURRENT_SOURCE_DIR}/src/robot.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorRobot.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinRobot.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/auv.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/ManipulatorRobot.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/Kinematics.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/ManipulatorPropagator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/ManipulatorIntegrator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Dubin/DubinRobot.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Dubin/DubinPropagator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/AUV/auv.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/AUV/AUVPropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/propagator.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/Kinematics.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/ManipulatorPropagator.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/DubinPropagator.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/AUVPropagator.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/integrate.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousActionSpace.cpp

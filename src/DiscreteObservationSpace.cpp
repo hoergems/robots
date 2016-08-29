@@ -1,4 +1,4 @@
-#include "include/DiscreteObservationSpace.hpp"
+#include <robot_headers/DiscreteObservationSpace.hpp>
 
 namespace shared
 {

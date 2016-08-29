@@ -80,6 +80,10 @@ bool Robot::propagateState(const std::vector<double>& current_state,
     return true;
 }
 
+void Robot::updateRobot(std::vector<double> &robotState) {
+    
+}
+
 std::shared_ptr<Eigen::Distribution<double>> Robot::getProcessDistribution() const
 {
     return process_distribution_;

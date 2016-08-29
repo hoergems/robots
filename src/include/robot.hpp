@@ -50,6 +50,8 @@ public:
                         double duration,
                         double simulation_step_size,
                         std::vector<double>& result);
+    
+    virtual void updateRobot(std::vector<double> &robotState);
 
     virtual bool makeActionSpace(bool normalizedActionSpace) = 0;
 

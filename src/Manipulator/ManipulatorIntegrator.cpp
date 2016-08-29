@@ -295,7 +295,7 @@ void Integrate::do_integration(std::vector<double> &x,
 		                       std::vector<double> &control,
 		                       std::vector<double> &control_error,
 		                       std::vector<double> &int_times,
-		                       std::vector<double> &result) const {
+		                       std::vector<double> &result) {
 	double t0 = int_times[0];
 	double te = int_times[1];
 	double step_size = int_times[2];

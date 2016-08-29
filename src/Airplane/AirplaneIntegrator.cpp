@@ -16,7 +16,7 @@ void AirplaneIntegrator::do_integration(state_type& x,
                                         state_type& control,
                                         state_type& control_error,
                                         state_type& int_times,
-                                        state_type& result) const
+                                        state_type& result)
 {
     double t0 = int_times[0];
     double te = int_times[1];
@@ -37,11 +37,11 @@ void AirplaneIntegrator::ode(const state_type& x , state_type& dxdt , double t) 
     dxdt[0] = x[3] * cos(x[7]) * cos(x[6]); // x
     dxdt[1] = x[3] * cos(x[7]) * sin(x[6]); // y
     dxdt[2] = x[3] * sin(x[7]); // z
-    dxdt[3] = x[8] * cos(x[5]) - Cd_ * k_ * std::pow(x[3], 2) - g_ * sin(x[7]); // v
+    dxdt[3] = x[8] * cos(x[5]) - cd_ * k_ * std::pow(x[3], 2) - g_ * sin(x[7]); // v
     dxdt[4] = alphaDest_ - x[4]; // alpha
     dxdt[5] = betaDest_ - x[5]; // beta
-    dxdt[6] = x[3] * (sin(x[4]) / cos(x[7])) * ((x[8] * sin(x[5]) / x[3]) + Cl_ * k_ * x[3]); // theta
-    dxdt[7] = cos(x[4]) * ((x[8] * sin(x[5]) / x[3]) + Cl_ * k_ * x[3]) - g_ * (cos(x[7]) / x[3]); // omega
+    dxdt[6] = x[3] * (sin(x[4]) / cos(x[7])) * ((x[8] * sin(x[5]) / x[3]) + cl_ * k_ * x[3]); // theta
+    dxdt[7] = cos(x[4]) * ((x[8] * sin(x[5]) / x[3]) + cl_ * k_ * x[3]) - g_ * (cos(x[7]) / x[3]); // omega
     dxdt[8] = tauDest_ - x[8]; // tau
 }
 

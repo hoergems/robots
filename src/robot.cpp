@@ -104,6 +104,10 @@ double Robot::calcLikelihood(const frapu::RobotStateSharedPtr& state, std::vecto
     return observation_distribution_->calcPdf(observation, transformedState);
 }
 
+std::shared_ptr<shared::StateSpace> getStateSpace() const {
+    return stateSpace_;
+}
+
 shared::ObservationSpace* Robot::getObservationSpace() const
 {
     return observationSpace_.get();
@@ -210,12 +214,6 @@ void Robot::getStateLimits(std::vector<double>& lowerLimits, std::vector<double>
 {
     lowerLimits = lowerStateLimits_;
     upperLimits = upperStateLimits_;
-}
-
-void Robot::getControlLimits(std::vector<double>& lowerLimits, std::vector<double>& upperLimits) const
-{
-    lowerLimits = lowerControlLimits_;
-    upperLimits = upperControlLimits_;
 }
 
 void Robot::setStateCovarianceMatrix(Eigen::MatrixXd& state_covariance_matrix)

@@ -44,7 +44,7 @@ unsigned int DiscreteObservationSpace::getNumObservations()
 size_t DiscreteObservationSpace::calcHashValue_(const std::vector<double> &observation) const{
     std::size_t hashValue = 0;
     for (auto &k: observation) {
-	robotutils::hash_combine(hashValue, k);
+	frapu::hash_combine(hashValue, k);
     }
     
     return hashValue;    

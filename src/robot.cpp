@@ -241,6 +241,10 @@ void Robot::setNewtonModel()
 
 }
 
+void Robot::setGravityConstant(double gravity_constant) {
+    
+}
+
 void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr &environmentInfo) {
     environmentInfo_ = environmentInfo;
 }

@@ -291,20 +291,21 @@ void Integrate::do_integration_second_order(std::vector<double> &x,
 	
 }
 
-void Integrate::do_integration(std::vector<double> &x, 
-		                       std::vector<double> &control,
-		                       std::vector<double> &control_error,
-		                       std::vector<double> &int_times,
+void Integrate::do_integration(const std::vector<double> &x, 
+		                       const std::vector<double> &control,
+		                       const std::vector<double> &control_error,
+		                       const std::vector<double> &int_times,
 		                       std::vector<double> &result) {
 	double t0 = int_times[0];
 	double te = int_times[1];
 	double step_size = int_times[2];
 	rho_ = control;	
 	zeta_ = control_error;
+	std::vector<double> xNonconst = x;
 	size_t k = integrate_const(adams_bashforth<2, state_type>() ,
 		                       std::bind(&Integrate::ode , this , pl::_1 , pl::_2 , pl::_3),
-		                       x , t0 , te , step_size);
-	result = x;
+		                       xNonconst , t0 , te , step_size);
+	result = xNonconst;
 }
 
 void Integrate::do_integration_delta(std::vector<double> &x, 

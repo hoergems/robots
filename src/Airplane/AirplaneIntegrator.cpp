@@ -12,10 +12,10 @@ AirplaneIntegrator::AirplaneIntegrator():
 
 }
 
-void AirplaneIntegrator::do_integration(state_type& x,
-                                        state_type& control,
-                                        state_type& control_error,
-                                        state_type& int_times,
+void AirplaneIntegrator::do_integration(const state_type& x,
+                                        const state_type& control,
+                                        const state_type& control_error,
+                                        const state_type& int_times,
                                         state_type& result)
 {
     double t0 = int_times[0];
@@ -24,10 +24,11 @@ void AirplaneIntegrator::do_integration(state_type& x,
     tauDest_ = control[0] + control_error[0];
     alphaDest_ = control[1] + control_error[1];
     betaDest_ = control[2] + control_error[2];
+    std::vector<double> xNonConst = x;
     size_t k = integrate_const(adams_bashforth<2, state_type>() ,
                                std::bind(&AirplaneIntegrator::ode , this , pl::_1 , pl::_2 , pl::_3),
-                               x , t0 , te , step_size);
-    result = x;
+                               xNonConst , t0 , te , step_size);
+    result = xNonConst;
 }
 
 void AirplaneIntegrator::ode(const state_type& x , state_type& dxdt , double t) const

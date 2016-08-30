@@ -52,12 +52,13 @@ DubinRobot::DubinRobot(std::string robot_file):
     beacons_ = std::vector<shared::Beacon>( {b0, b1});
 }
 
-void DubinRobot::createRobotCollisionObjects(const std::vector<double>& state,
-        std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const
+void DubinRobot::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,
+        std::vector<frapu::CollisionObjectSharedPtr>& collision_objects) const
 {
-    double x = state[0];
-    double y = state[1];
-    double theta = state[2];
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    double x = stateVec[0];
+    double y = stateVec[1];
+    double theta = stateVec[2];
 
     fcl::Matrix3f rot_matrix(cos(theta), -sin(theta), 0.0,
                              sin(theta), cos(theta), 0.0,
@@ -78,7 +79,8 @@ void DubinRobot::createRobotCollisionObjects(const std::vector<double>& state,
     collision_objects.push_back(coll_obj);
 }
 
-bool DubinRobot::makeActionSpace(bool normalizedActionSpace) {
+bool DubinRobot::makeActionSpace(bool normalizedActionSpace)
+{
     actionSpace_ = std::make_shared<shared::DiscreteActionSpace>(normalizedActionSpace);
     unsigned int numDimensions = 2;
     actionSpace_->setNumDimensions(numDimensions);
@@ -104,7 +106,9 @@ bool DubinRobot::makeObservationSpace(const shared::ObservationSpaceInfo& observ
     }
 }
 
-bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const
+bool DubinRobot::getObservation(const frapu::RobotStateSharedPtr& state,
+                                std::vector<double>& observationError,
+                                std::vector<double>& observation) const
 {
     std::vector<double> res;
     transformToObservationSpace(state, res);
@@ -114,37 +118,41 @@ bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>&
     observation[2] = res[2] + observationError[2];
 }
 
-bool DubinRobot::getObservation(std::vector<double>& state, std::vector<double>& observation) const
+bool DubinRobot::getObservation(const frapu::RobotStateSharedPtr& state,
+                                std::vector<double>& observation) const
 {
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         observation.clear();
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
-        for (size_t i = 0; i < state.size(); i++) {
-            observation.push_back(state[i] + sample(i, 0));
+        for (size_t i = 0; i < stateVec.size(); i++) {
+            observation.push_back(stateVec[i] + sample(i, 0));
         }
     } else {
         observation = std::vector<double>(3);
         unsigned int observationSpaceDimension = observationSpace_->getDimension();
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
 
-        observation[0] = sample(0, 0) + 1.0 / (std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0);
-        observation[1] = sample(1, 0) + 1.0 / (std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0);
-        observation[2] = state[3] + sample(2, 0);
+        observation[0] = sample(0, 0) + 1.0 / (std::pow(stateVec[0] - beacons_[0].x_, 2) + std::pow(stateVec[1] - beacons_[0].y_, 2) + 1.0);
+        observation[1] = sample(1, 0) + 1.0 / (std::pow(stateVec[0] - beacons_[1].x_, 2) + std::pow(stateVec[1] - beacons_[1].y_, 2) + 1.0);
+        observation[2] = stateVec[3] + sample(2, 0);
 
     }
 
     return true;
 }
 
-void DubinRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const
+void DubinRobot::transformToObservationSpace(const frapu::RobotStateSharedPtr& state,
+        std::vector<double>& res) const
 {
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
-        res = state;
+        res = stateVec;
     } else {
         res = std::vector<double>(3);
-        res[0] = 1.0 / (std::pow(state[0] - beacons_[0].x_, 2) + std::pow(state[1] - beacons_[0].y_, 2) + 1.0);
-        res[1] = 1.0 / (std::pow(state[0] - beacons_[1].x_, 2) + std::pow(state[1] - beacons_[1].y_, 2) + 1.0);
-        res[2] = state[3];
+        res[0] = 1.0 / (std::pow(stateVec[0] - beacons_[0].x_, 2) + std::pow(stateVec[1] - beacons_[0].y_, 2) + 1.0);
+        res[1] = 1.0 / (std::pow(stateVec[0] - beacons_[1].x_, 2) + std::pow(stateVec[1] - beacons_[1].y_, 2) + 1.0);
+        res[2] = stateVec[3];
     }
 }
 
@@ -158,15 +166,17 @@ int DubinRobot::getDOF() const
     return 4;
 }
 
-void DubinRobot::makeNextStateAfterCollision(std::vector<double>& previous_state,
-        std::vector<double>& colliding_state,
-        std::vector<double>& next_state)
+void DubinRobot::makeNextStateAfterCollision(const frapu::RobotStateSharedPtr& previousState,
+        const frapu::RobotStateSharedPtr& collidingState,
+        frapu::RobotStateSharedPtr& nextState)
 {
-    next_state = previous_state;
-    next_state[3] = 0.0;
+    std::vector<double> previousStateVec = static_cast<frapu::VectorState*>(previousState.get())->asVector();
+    std::vector<double> nextStateVec = previousStateVec;
+    nextStateVec[3] = 0.0;
+    nextState = std::make_shared<frapu::VectorState>(nextStateVec);
 }
 
-bool DubinRobot::isTerminal(std::vector<double>& state) const
+bool DubinRobot::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
     double dist = distanceGoal(state);
     if (dist < goal_radius_) {
@@ -177,11 +187,12 @@ bool DubinRobot::isTerminal(std::vector<double>& state) const
 }
 
 
-double DubinRobot::distanceGoal(std::vector<double>& state) const
+double DubinRobot::distanceGoal(const frapu::RobotStateSharedPtr& state) const
 {
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
     assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
-    double x = state[0];
-    double y = state[1];
+    double x = stateVec[0];
+    double y = stateVec[1];
 
     double dist = std::pow(goal_position_[0] - x, 2);
     dist += std::pow(goal_position_[1] - y, 2);
@@ -211,40 +222,42 @@ void DubinRobot::getLinearObservationMatrix(const std::vector<double>& state, Ei
     H(2, 3) = 1.0;
 }
 
-void DubinRobot::getLinearObservationDynamics(const std::vector<double>& state,
+void DubinRobot::getLinearObservationDynamics(const frapu::RobotStateSharedPtr& state,
         Eigen::MatrixXd& H,
         Eigen::MatrixXd& W) const
 {
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         H = Eigen::MatrixXd::Identity(4, 4);
         W = Eigen::MatrixXd::Identity(4, 4);
     } else {
-        getLinearObservationMatrix(state, H);
+        getLinearObservationMatrix(stateVec, H);
         W = Eigen::MatrixXd::Identity(3, 3);
     }
 }
 
-void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
+void DubinRobot::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
         std::vector<double>& control,
         double& duration,
         std::vector<Eigen::MatrixXd>& matrices) const
 {
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     Eigen::MatrixXd A(4, 4);
-    A << 1, 0, -duration* state[3]*sin(state[2]), duration* cos(state[2]),
-      0, 1, duration* state[3]*cos(state[2]), duration* sin(state[2]),
+    A << 1, 0, -duration* stateVec[3]*sin(stateVec[2]), duration* cos(stateVec[2]),
+      0, 1, duration* stateVec[3]*cos(stateVec[2]), duration* sin(stateVec[2]),
       0, 0, 1, duration* tan(control[1]) / d_,
       0, 0, 0, 1;
 
     Eigen::MatrixXd B(4, 2);
     B << 0, 0,
       0, 0,
-      0, duration* state[3]*(std::pow(tan(control[1]), 2) + 1) / d_,
+      0, duration* stateVec[3]*(std::pow(tan(control[1]), 2) + 1) / d_,
       duration, 0;
 
     Eigen::MatrixXd V(4, 2);
     V << 0, 0,
       0, 0,
-      0, duration* state[3]*(std::pow(tan(control[1]), 2) + 1) / d_,
+      0, duration* stateVec[3]*(std::pow(tan(control[1]), 2) + 1) / d_,
       duration, 0;
 
     matrices.push_back(A);
@@ -257,7 +270,7 @@ void DubinRobot::getLinearProcessMatrices(const std::vector<double>& state,
         matrices.push_back(W);
     } else {
         Eigen::MatrixXd H;
-        getLinearObservationMatrix(state, H);
+        getLinearObservationMatrix(stateVec, H);
         Eigen::MatrixXd W = Eigen::MatrixXd::Identity(3, 3);
         matrices.push_back(H);
         matrices.push_back(W);
@@ -276,22 +289,23 @@ void DubinRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
 void DubinRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix,
         unsigned long seed)
-{   
+{
     observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
     setObservationCovarianceMatrix(observation_distribution_->_covar);
 }
 
-void DubinRobot::updateViewer(std::vector<double>& state,
+void DubinRobot::updateViewer(const frapu::RobotStateSharedPtr& state,
                               std::vector<std::vector<double>>& particles,
-                              std::vector<std::vector<double>>& particle_colors)
+                              std::vector<std::vector<double>>& particleColors)
 {
 #ifdef USE_OPENRAVE
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     std::vector<std::string> names;
     std::vector<std::vector<double>> dims;
     std::vector<std::vector<double>> colors;
     std::string name = "dubin";
     names.push_back(name);
-    std::vector<double> main_dims( {state[0], state[1], 0.025, dim_x_, dim_y_, dim_z_, state[2]});
+    std::vector<double> main_dims( {stateVec[0], stateVec[1], 0.025, dim_x_, dim_y_, dim_z_, stateVec[2]});
     dims.push_back(main_dims);
     std::vector<double> main_color( {1.0, 0.0, 0.0, 0.5});
     colors.push_back(main_color);
@@ -308,8 +322,7 @@ void DubinRobot::updateViewer(std::vector<double>& state,
                                      particles[i][2]
                                     });
         dims.push_back(p_dims);
-        //std::vector<double> c({0.0, 1.0, 0.0, 0.5});
-        colors.push_back(particle_colors[i]);
+        colors.push_back(particleColors[i]);
     }
 
     viewer_->addBoxes(names, dims, colors);

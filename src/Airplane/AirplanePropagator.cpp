@@ -9,8 +9,8 @@ AirplanePropagator::AirplanePropagator():
 }
 
 bool AirplanePropagator::propagateState(const std::vector<double>& currentState,
-                                        std::vector<double>& control,
-                                        std::vector<double>& control_error,
+                                        const std::vector<double>& control,
+                                        const std::vector<double>& control_error,
                                         const double& duration,
                                         const double& simulation_step_size,
                                         std::vector<double>& result)
@@ -23,7 +23,8 @@ bool AirplanePropagator::propagateState(const std::vector<double>& currentState,
     integrator_->do_integration(currentStateNonConst, control, control_error, intTimes, result);
 }
 
-std::shared_ptr<shared::AirplaneIntegrator> AirplanePropagator::getIntegrator() const {
+std::shared_ptr<shared::AirplaneIntegrator> AirplanePropagator::getIntegrator() const
+{
     return integrator_;
 }
 }

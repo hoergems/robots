@@ -160,8 +160,8 @@ bool ManipulatorPropagator::propagate_nonlinear_second_order(const std::vector<d
 }
 
 bool ManipulatorPropagator::propagateState(const std::vector<double>& currentState,
-        std::vector<double>& control,
-        std::vector<double>& control_error,
+        const std::vector<double>& control,
+        const std::vector<double>& control_error,
         const double& duration,
         const double& simulation_step_size,
         std::vector<double>& result)
@@ -183,9 +183,7 @@ BOOST_PYTHON_MODULE(libpropagator)
 
     class_<ManipulatorPropagator>("ManipulatorPropagator", init<>())
     .def("propagateState", &Propagator::propagateState, propagate_nonlinear_overload())
-    .def("propagateLinear", &ManipulatorPropagator::propagate_linear, propagate_linear_overload())
-    //.def("doIntegration", &Integrate::do_integration)
-    //.def("getResult", &Integrate::getResult)
+    .def("propagateLinear", &ManipulatorPropagator::propagate_linear, propagate_linear_overload())    
     ;
 }
 

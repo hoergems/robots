@@ -30,58 +30,61 @@ Robot::Robot(std::string robot_file):
 #endif
 }
 
-bool Robot::propagateState(const std::vector<double>& current_state,
-                           std::vector<double>& control_input,
-                           std::vector<double>& control_error,
+bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,
+                           const frapu::ActionSharedPtr& action,
+                           const std::vector<double> controlError,
                            double duration,
-                           double simulation_step_size,
-                           std::vector<double>& result)
+                           double simulationStepSize,
+                           frapu::RobotStateSharedPtr& result)
 {
     boost::this_thread::interruption_point();
-    result.clear();
-    propagator_->propagateState(current_state,
-                                control_input,
-                                control_error,
-                                duration,
-                                simulation_step_size,
-                                result);
+    result = nullptr;
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    std::vector<double> controlVec = static_cast<const frapu::VectorAction*>(action.get())->asVector();
+    std::vector<double> resultVec;    
+    propagator_->propagateState(stateVec, controlVec, controlError, duration, simulationStepSize, resultVec);
     if (constraints_enforced_) {
-        enforceConstraints(result);
+        enforceConstraints(resultVec);
     }
-
-    return true;
-}
-
-bool Robot::propagateState(const std::vector<double>& current_state,
-                           std::vector<double>& control_input,
-                           double duration,
-                           double simulation_step_size,
-                           std::vector<double>& result)
-{
-    boost::this_thread::interruption_point();
-    result.clear();
-    std::vector<double> control_error(control_input.size());
-    Eigen::MatrixXd sample = process_distribution_->samples(1);
-    for (size_t i = 0; i < control_error.size(); i++) {
-        control_error[i] = sample(i, 0);
-    }
-
-    propagator_->propagateState(current_state,
-                                control_input,
-                                control_error,
-                                duration,
-                                simulation_step_size,
-                                result);
-
-    if (constraints_enforced_) {
-        enforceConstraints(result);
-    }
-
-    return true;
-}
-
-void Robot::updateRobot(std::vector<double> &robotState) {
     
+    result = std::make_shared<frapu::VectorState>(resultVec);
+    return true;
+}
+
+bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,
+                           const frapu::ActionSharedPtr& action,
+                           double duration,
+                           double simulationStepSize,
+                           frapu::RobotStateSharedPtr& result)
+{
+    
+    boost::this_thread::interruption_point();
+    std::vector<double> controlVec = static_cast<const frapu::VectorAction*>(action.get())->asVector();
+    std::vector<double> controlError(controlVec.size());
+    Eigen::MatrixXd sample = process_distribution_->samples(1);
+    for (size_t i = 0; i < controlError.size(); i++) {
+        controlError[i] = sample(i, 0);
+    }
+    
+    return propagateState(state, action, controlError, duration, simulationStepSize, result);    
+}
+
+bool Robot::isValid(const frapu::RobotStateSharedPtr& state) const
+{
+    std::vector<frapu::CollisionObjectSharedPtr> collisionObjects;
+    createRobotCollisionObjects(state, collisionObjects);
+    for (size_t i = 0; i < environmentInfo_->obstacles.size(); i++) {
+        if (environmentInfo_->obstacles[i]->inCollision(collisionObjects)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void Robot::updateRobot(const frapu::RobotStateSharedPtr& state)
+{
+
 }
 
 std::shared_ptr<Eigen::Distribution<double>> Robot::getProcessDistribution() const
@@ -94,7 +97,8 @@ std::shared_ptr<Eigen::Distribution<double>> Robot::getObservationDistribution()
     return observation_distribution_;
 }
 
-double Robot::calcLikelihood(std::vector<double> &state, std::vector<double> &observation) {
+double Robot::calcLikelihood(const frapu::RobotStateSharedPtr& state, std::vector<double>& observation)
+{
     std::vector<double> transformedState;
     transformToObservationSpace(state, transformedState);
     return observation_distribution_->calcPdf(observation, transformedState);
@@ -108,7 +112,7 @@ shared::ObservationSpace* Robot::getObservationSpace() const
 std::shared_ptr<shared::ActionSpace> Robot::getActionSpace() const
 {
     if (!actionSpace_) {
-	assert(false && "ACTION SPACE IS NULL");
+        assert(false && "ACTION SPACE IS NULL");
     }
     return actionSpace_;
 }
@@ -128,7 +132,7 @@ bool Robot::checkSelfCollision(std::vector<std::shared_ptr<fcl::CollisionObject>
     return false;
 }
 
-bool Robot::checkSelfCollision(const std::vector<double>& state) const
+bool Robot::checkSelfCollision(const frapu::RobotStateSharedPtr& state) const
 {
     return false;
 }
@@ -241,11 +245,13 @@ void Robot::setNewtonModel()
 
 }
 
-void Robot::setGravityConstant(double gravity_constant) {
-    
+void Robot::setGravityConstant(double gravity_constant)
+{
+
 }
 
-void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr &environmentInfo) {
+void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr& environmentInfo)
+{
     environmentInfo_ = environmentInfo;
 }
 

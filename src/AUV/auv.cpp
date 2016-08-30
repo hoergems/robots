@@ -31,11 +31,12 @@ AUV::AUV(std::string robot_file):
     upperControlLimits_.push_back(5.0);
 }
 
-void AUV::createRobotCollisionObjects(const std::vector<double>& state,
-                                      std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const
+void AUV::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,
+                                      std::vector<frapu::CollisionObjectSharedPtr>& collision_objects) const
 {
-    double x = state[0];
-    double y = state[1];
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    double x = stateVec[0];
+    double y = stateVec[1];
     fcl::Vec3f trans_vec(x, y, 0.001);
     fcl::Matrix3f rot_matrix(1.0, 0.0, 0.0,
                              0.0, 1.0, 0.0,
@@ -50,8 +51,7 @@ void AUV::createRobotCollisionObjects(const std::vector<double>& state,
     fcl::Box* box = new fcl::Box();
     fcl::Transform3f box_tf;
     fcl::constructBox(link_aabb, trans, *box, box_tf);
-    std::shared_ptr<fcl::CollisionObject> coll_obj =
-        std::make_shared<fcl::CollisionObject>(boost::shared_ptr<fcl::CollisionGeometry>(box), box_tf);
+    frapu::CollisionObjectSharedPtr coll_obj = std::make_shared<fcl::CollisionObject>(boost::shared_ptr<fcl::CollisionGeometry>(box), box_tf);
     collision_objects.push_back(coll_obj);
 }
 
@@ -76,19 +76,23 @@ bool AUV::makeObservationSpace(const shared::ObservationSpaceInfo& observationSp
     return true;
 }
 
-bool AUV::getObservation(std::vector<double>& state, std::vector<double>& observationError, std::vector<double>& observation) const
+bool AUV::getObservation(const frapu::RobotStateSharedPtr& state,
+                         std::vector<double>& observationError,
+                         std::vector<double>& observation) const
 {
     return getObservation(state, observation);
 }
 
-bool AUV::getObservation(std::vector<double>& state, std::vector<double>& observation) const
+bool AUV::getObservation(const frapu::RobotStateSharedPtr& state,
+                         std::vector<double>& observation) const
 {
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
     std::vector<frapu::CollisionObjectSharedPtr> collisionObjects;
     createRobotCollisionObjects(state, collisionObjects);
     for (auto & obstacle : environmentInfo_->obstacles) {
         if (obstacle->getTerrain()->isObservable()) {
             if (obstacle->inCollision(collisionObjects)) {
-                observation = state;
+                observation = stateVec;
                 return true;
             }
         }
@@ -101,7 +105,7 @@ bool AUV::getObservation(std::vector<double>& state, std::vector<double>& observ
     return true;
 }
 
-double AUV::calcLikelihood(std::vector<double>& state, std::vector<double>& observation)
+double AUV::calcLikelihood(const frapu::RobotStateSharedPtr& state, std::vector<double>& observation)
 {
     std::vector<double> transformedState;
     transformToObservationSpace(state, transformedState);
@@ -119,7 +123,8 @@ double AUV::calcLikelihood(std::vector<double>& state, std::vector<double>& obse
     return 0.0;
 }
 
-void AUV::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const
+void AUV::transformToObservationSpace(const frapu::RobotStateSharedPtr& state,
+                                      std::vector<double>& res) const
 {
     getObservation(state, res);
 }
@@ -134,14 +139,14 @@ int AUV::getDOF() const
     return 2;
 }
 
-void AUV::makeNextStateAfterCollision(std::vector<double>& previous_state,
-                                      std::vector<double>& colliding_state,
-                                      std::vector<double>& next_state)
+void AUV::makeNextStateAfterCollision(const frapu::RobotStateSharedPtr& previousState,
+                                      const frapu::RobotStateSharedPtr& collidingState,
+                                      frapu::RobotStateSharedPtr& nextState)
 {
-    next_state = previous_state;
+    nextState = previousState;
 }
 
-bool AUV::isTerminal(std::vector<double>& state) const
+bool AUV::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
     double dist = distanceGoal(state);
     if (dist < goal_radius_) {
@@ -151,11 +156,12 @@ bool AUV::isTerminal(std::vector<double>& state) const
     return false;
 }
 
-double AUV::distanceGoal(std::vector<double>& state) const
+double AUV::distanceGoal(const frapu::RobotStateSharedPtr& state) const
 {
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
-    double x = state[0];
-    double y = state[1];
+    double x = stateVec[0];
+    double y = stateVec[1];
 
     double dist = std::pow(goal_position_[0] - x, 2);
     dist += std::pow(goal_position_[1] - y, 2);
@@ -167,14 +173,14 @@ void AUV::setGravityConstant(double gravity_constant)
 
 }
 
-void AUV::getLinearObservationDynamics(const std::vector<double>& state,
+void AUV::getLinearObservationDynamics(const frapu::RobotStateSharedPtr& state,
                                        Eigen::MatrixXd& H,
                                        Eigen::MatrixXd& W) const
 {
 
 }
 
-void AUV::getLinearProcessMatrices(const std::vector<double>& state,
+void AUV::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
                                    std::vector<double>& control,
                                    double& duration,
                                    std::vector<Eigen::MatrixXd>& matrices) const
@@ -205,23 +211,24 @@ void AUV::makeObservationDistribution(Eigen::MatrixXd& mean,
     observation_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
 }
 
-void AUV::updateRobot(std::vector<double>& robotState)
+void AUV::updateRobot(const frapu::RobotStateSharedPtr& state)
 {
     cout << "UPDATE" << endl;
     cout << "obstacles size: " << environmentInfo_->obstacles.size() << endl;
 }
 
-void AUV::updateViewer(std::vector<double>& state,
+void AUV::updateViewer(const frapu::RobotStateSharedPtr& state,
                        std::vector<std::vector<double>>& particles,
-                       std::vector<std::vector<double>>& particle_colors)
+                       std::vector<std::vector<double>>& particleColors)
 {
 #ifdef USE_OPENRAVE
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     std::vector<std::string> names;
     std::vector<std::vector<double>> dims;
     std::vector<std::vector<double>> colors;
     std::string name = "auv";
     names.push_back(name);
-    std::vector<double> main_dims( {state[0], state[1], 0.001, dim_x_, dim_y_, dim_z_, 0.0});
+    std::vector<double> main_dims( {stateVec[0], stateVec[1], 0.001, dim_x_, dim_y_, dim_z_, 0.0});
     dims.push_back(main_dims);
     std::vector<double> main_color( {1.0, 0.0, 0.0, 0.5});
     colors.push_back(main_color);
@@ -239,7 +246,7 @@ void AUV::updateViewer(std::vector<double>& state,
                                     });
         dims.push_back(p_dims);
         //std::vector<double> c({0.0, 1.0, 0.0, 0.5});
-        colors.push_back(particle_colors[i]);
+        colors.push_back(particleColors[i]);
     }
 
     viewer_->addBoxes(names, dims, colors);

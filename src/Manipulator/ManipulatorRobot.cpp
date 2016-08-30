@@ -418,13 +418,6 @@ void ManipulatorRobot::quatFromRPY(double& roll, double& pitch, double& yaw, std
     quat.push_back(w);
 }
 
-std::vector<std::shared_ptr<fcl::CollisionObject>> ManipulatorRobot::createRobotCollisionObjectsPy(const std::vector<double>& joint_angles)
-{
-    std::vector<std::shared_ptr<fcl::CollisionObject>> collision_objects;
-    createRobotCollisionObjects(joint_angles, collision_objects);
-    return collision_objects;
-}
-
 std::vector<std::shared_ptr<fcl::CollisionObject>>
 ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& joint_angles)
 {
@@ -481,17 +474,19 @@ bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& 
     }
 }
 
-bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<double>& observation) const
+bool ManipulatorRobot::getObservation(const frapu::RobotStateSharedPtr& state,
+                                      std::vector<double>& observation) const
 {
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     observation.clear();
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
-        for (size_t i = 0; i < state.size(); i++) {
-            observation.push_back(state[i] + sample(i, 0));
+        for (size_t i = 0; i < stateVec.size(); i++) {
+            observation.push_back(stateVec[i] + sample(i, 0));
         }
     } else {
         std::vector<double> end_effector_position;
-        getEndEffectorPosition(state, end_effector_position);
+        getEndEffectorPosition(stateVec, end_effector_position);
         unsigned int observationSpaceDimension = observationSpace_->getDimension();
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
         observation = std::vector<double>(observationSpaceDimension);
@@ -499,16 +494,16 @@ bool ManipulatorRobot::getObservation(std::vector<double>& state, std::vector<do
             observation[i] = end_effector_position[i] + sample(i, 0);
         }
 
-        unsigned int stateSizeHalf = state.size() / 2;
+        unsigned int stateSizeHalf = stateVec.size() / 2;
         for (size_t i = 0; i < stateSizeHalf; i++) {
-            observation[i + 3] = state[i + stateSizeHalf] + sample(i + 3, 0);
+            observation[i + 3] = stateVec[i + stateSizeHalf] + sample(i + 3, 0);
         }
     }
 
     return true;
 }
 
-bool ManipulatorRobot::getObservation(std::vector<double>& state,
+bool ManipulatorRobot::getObservation(const frapu::RobotStateSharedPtr& state,
                                       std::vector<double>& observationError,
                                       std::vector<double>& observation) const
 {
@@ -520,23 +515,25 @@ bool ManipulatorRobot::getObservation(std::vector<double>& state,
     }
 }
 
-void ManipulatorRobot::transformToObservationSpace(std::vector<double>& state, std::vector<double>& res) const
+void ManipulatorRobot::transformToObservationSpace(const frapu::RobotStateSharedPtr& state,
+        std::vector<double>& res) const
 {
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     res.clear();
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
-        res = state;
+        res = stateVec;
     } else {
         std::vector<double> end_effector_position;
         unsigned int observationSpaceDimension = observationSpace_->getDimension();
         res = std::vector<double>(observationSpaceDimension);
-        getEndEffectorPosition(state, end_effector_position);
+        getEndEffectorPosition(stateVec, end_effector_position);
         for (size_t i = 0; i < 3; i++) {
             res[i] = end_effector_position[i];
         }
 
-        unsigned int stateSizeHalf = state.size() / 2;
+        unsigned int stateSizeHalf = stateVec.size() / 2;
         for (size_t i = 0; i < stateSizeHalf; i++) {
-            res[i + 3] = state[i + stateSizeHalf];
+            res[i + 3] = stateVec[i + stateSizeHalf];
         }
     }
 }
@@ -581,12 +578,13 @@ void ManipulatorRobot::initCollisionObjects()
     collision_objects_.push_back(std::make_shared<fcl::CollisionObject>(boost::shared_ptr<fcl::CollisionGeometry>(box), box_tf));
 }
 
-void ManipulatorRobot::createRobotCollisionObjects(const std::vector<double>& state,
-        std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const
+void ManipulatorRobot::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,
+            std::vector<frapu::CollisionObjectSharedPtr>& collision_objects) const
 {
-    unsigned int len = state.size();
-    if (state.size() > getControlSpaceDimension()) {
-        len = state.size() / 2;
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    unsigned int len = stateVec.size();
+    if (stateVec.size() > getControlSpaceDimension()) {
+        len = stateVec.size() / 2;
     }
     Eigen::MatrixXd res = Eigen::MatrixXd::Identity(4, 4);
     res(0, 3) = joint_origins_[0][0];
@@ -594,7 +592,7 @@ void ManipulatorRobot::createRobotCollisionObjects(const std::vector<double>& st
     res(2, 3) = joint_origins_[0][2];
 
     for (size_t i = 0; i < len; i++) {
-        res = kinematics_->getPoseOfLinkN(state[i], res, i);
+        res = kinematics_->getPoseOfLinkN(stateVec[i], res, i);
         fcl::Matrix3f trans_matrix(res(0, 0), res(0, 1), res(0, 2),
                                    res(1, 0), res(1, 1), res(1, 2),
                                    res(2, 0), res(2, 1), res(2, 2));
@@ -636,30 +634,32 @@ bool ManipulatorRobot::checkSelfCollision(std::vector<std::shared_ptr<fcl::Colli
     return false;
 }
 
-void ManipulatorRobot::getLinearProcessMatrices(const std::vector<double>& state,
+void ManipulatorRobot::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
         std::vector<double>& control,
         double& duration,
         std::vector<Eigen::MatrixXd>& matrices) const
 {
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(state,
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
+    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(stateVec,
             control,
             duration,
             observationSpace_->getObservationSpaceInfo().observationType,
             matrices);
 }
 
-void ManipulatorRobot::getLinearObservationDynamics(const std::vector<double>& state,
+void ManipulatorRobot::getLinearObservationDynamics(const frapu::RobotStateSharedPtr& state,
         Eigen::MatrixXd& H,
         Eigen::MatrixXd& W) const
 {
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     shared::ManipulatorPropagator* p = static_cast<shared::ManipulatorPropagator*>(propagator_.get());
-    p->getIntegrator()->getLinearObservationDynamics(state,
+    p->getIntegrator()->getLinearObservationDynamics(stateVec,
             observationSpace_->getObservationSpaceInfo().observationType,
             H,
             W);
 }
 
-bool ManipulatorRobot::checkSelfCollision(const std::vector<double>& state) const
+bool ManipulatorRobot::checkSelfCollision(const frapu::RobotStateSharedPtr& state) const
 {
     std::vector<std::shared_ptr<fcl::CollisionObject>> robot_collision_objects;
     createRobotCollisionObjects(state, robot_collision_objects);
@@ -707,23 +707,24 @@ void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_a
 
 }
 
-void ManipulatorRobot::updateViewer(std::vector<double>& state,
+void ManipulatorRobot::updateViewer(const frapu::RobotStateSharedPtr& state,
                                     std::vector<std::vector<double>>& particles,
-                                    std::vector<std::vector<double>>& particle_colors)
+                                    std::vector<std::vector<double>>& particleColors)
 {
 #ifdef USE_OPENRAVE
+    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     std::vector<double> joint_values;
     std::vector<double> joint_velocities;
     std::vector<std::vector<double>> particle_joint_values;
     //std::vector<std::vector<double>> particle_joint_colors;
-    for (size_t i = 0; i < state.size() / 2; i++) {
-        joint_values.push_back(state[i]);
-        joint_velocities.push_back(state[i + state.size() / 2]);
+    for (size_t i = 0; i < stateVec.size() / 2; i++) {
+        joint_values.push_back(stateVec[i]);
+        joint_velocities.push_back(stateVec[i + stateVec.size() / 2]);
     }
 
     for (size_t i = 0; i < particles.size(); i++) {
         std::vector<double> particle;
-        for (size_t j = 0; j < state.size() / 2; j++) {
+        for (size_t j = 0; j < stateVec.size() / 2; j++) {
             particle.push_back(particles[i][j]);
         }
         particle_joint_values.push_back(particle);
@@ -733,7 +734,7 @@ void ManipulatorRobot::updateViewer(std::vector<double>& state,
     viewer_->updateRobotValues(joint_values,
                                joint_velocities,
                                particle_joint_values,
-                               particle_colors,
+                               particleColors,
                                nullptr);
 
 #endif
@@ -1152,7 +1153,7 @@ int ManipulatorRobot::getDOF() const
     return active_joints_.size();
 }
 
-bool ManipulatorRobot::isTerminal(std::vector<double>& state) const
+bool ManipulatorRobot::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
     double dist = distanceGoal(state);
     if (dist < goal_radius_) {
@@ -1162,11 +1163,12 @@ bool ManipulatorRobot::isTerminal(std::vector<double>& state) const
     return false;
 }
 
-double ManipulatorRobot::distanceGoal(std::vector<double>& state) const
+double ManipulatorRobot::distanceGoal(const frapu::RobotStateSharedPtr& state) const
 {
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
     assert(goal_position_.size() != 0 && "ManipulatorRobot: No goal area set. Cannot calculate distance!");
     std::vector<double> end_effector_position;
-    getEndEffectorPosition(state, end_effector_position);
+    getEndEffectorPosition(stateVec, end_effector_position);
     double dist = 0.0;
     for (size_t i = 0; i < end_effector_position.size(); i++) {
         dist += std::pow(end_effector_position[i] - goal_position_[i], 2);
@@ -1176,14 +1178,17 @@ double ManipulatorRobot::distanceGoal(std::vector<double>& state) const
 
 }
 
-void ManipulatorRobot::makeNextStateAfterCollision(std::vector<double>& previous_state,
-        std::vector<double>& colliding_state,
-        std::vector<double>& next_state)
+void ManipulatorRobot::makeNextStateAfterCollision(const frapu::RobotStateSharedPtr& previousState,
+        const frapu::RobotStateSharedPtr& collidingState,
+        frapu::RobotStateSharedPtr& nextState)
 {
-    next_state = previous_state;
-    for (size_t i = previous_state.size() / 2; i < previous_state.size(); i++) {
-        next_state[i] = 0.0;
+    std::vector<double> previousStateVec = static_cast<frapu::VectorState*>(previousState.get())->asVector();
+    std::vector<double> nextStateVec = previousStateVec;
+    for (size_t i = nextStateVec.size() / 2; i < nextStateVec.size(); i++) {
+        nextStateVec[i] = 0.0;
     }
+
+    nextState = std::make_shared<frapu::VectorState>(nextStateVec);
 }
 
 std::vector<double> ManipulatorRobot::getProcessMatrices(std::vector<double>& x,
@@ -1213,10 +1218,10 @@ void ManipulatorRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
 void ManipulatorRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix,
         unsigned long seed)
-{   
+{
     cout << "obs matrix: (" << covariance_matrix.rows() << ", " << covariance_matrix.cols() << ")" << endl;
     observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
-    cout << "covar: " << observation_distribution_->_covar << endl;    
+    cout << "covar: " << observation_distribution_->_covar << endl;
     setObservationCovarianceMatrix(observation_distribution_->_covar);
 }
 

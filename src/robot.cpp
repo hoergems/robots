@@ -43,11 +43,11 @@ bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,
     std::vector<double> controlVec = static_cast<const frapu::VectorAction*>(action.get())->asVector();
     std::vector<double> resultVec;    
     propagator_->propagateState(stateVec, controlVec, controlError, duration, simulationStepSize, resultVec);
-    if (constraints_enforced_) {
-        enforceConstraints(resultVec);
-    }
-    
     result = std::make_shared<frapu::VectorState>(resultVec);
+    if (constraints_enforced_) {
+        enforceConstraints(result);
+    }    
+    
     return true;
 }
 
@@ -104,7 +104,7 @@ double Robot::calcLikelihood(const frapu::RobotStateSharedPtr& state, std::vecto
     return observation_distribution_->calcPdf(observation, transformedState);
 }
 
-std::shared_ptr<shared::StateSpace> getStateSpace() const {
+std::shared_ptr<frapu::StateSpace> Robot::getStateSpace() const {
     return stateSpace_;
 }
 
@@ -151,22 +151,9 @@ void Robot::enforceConstraints(bool enforce)
     constraints_enforced_ = enforce;
 }
 
-bool Robot::enforceConstraints(std::vector<double>& state) const
+bool Robot::enforceConstraints(frapu::RobotStateSharedPtr& state) const
 {
-    bool enforced = false;
-    for (size_t i = 0; i < state.size(); i++) {
-        if (state[i] < lowerStateLimits_[i]) {
-            state[i] = lowerStateLimits_[i];
-            enforced = true;
-        }
-
-        else if (state[i] > upperStateLimits_[i]) {
-            state[i] = upperStateLimits_[i];
-            enforced = true;
-        }
-    }
-
-    return enforced;
+    return stateSpace_->enforceStateLimits(state);    
 }
 
 bool Robot::enforceControlConstraints(std::vector<double>& control) const
@@ -208,12 +195,6 @@ void Robot::sampleRandomControl(std::vector<double>& control,
 unsigned int Robot::getControlSpaceDimension() const
 {
     return actionSpace_->getNumDimensions();
-}
-
-void Robot::getStateLimits(std::vector<double>& lowerLimits, std::vector<double>& upperLimits) const
-{
-    lowerLimits = lowerStateLimits_;
-    upperLimits = upperStateLimits_;
 }
 
 void Robot::setStateCovarianceMatrix(Eigen::MatrixXd& state_covariance_matrix)

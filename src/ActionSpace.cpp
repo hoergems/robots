@@ -33,19 +33,15 @@ unsigned int ActionSpace::getNumDimensions() const
     return numDimensions_;
 }
 
-void ActionSpace::setActionLimits(std::vector<double>& lowerActionLimits,
-                                  std::vector<double>& upperActionLimits)
+void setActionLimits(std::shared_ptr<shared::ActionLimits> &actionLimits)
 {
-    lowerActionLimits_ = lowerActionLimits;
-    upperActionLimits_ = upperActionLimits;
-    actionNormalizer_->setActionLimits(lowerActionLimits, upperActionLimits);
+    actionLimits_ = actionLimits;
+    actionNormalizer_->setActionLimits(actionLimits);
 }
 
-void ActionSpace::getActionLimits(std::vector<double>& lowerActionLimits,
-                                  std::vector<double>& upperActionLimits) const
+void ActionSpace::getActionLimits() const
 {
-    lowerActionLimits = lowerActionLimits_;
-    upperActionLimits = upperActionLimits_;
+    return actionLimits_;
 }
 
 void ActionSpace::normalizeAction(std::vector<double>& action,

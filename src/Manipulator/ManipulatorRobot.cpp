@@ -478,67 +478,71 @@ bool ManipulatorRobot::makeObservationSpace(const frapu::ObservationSpaceInfo& o
 }
 
 bool ManipulatorRobot::getObservation(const frapu::RobotStateSharedPtr& state,
-                                      std::vector<double>& observation) const
+                                      frapu::ObservationSharedPtr& observation) const
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
-    observation.clear();
+    std::vector<double> observationVec;    
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
         for (size_t i = 0; i < stateVec.size(); i++) {
-            observation.push_back(stateVec[i] + sample(i, 0));
+            observationVec.push_back(stateVec[i] + sample(i, 0));
         }
     } else {
         std::vector<double> end_effector_position;
         getEndEffectorPosition(stateVec, end_effector_position);
         unsigned int observationSpaceDimension = observationSpace_->getDimension();
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
-        observation = std::vector<double>(observationSpaceDimension);
+        observationVec = std::vector<double>(observationSpaceDimension);
         for (size_t i = 0; i < 3; i++) {
-            observation[i] = end_effector_position[i] + sample(i, 0);
+            observationVec[i] = end_effector_position[i] + sample(i, 0);
         }
 
         unsigned int stateSizeHalf = stateVec.size() / 2;
         for (size_t i = 0; i < stateSizeHalf; i++) {
-            observation[i + 3] = stateVec[i + stateSizeHalf] + sample(i + 3, 0);
+            observationVec[i + 3] = stateVec[i + stateSizeHalf] + sample(i + 3, 0);
         }
     }
-
+    
+    observation = std::make_shared<frapu::VectorObservation>(observationVec);
     return true;
 }
 
 bool ManipulatorRobot::getObservation(const frapu::RobotStateSharedPtr& state,
                                       std::vector<double>& observationError,
-                                      std::vector<double>& observation) const
-{
-    std::vector<double> res;
-    observation = std::vector<double>(observationSpace_->getDimension());
-    transformToObservationSpace(state, res);
+                                      frapu::ObservationSharedPtr& observation) const
+{    
+    transformToObservationSpace(state, observation);
+    std::vector<double> observationVec = static_cast<frapu::VectorObservation *>(observation.get())->asVector();
     for (size_t i = 0; i < observationSpace_->getDimension(); i++) {
-        observation[i] = res[i] + observationError[i];
+        observationVec[i] += observationError[i];
     }
+    
+    observation = std::make_shared<frapu::VectorObservation>(observationVec);
 }
 
 void ManipulatorRobot::transformToObservationSpace(const frapu::RobotStateSharedPtr& state,
-        std::vector<double>& res) const
+        frapu::ObservationSharedPtr& res) const
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
-    res.clear();
+    std::vector<double> observationVec;    
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
-        res = stateVec;
+        observationVec = stateVec;
     } else {
         std::vector<double> end_effector_position;
         unsigned int observationSpaceDimension = observationSpace_->getDimension();
-        res = std::vector<double>(observationSpaceDimension);
+        observationVec = std::vector<double>(observationSpaceDimension);
         getEndEffectorPosition(stateVec, end_effector_position);
         for (size_t i = 0; i < 3; i++) {
-            res[i] = end_effector_position[i];
+            observationVec[i] = end_effector_position[i];
         }
 
         unsigned int stateSizeHalf = stateVec.size() / 2;
         for (size_t i = 0; i < stateSizeHalf; i++) {
-            res[i + 3] = stateVec[i + stateSizeHalf];
+            observationVec[i + 3] = stateVec[i + stateSizeHalf];
         }
     }
+    
+    res = std::make_shared<frapu::VectorObservation>(observationVec);
 }
 
 void ManipulatorRobot::initCollisionObjects()

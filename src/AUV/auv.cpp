@@ -87,40 +87,46 @@ bool AUV::makeObservationSpace(const frapu::ObservationSpaceInfo& observationSpa
 
 bool AUV::getObservation(const frapu::RobotStateSharedPtr& state,
                          std::vector<double>& observationError,
-                         std::vector<double>& observation) const
+                         frapu::ObservationSharedPtr& observation) const
 {
     return getObservation(state, observation);
 }
 
 bool AUV::getObservation(const frapu::RobotStateSharedPtr& state,
-                         std::vector<double>& observation) const
+                         frapu::ObservationSharedPtr& observation) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    std::vector<double> observationVec;
     std::vector<frapu::CollisionObjectSharedPtr> collisionObjects;
     createRobotCollisionObjects(state, collisionObjects);
     for (auto & obstacle : environmentInfo_->obstacles) {
         if (obstacle->getTerrain()->isObservable()) {
             if (obstacle->inCollision(collisionObjects)) {
-                observation = stateVec;
+                observationVec = stateVec;
                 return true;
             }
         }
     }
 
-    observation.clear();
-    observation.push_back(-100);
-    observation.push_back(-100);
-
+    observationVec.clear();
+    observationVec.push_back(-100);
+    observationVec.push_back(-100);
+    observation = std::make_shared<frapu::VectorObservation>(observationVec);
     return true;
 }
 
-double AUV::calcLikelihood(const frapu::RobotStateSharedPtr& state, std::vector<double>& observation)
+double AUV::calcLikelihood(const frapu::RobotStateSharedPtr& state,
+                           const frapu::ObservationSharedPtr& observation) const
 {
-    std::vector<double> transformedState;
-    transformToObservationSpace(state, transformedState);
+    frapu::ObservationSharedPtr observationState;
+    transformToObservationSpace(state, observationState);
+    std::vector<double> observationVec =
+        static_cast<frapu::VectorObservation*>(observationState.get())->asVector();
+    std::vector<double> stateVec =
+        static_cast<frapu::VectorState*>(state.get())->asVector();
     bool isSame = true;
-    for (size_t i = 0; i < observation.size(); i++) {
-        if (transformedState[i] != observation[i]) {
+    for (size_t i = 0; i < observationVec.size(); i++) {
+        if (stateVec[i] != observationVec[i]) {
             isSame = false;
         }
     }
@@ -133,7 +139,7 @@ double AUV::calcLikelihood(const frapu::RobotStateSharedPtr& state, std::vector<
 }
 
 void AUV::transformToObservationSpace(const frapu::RobotStateSharedPtr& state,
-                                      std::vector<double>& res) const
+                                      frapu::ObservationSharedPtr& res) const
 {
     getObservation(state, res);
 }

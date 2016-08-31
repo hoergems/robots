@@ -122,52 +122,59 @@ bool DubinRobot::makeObservationSpace(const frapu::ObservationSpaceInfo& observa
 
 bool DubinRobot::getObservation(const frapu::RobotStateSharedPtr& state,
                                 std::vector<double>& observationError,
-                                std::vector<double>& observation) const
+                                frapu::ObservationSharedPtr& observation) const
 {
-    std::vector<double> res;
-    transformToObservationSpace(state, res);
-    observation = std::vector<double>(observationSpace_->getDimension());
-    observation[0] = res[0] + observationError[0];
-    observation[1] = res[1] + observationError[1];
-    observation[2] = res[2] + observationError[2];
+    transformToObservationSpace(state, observation);
+    std::vector<double> observationVec =
+        static_cast<frapu::VectorObservation*>(observation.get())->asVector();
+    for (size_t i = 0; i < observationError.size(); i++) {
+        observationVec[i] += observationError[i];
+    }
+    
+    observation = std::make_shared<frapu::VectorObservation>(observationVec);
 }
 
 bool DubinRobot::getObservation(const frapu::RobotStateSharedPtr& state,
-                                std::vector<double>& observation) const
+                                frapu::ObservationSharedPtr& observation) const
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
+    std::vector<double> observationVec;
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
-        observation.clear();
+        observationVec = std::vector<double>(stateVec.size());        
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
         for (size_t i = 0; i < stateVec.size(); i++) {
-            observation.push_back(stateVec[i] + sample(i, 0));
+            observationVec[i] = stateVec[i] + sample(i, 0);
         }
     } else {
-        observation = std::vector<double>(3);
+        observationVec = std::vector<double>(3);
         unsigned int observationSpaceDimension = observationSpace_->getDimension();
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
 
-        observation[0] = sample(0, 0) + 1.0 / (std::pow(stateVec[0] - beacons_[0].x_, 2) + std::pow(stateVec[1] - beacons_[0].y_, 2) + 1.0);
-        observation[1] = sample(1, 0) + 1.0 / (std::pow(stateVec[0] - beacons_[1].x_, 2) + std::pow(stateVec[1] - beacons_[1].y_, 2) + 1.0);
-        observation[2] = stateVec[3] + sample(2, 0);
+        observationVec[0] = sample(0, 0) + 1.0 / (std::pow(stateVec[0] - beacons_[0].x_, 2) + std::pow(stateVec[1] - beacons_[0].y_, 2) + 1.0);
+        observationVec[1] = sample(1, 0) + 1.0 / (std::pow(stateVec[0] - beacons_[1].x_, 2) + std::pow(stateVec[1] - beacons_[1].y_, 2) + 1.0);
+        observationVec[2] = stateVec[3] + sample(2, 0);
 
     }
-
+    
+    observation = std::make_shared<frapu::VectorObservation>(observationVec);
     return true;
 }
 
 void DubinRobot::transformToObservationSpace(const frapu::RobotStateSharedPtr& state,
-        std::vector<double>& res) const
+        frapu::ObservationSharedPtr& res) const
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
+    std::vector<double> observationVec;
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
-        res = stateVec;
+        observationVec = stateVec;
     } else {
-        res = std::vector<double>(3);
-        res[0] = 1.0 / (std::pow(stateVec[0] - beacons_[0].x_, 2) + std::pow(stateVec[1] - beacons_[0].y_, 2) + 1.0);
-        res[1] = 1.0 / (std::pow(stateVec[0] - beacons_[1].x_, 2) + std::pow(stateVec[1] - beacons_[1].y_, 2) + 1.0);
-        res[2] = stateVec[3];
+        observationVec = std::vector<double>(3);
+        observationVec[0] = 1.0 / (std::pow(stateVec[0] - beacons_[0].x_, 2) + std::pow(stateVec[1] - beacons_[0].y_, 2) + 1.0);
+        observationVec[1] = 1.0 / (std::pow(stateVec[0] - beacons_[1].x_, 2) + std::pow(stateVec[1] - beacons_[1].y_, 2) + 1.0);
+        observationVec[2] = stateVec[3];
     }
+    
+    res = std::make_shared<frapu::VectorObservation>(observationVec);
 }
 
 int DubinRobot::getStateSpaceDimension() const

@@ -2,8 +2,8 @@
 
 namespace frapu
 {
-DiscreteActionSpace::DiscreteActionSpace(bool normalizedActionSpace):
-    ActionSpace(normalizedActionSpace)
+DiscreteActionSpace::DiscreteActionSpace(const ActionSpaceInfo &actionSpaceInfo):
+    ActionSpace(actionSpaceInfo)
 {
 
 }

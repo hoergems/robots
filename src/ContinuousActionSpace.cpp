@@ -2,8 +2,8 @@
 
 namespace frapu
 {
-ContinuousActionSpace::ContinuousActionSpace(bool normalizedActionSpace):
-    ActionSpace(normalizedActionSpace)
+ContinuousActionSpace::ContinuousActionSpace(const ActionSpaceInfo &actionSpaceInfo):
+    ActionSpace(actionSpaceInfo)
 {
 
 }

@@ -427,9 +427,9 @@ bool ManipulatorRobot::makeStateSpace()
 bool ManipulatorRobot::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
 {
     if (actionSpaceInfo.type == "continuous") {
-        actionSpace_ = std::make_shared<frapu::ContinuousVectorActionSpace>(actionSpaceInfo.normalized);
+        actionSpace_ = std::make_shared<frapu::ContinuousVectorActionSpace>(actionSpaceInfo);
     } else {
-        actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo.normalized);
+        actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo);
     }
 
     unsigned int numDimensions = active_joints_.size();

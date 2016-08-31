@@ -65,7 +65,7 @@ bool AUV::makeStateSpace()
 
 bool AUV::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
 {
-    actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo.normalized);
+    actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo);
     unsigned int numDimensions = 1;
     actionSpace_->setNumDimensions(numDimensions);
     frapu::ActionLimitsSharedPtr actionLimits =

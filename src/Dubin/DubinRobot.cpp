@@ -90,9 +90,9 @@ bool DubinRobot::makeStateSpace()
 bool DubinRobot::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
 {
     if (actionSpaceInfo.type == "continuous") {
-        actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo.normalized);
+        actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo);
     } else {
-        actionSpace_ = std::make_shared<frapu::ContinuousVectorActionSpace>(actionSpaceInfo.normalized);
+        actionSpace_ = std::make_shared<frapu::ContinuousVectorActionSpace>(actionSpaceInfo);
     }
 
     frapu::ActionLimitsSharedPtr actionLimits =

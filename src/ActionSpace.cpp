@@ -6,12 +6,12 @@ using std::endl;
 
 namespace frapu
 {
-ActionSpace::ActionSpace(bool normalizedActionSpace):
+ActionSpace::ActionSpace(const ActionSpaceInfo &actionSpaceInfo):
     numDimensions_(),    
     actionNormalizer_(nullptr),
-    normalizedActionSpace_(normalizedActionSpace)
+    actionSpaceInfo_(actionSpaceInfo)
 {
-    if (normalizedActionSpace) {
+    if (actionSpaceInfo_.normalized) {
         actionNormalizer_ = std::unique_ptr<standardNormalize>(new standardNormalize());
         //actionNormalizer_ = std::make_unique<shared::standardNormalize>(lowerActionLimits_, upperActionLimits_);
     } else {
@@ -19,6 +19,10 @@ ActionSpace::ActionSpace(bool normalizedActionSpace):
         //actionNormalizer_ = std::make_unique<shared::nullNormalize>(lowerActionLimits_, upperActionLimits_);
     }
 
+}
+
+const ActionSpaceInfo ActionSpace::getInfo() const {
+    return actionSpaceInfo_;
 }
 
 void ActionSpace::setNumDimensions(unsigned int& numDimensions)
@@ -50,11 +54,6 @@ void ActionSpace::normalizeAction(ActionSharedPtr& action)
 void ActionSpace::denormalizeAction(ActionSharedPtr& action)
 {
     actionNormalizer_->denormalizeAction(action);    
-}
-
-bool ActionSpace::isNormalized() const
-{
-    return normalizedActionSpace_;
 }
 
 }

@@ -210,7 +210,6 @@ void AUV::makeProcessDistribution(Eigen::MatrixXd& mean,
     elements.push_back(std::make_pair(elem1, 0.8));
     elements.push_back(std::make_pair(elem2, 0.1));
     static_cast<Eigen::WeightedDiscreteDistribution<double> *>(process_distribution_.get())->setElements(elements);
-    setStateCovarianceMatrix(covariance_matrix);
 }
 
 void AUV::makeObservationDistribution(Eigen::MatrixXd& mean,

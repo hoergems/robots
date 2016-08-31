@@ -1188,17 +1188,13 @@ void ManipulatorRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
         unsigned long seed)
 {
     process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
-    setStateCovarianceMatrix(process_distribution_->_covar);
 }
 
 void ManipulatorRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix,
         unsigned long seed)
 {
-    cout << "obs matrix: (" << covariance_matrix.rows() << ", " << covariance_matrix.cols() << ")" << endl;
     observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
-    cout << "covar: " << observation_distribution_->_covar << endl;
-    setObservationCovarianceMatrix(observation_distribution_->_covar);
 }
 
 /**BOOST_PYTHON_MODULE(librobots)

@@ -298,7 +298,6 @@ void DubinRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
         unsigned long seed)
 {
     process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
-    setStateCovarianceMatrix(process_distribution_->_covar);
 }
 
 void DubinRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
@@ -306,7 +305,6 @@ void DubinRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
         unsigned long seed)
 {
     observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
-    setObservationCovarianceMatrix(observation_distribution_->_covar);
 }
 
 void DubinRobot::updateViewer(const frapu::RobotStateSharedPtr& state,

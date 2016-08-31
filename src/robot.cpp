@@ -15,15 +15,13 @@ Robot::Robot(std::string robot_file):
     state_covariance_matrix_(),
     observation_covariance_matrix_(),
     goal_position_(),
-    goal_radius_(),
-    lowerStateLimits_(),
-    upperStateLimits_(),
-    lowerControlLimits_(),
-    upperControlLimits_(),
+    goal_radius_(),    
     process_distribution_(nullptr),
-    observation_distribution_(nullptr),
-    observationSpace_(nullptr),
-    environmentInfo_(nullptr)
+    observation_distribution_(nullptr),    
+    environmentInfo_(nullptr),
+    stateSpace_(nullptr),
+    actionSpace_(nullptr),
+    observationSpace_(nullptr)
 {
 #ifdef USE_OPENRAVE
     viewer_ = std::make_shared<shared::ViewerInterface>();
@@ -45,7 +43,7 @@ bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,
     propagator_->propagateState(stateVec, controlVec, controlError, duration, simulationStepSize, resultVec);
     result = std::make_shared<frapu::VectorState>(resultVec);
     if (constraints_enforced_) {
-        enforceConstraints(result);
+        stateSpace_->enforceStateLimits(result);        
     }    
     
     return true;
@@ -104,16 +102,16 @@ double Robot::calcLikelihood(const frapu::RobotStateSharedPtr& state, std::vecto
     return observation_distribution_->calcPdf(observation, transformedState);
 }
 
-std::shared_ptr<frapu::StateSpace> Robot::getStateSpace() const {
+frapu::StateSpaceSharedPtr Robot::getStateSpace() const {
     return stateSpace_;
 }
 
-shared::ObservationSpace* Robot::getObservationSpace() const
+frapu::ObservationSpaceSharedPtr Robot::getObservationSpace() const
 {
-    return observationSpace_.get();
+    return observationSpace_;
 }
 
-std::shared_ptr<shared::ActionSpace> Robot::getActionSpace() const
+frapu::ActionSpaceSharedPtr Robot::getActionSpace() const
 {
     if (!actionSpace_) {
         assert(false && "ACTION SPACE IS NULL");
@@ -149,47 +147,6 @@ bool Robot::constraintsEnforced()
 void Robot::enforceConstraints(bool enforce)
 {
     constraints_enforced_ = enforce;
-}
-
-bool Robot::enforceConstraints(frapu::RobotStateSharedPtr& state) const
-{
-    return stateSpace_->enforceStateLimits(state);    
-}
-
-bool Robot::enforceControlConstraints(std::vector<double>& control) const
-{
-    for (size_t i = 0; i < control.size(); i++) {
-        if (control[i] < lowerControlLimits_[i]) {
-            control[i] = lowerControlLimits_[i];
-        }
-
-        else if (control[i] > upperControlLimits_[i]) {
-            control[i] = upperControlLimits_[i];
-        }
-    }
-}
-
-void Robot::sampleRandomControl(std::vector<double>& control,
-                                std::default_random_engine* randGen,
-                                std::string& actionSamplingStrategy)
-{
-    control = std::vector<double>(lowerControlLimits_.size());
-    if (actionSamplingStrategy == "continuous") {
-        for (size_t i = 0; i < lowerControlLimits_.size(); i++) {
-            std::uniform_real_distribution<double> uniform_dist(lowerControlLimits_[i], upperControlLimits_[i]);
-            double rand_num = uniform_dist(*randGen);
-            control[i] = rand_num;
-        }
-    } else {
-        for (size_t i = 0; i < lowerControlLimits_.size(); i++) {
-            unsigned int rand_num = std::uniform_int_distribution<long>(0, 1)(*randGen);
-            if (rand_num == 0) {
-                control[i] = lowerControlLimits_[i];
-            } else {
-                control[i] = upperControlLimits_[i];
-            }
-        }
-    }
 }
 
 unsigned int Robot::getControlSpaceDimension() const

@@ -1,6 +1,6 @@
 #include <robot_headers/ContinuousObservationSpace.hpp>
 
-namespace shared
+namespace frapu
 {
 ContinuousObservationSpace::ContinuousObservationSpace(const ObservationSpaceInfo& observationSpaceInfo):
     ObservationSpace(observationSpaceInfo),

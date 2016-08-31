@@ -1,9 +1,9 @@
 #include <robot_headers/ContinuousActionSpace.hpp>
 
-namespace shared
+namespace frapu
 {
 ContinuousActionSpace::ContinuousActionSpace(bool normalizedActionSpace):
-    shared::ActionSpace(normalizedActionSpace)
+    ActionSpace(normalizedActionSpace)
 {
 
 }

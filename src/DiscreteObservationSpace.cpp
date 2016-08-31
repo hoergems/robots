@@ -1,6 +1,6 @@
 #include <robot_headers/DiscreteObservationSpace.hpp>
 
-namespace shared
+namespace frapu
 {
 DiscreteObservationSpace::DiscreteObservationSpace(const ObservationSpaceInfo& observationSpaceInfo):
     ObservationSpace(observationSpaceInfo),

@@ -79,29 +79,43 @@ void DubinRobot::createRobotCollisionObjects(const frapu::RobotStateSharedPtr st
     collision_objects.push_back(coll_obj);
 }
 
-bool DubinRobot::makeActionSpace(bool normalizedActionSpace)
+bool DubinRobot::makeStateSpace()
 {
-    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>(normalizedActionSpace);
-    unsigned int numDimensions = 2;
-    actionSpace_->setNumDimensions(numDimensions);
-    actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);
+    stateSpace_ = std::make_shared<frapu::VectorStateSpace>(4);
+    frapu::StateLimitsSharedPtr stateLimits =
+        std::make_shared<frapu::VectorStateLimits>(lowerStateLimits_, upperStateLimits_);
+    stateSpace_->setStateLimits(stateLimits);
 }
 
-bool DubinRobot::makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo)
+bool DubinRobot::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
 {
-    observationSpace_ = std::make_shared<shared::ContinuousObservationSpace>(observationSpaceInfo);
+    if (actionSpaceInfo.type == "continuous") {
+        actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo.normalized);
+    } else {
+        actionSpace_ = std::make_shared<frapu::ContinuousVectorActionSpace>(actionSpaceInfo.normalized);
+    }
+
+    frapu::ActionLimitsSharedPtr actionLimits =
+        std::make_shared<frapu::VectorActionLimits>(lowerControlLimits_, upperControlLimits_);
+    actionSpace_->setActionLimits(actionLimits);
+    unsigned int numDimensions = 2;
+    actionSpace_->setNumDimensions(numDimensions);
+}
+
+bool DubinRobot::makeObservationSpace(const frapu::ObservationSpaceInfo& observationSpaceInfo)
+{
+    observationSpace_ = std::make_shared<frapu::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
     if (observationSpaceInfo.observationType == "linear") {
         observationSpace_->setDimension(getStateSpaceDimension());
-        getStateLimits(lowerLimits, upperLimits);
-        static_cast<shared::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerLimits,
-                upperLimits);
+        static_cast<frapu::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerStateLimits_,
+                upperStateLimits_);
     } else {
         observationSpace_->setDimension(3);
         lowerLimits = std::vector<double>( {0.0, 0.0, -1.2});
         upperLimits = std::vector<double>( {1.0, 1.0, 1.2});
-        static_cast<shared::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerLimits,
+        static_cast<frapu::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerLimits,
                 upperLimits);
     }
 }
@@ -237,27 +251,28 @@ void DubinRobot::getLinearObservationDynamics(const frapu::RobotStateSharedPtr& 
 }
 
 void DubinRobot::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
-        std::vector<double>& control,
+        const frapu::ActionSharedPtr& control,
         double& duration,
         std::vector<Eigen::MatrixXd>& matrices) const
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
+    std::vector<double> controlVec = static_cast<frapu::VectorAction*>(control.get())->asVector();
     Eigen::MatrixXd A(4, 4);
     A << 1, 0, -duration* stateVec[3]*sin(stateVec[2]), duration* cos(stateVec[2]),
       0, 1, duration* stateVec[3]*cos(stateVec[2]), duration* sin(stateVec[2]),
-      0, 0, 1, duration* tan(control[1]) / d_,
+      0, 0, 1, duration* tan(controlVec[1]) / d_,
       0, 0, 0, 1;
 
     Eigen::MatrixXd B(4, 2);
     B << 0, 0,
       0, 0,
-      0, duration* stateVec[3]*(std::pow(tan(control[1]), 2) + 1) / d_,
+      0, duration* stateVec[3]*(std::pow(tan(controlVec[1]), 2) + 1) / d_,
       duration, 0;
 
     Eigen::MatrixXd V(4, 2);
     V << 0, 0,
       0, 0,
-      0, duration* stateVec[3]*(std::pow(tan(control[1]), 2) + 1) / d_,
+      0, duration* stateVec[3]*(std::pow(tan(controlVec[1]), 2) + 1) / d_,
       duration, 0;
 
     matrices.push_back(A);

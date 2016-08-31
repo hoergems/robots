@@ -4,20 +4,18 @@
 using std::cout;
 using std::endl;
 
-namespace shared
+namespace frapu
 {
 ActionSpace::ActionSpace(bool normalizedActionSpace):
-    numDimensions_(),
-    lowerActionLimits_(),
-    upperActionLimits_(),
+    numDimensions_(),    
     actionNormalizer_(nullptr),
     normalizedActionSpace_(normalizedActionSpace)
 {
     if (normalizedActionSpace) {
-        actionNormalizer_ = std::unique_ptr<shared::standardNormalize>(new standardNormalize());
+        actionNormalizer_ = std::unique_ptr<standardNormalize>(new standardNormalize());
         //actionNormalizer_ = std::make_unique<shared::standardNormalize>(lowerActionLimits_, upperActionLimits_);
     } else {
-        actionNormalizer_ = std::unique_ptr<shared::nullNormalize>(new nullNormalize());
+        actionNormalizer_ = std::unique_ptr<nullNormalize>(new nullNormalize());
         //actionNormalizer_ = std::make_unique<shared::nullNormalize>(lowerActionLimits_, upperActionLimits_);
     }
 
@@ -33,27 +31,25 @@ unsigned int ActionSpace::getNumDimensions() const
     return numDimensions_;
 }
 
-void setActionLimits(std::shared_ptr<shared::ActionLimits> &actionLimits)
+void ActionSpace::setActionLimits(frapu::ActionLimitsSharedPtr &actionLimits)
 {
     actionLimits_ = actionLimits;
     actionNormalizer_->setActionLimits(actionLimits);
 }
 
-void ActionSpace::getActionLimits() const
+ActionLimitsSharedPtr ActionSpace::getActionLimits() const
 {
     return actionLimits_;
 }
 
-void ActionSpace::normalizeAction(std::vector<double>& action,
-                                  std::vector<double>& normalizedAction)
+void ActionSpace::normalizeAction(ActionSharedPtr& action)
 {
-    actionNormalizer_->operator()(action, normalizedAction);
+    actionNormalizer_->operator()(action);
 }
 
-void ActionSpace::denormalizeAction(std::vector<double>& normalizedAction,
-                                    std::vector<double>& action)
+void ActionSpace::denormalizeAction(ActionSharedPtr& action)
 {
-    actionNormalizer_->denormalizeAction(normalizedAction, action);    
+    actionNormalizer_->denormalizeAction(action);    
 }
 
 bool ActionSpace::isNormalized() const

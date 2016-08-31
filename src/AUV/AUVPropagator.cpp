@@ -4,8 +4,7 @@ namespace shared
 {
 
 AUVPropagator::AUVPropagator():
-    shared::Propagator(),
-    actionSpace_(nullptr)
+    shared::Propagator()    
 {
 
 }
@@ -33,11 +32,6 @@ bool AUVPropagator::propagateState(const std::vector<double>& currentState,
     }
 
     result[0] += control_error[0];
-}
-
-void AUVPropagator::setActionSpace(std::shared_ptr<shared::ActionSpace>& actionSpace)
-{
-    actionSpace_ = actionSpace;
 }
 
 }

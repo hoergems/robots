@@ -1,9 +1,9 @@
 #include <robot_headers/DiscreteActionSpace.hpp>
 
-namespace shared
+namespace frapu
 {
 DiscreteActionSpace::DiscreteActionSpace(bool normalizedActionSpace):
-    shared::ActionSpace(normalizedActionSpace)
+    ActionSpace(normalizedActionSpace)
 {
 
 }

@@ -155,7 +155,9 @@ add_library(robots SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/propagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteActionSpace.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteVectorActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousActionSpace.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousVectorActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ObservationSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteObservationSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousObservationSpace.cpp)

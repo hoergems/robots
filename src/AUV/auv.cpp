@@ -55,24 +55,33 @@ void AUV::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,
     collision_objects.push_back(coll_obj);
 }
 
-bool AUV::makeActionSpace(bool normalizedActionSpace)
+bool AUV::makeStateSpace()
 {
-    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>(normalizedActionSpace);
-    unsigned int numDimensions = 1;
-    actionSpace_->setNumDimensions(numDimensions);
-    actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);
-    static_cast<shared::AUVPropagator*>(propagator_.get())->setActionSpace(actionSpace_);
+    stateSpace_ = std::make_shared<frapu::VectorStateSpace>(2);
+    frapu::StateLimitsSharedPtr stateLimits =
+        std::make_shared<frapu::VectorStateLimits>(lowerStateLimits_, upperStateLimits_);
+    stateSpace_->setStateLimits(stateLimits);
 }
 
-bool AUV::makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo)
+bool AUV::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
 {
-    observationSpace_ = std::make_shared<shared::DiscreteObservationSpace>(observationSpaceInfo);
+    actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo.normalized);
+    unsigned int numDimensions = 1;
+    actionSpace_->setNumDimensions(numDimensions);
+    frapu::ActionLimitsSharedPtr actionLimits =
+        std::make_shared<frapu::VectorActionLimits>(lowerControlLimits_, upperControlLimits_);
+    actionSpace_->setActionLimits(actionLimits);
+}
+
+bool AUV::makeObservationSpace(const frapu::ObservationSpaceInfo& observationSpaceInfo)
+{
+    observationSpace_ = std::make_shared<frapu::DiscreteObservationSpace>(observationSpaceInfo);
     observationSpace_->setDimension(2);
     std::vector<std::vector<double>> observations;
 
     // Get the observations using a serializer
 
-    static_cast<shared::DiscreteObservationSpace*>(observationSpace_.get())->addObservations(observations);
+    static_cast<frapu::DiscreteObservationSpace*>(observationSpace_.get())->addObservations(observations);
     return true;
 }
 
@@ -181,7 +190,7 @@ void AUV::getLinearObservationDynamics(const frapu::RobotStateSharedPtr& state,
 }
 
 void AUV::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
-                                   std::vector<double>& control,
+                                   const frapu::ActionSharedPtr& control,
                                    double& duration,
                                    std::vector<Eigen::MatrixXd>& matrices) const
 {

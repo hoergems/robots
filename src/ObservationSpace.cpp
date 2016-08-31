@@ -4,10 +4,10 @@
 using std::cout;
 using std::endl;
 
-namespace shared
+namespace frapu
 {
 
-ObservationSpace::ObservationSpace(const shared::ObservationSpaceInfo &observationSpaceInfo):
+ObservationSpace::ObservationSpace(const ObservationSpaceInfo &observationSpaceInfo):
     dimension_(1),    
     observationSpaceInfo_(observationSpaceInfo)
 {
@@ -22,7 +22,7 @@ unsigned int ObservationSpace::getDimension() const {
     return dimension_;
 }
 
-const shared::ObservationSpaceInfo ObservationSpace::getObservationSpaceInfo() const {
+const ObservationSpaceInfo ObservationSpace::getObservationSpaceInfo() const {
     return observationSpaceInfo_;
 }
 

@@ -346,17 +346,6 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
     TiXmlElement* robot_xml = xml_doc.FirstChildElement("robot");
     initLinks(robot_xml);
     initJoints(robot_xml);
-
-    std::vector<double> stateLowerLimits;
-    std::vector<double> stateUpperLimits;
-    std::vector<double> lowerVelocityLimits;
-    std::vector<double> upperVelocityLimits;
-    getStateLimits(stateLowerLimits, stateUpperLimits);
-    for (size_t i = 0; i < stateLowerLimits.size() / 2; i++) {
-        lowerVelocityLimits.push_back(stateLowerLimits[i + stateLowerLimits.size() / 2]);
-        upperVelocityLimits.push_back(stateUpperLimits[i + stateUpperLimits.size() / 2]);
-    }
-
     kinematics_->setJointOrigins(joint_origins_);
     kinematics_->setLinkDimensions(active_link_dimensions_);
     static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setJointDamping(joint_dampings_);
@@ -419,31 +408,46 @@ void ManipulatorRobot::quatFromRPY(double& roll, double& pitch, double& yaw, std
 }
 
 std::vector<std::shared_ptr<fcl::CollisionObject>>
-ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& joint_angles)
+        ManipulatorRobot::createEndEffectorCollisionObjectPy(const std::vector<double>& joint_angles)
 {
     std::vector<std::shared_ptr<fcl::CollisionObject>> collision_objects;
     createEndEffectorCollisionObject(joint_angles, collision_objects);
     return collision_objects;
 }
 
-bool ManipulatorRobot::makeActionSpace(bool normalizedActionSpace)
+bool ManipulatorRobot::makeStateSpace()
 {
-    actionSpace_ = std::make_shared<shared::DiscreteActionSpace>(normalizedActionSpace);
-    unsigned int numDimensions = active_joints_.size();
-    actionSpace_->setNumDimensions(numDimensions);
-    actionSpace_->setActionLimits(lowerControlLimits_, upperControlLimits_);
+    unsigned int dimensions = lowerStateLimits_.size();
+    stateSpace_ = std::make_shared<frapu::VectorStateSpace>(dimensions);
+    frapu::StateLimitsSharedPtr stateLimits =
+        std::make_shared<shared::ManipulatorStateLimits>(lowerStateLimits_, upperStateLimits_);
+    stateSpace_->setStateLimits(stateLimits);
 }
 
-bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& observationSpaceInfo)
+bool ManipulatorRobot::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
 {
-    observationSpace_ = std::make_shared<shared::ContinuousObservationSpace>(observationSpaceInfo);
+    if (actionSpaceInfo.type == "continuous") {
+        actionSpace_ = std::make_shared<frapu::ContinuousVectorActionSpace>(actionSpaceInfo.normalized);
+    } else {
+        actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo.normalized);
+    }
+
+    unsigned int numDimensions = active_joints_.size();
+    actionSpace_->setNumDimensions(numDimensions);
+    frapu::ActionLimitsSharedPtr actionLimits =
+        std::make_shared<frapu::VectorActionLimits>(lowerControlLimits_, upperControlLimits_);
+    actionSpace_->setActionLimits(actionLimits);
+}
+
+bool ManipulatorRobot::makeObservationSpace(const frapu::ObservationSpaceInfo& observationSpaceInfo)
+{
+    observationSpace_ = std::make_shared<frapu::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
         observationSpace_->setDimension(getStateSpaceDimension());
-        getStateLimits(lowerLimits, upperLimits);
-        static_cast<shared::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerLimits,
-                upperLimits);
+        static_cast<frapu::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerStateLimits_,
+                upperStateLimits_);
 
     } else {
         observationSpace_->setDimension(3 + getStateSpaceDimension() / 2);
@@ -456,7 +460,6 @@ bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& 
         }
 
         radius = sqrt(radius);
-        getStateLimits(lowerLimits, upperLimits);
         std::vector<double> lowerObservationLimits;
         std::vector<double> upperObservationLimits;
         for (size_t i = 0; i < 3; i++) {
@@ -465,11 +468,11 @@ bool ManipulatorRobot::makeObservationSpace(const shared::ObservationSpaceInfo& 
         }
 
         for (size_t i = 0; i < lowerLimits.size() / 2; i++) {
-            lowerObservationLimits.push_back(lowerLimits[i + lowerLimits.size() / 2]);
-            upperObservationLimits.push_back(upperLimits[i + upperLimits.size() / 2]);
+            lowerObservationLimits.push_back(lowerStateLimits_[i + lowerStateLimits_.size() / 2]);
+            upperObservationLimits.push_back(upperStateLimits_[i + upperStateLimits_.size() / 2]);
         }
 
-        static_cast<shared::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerObservationLimits,
+        static_cast<frapu::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerObservationLimits,
                 upperObservationLimits);
     }
 }
@@ -579,7 +582,7 @@ void ManipulatorRobot::initCollisionObjects()
 }
 
 void ManipulatorRobot::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,
-            std::vector<frapu::CollisionObjectSharedPtr>& collision_objects) const
+        std::vector<frapu::CollisionObjectSharedPtr>& collision_objects) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
     unsigned int len = stateVec.size();
@@ -635,13 +638,14 @@ bool ManipulatorRobot::checkSelfCollision(std::vector<std::shared_ptr<fcl::Colli
 }
 
 void ManipulatorRobot::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
-        std::vector<double>& control,
+        const frapu::ActionSharedPtr& control,
         double& duration,
         std::vector<Eigen::MatrixXd>& matrices) const
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
+    std::vector<double> controlVec = static_cast<frapu::VectorAction*>(control.get())->asVector();
     static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(stateVec,
-            control,
+            controlVec,
             duration,
             observationSpace_->getObservationSpaceInfo().observationType,
             matrices);
@@ -1016,34 +1020,6 @@ void ManipulatorRobot::getActiveJoints(std::vector<std::string>& joints) const
     }
 }
 
-bool ManipulatorRobot::enforceConstraints(std::vector<double>& state) const
-{
-    bool return_val = true;
-    for (size_t i = 0; i < state.size() / 2; i++) {
-        if (state[i] < lowerStateLimits_[i]) {
-            state[i] = lowerStateLimits_[i];
-            state[i + state.size() / 2] = 0.0;
-            return_val = false;
-        } else if (state[i] > upperStateLimits_[i]) {
-            state[i] = upperStateLimits_[i];
-            state[i + state.size() / 2] = 0.0;
-            return_val = false;
-        }
-
-        if (state[i + state.size() / 2] < lowerStateLimits_[i + state.size() / 2]) {
-            state[i + state.size() / 2] = lowerStateLimits_[i + state.size() / 2];
-            return_val = false;
-        }
-
-        else if (state[i + state.size() / 2] > upperStateLimits_[i + state.size() / 2]) {
-            state[i + state.size() / 2] = upperStateLimits_[i + state.size() / 2];
-            return_val = false;
-        }
-    }
-
-    return return_val;
-}
-
 void ManipulatorRobot::getJointLowerPositionLimits(std::vector<std::string>& joints, std::vector<double>& joint_limits) const
 {
     int index = 0;
@@ -1340,3 +1316,4 @@ void ManipulatorRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
 }*/
 
 }
+

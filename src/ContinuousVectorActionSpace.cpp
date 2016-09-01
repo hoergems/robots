@@ -1,4 +1,4 @@
-#include <robot_headers/ContinuousVectorActionSpace.hpp>
+#include <robot_headers/ActionSpace.hpp>
 
 namespace frapu
 {

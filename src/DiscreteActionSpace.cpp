@@ -1,4 +1,4 @@
-#include <robot_headers/DiscreteActionSpace.hpp>
+#include <robot_headers/ActionSpace.hpp>
 
 namespace frapu
 {

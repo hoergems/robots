@@ -46,14 +46,14 @@ ActionLimitsSharedPtr ActionSpace::getActionLimits() const
     return actionLimits_;
 }
 
-void ActionSpace::normalizeAction(ActionSharedPtr& action)
+void ActionSpace::normalizeAction(const ActionSharedPtr& action, ActionSharedPtr &normalizedAction)
 {
-    actionNormalizer_->operator()(action);
+    actionNormalizer_->operator()(action, normalizedAction);
 }
 
-void ActionSpace::denormalizeAction(ActionSharedPtr& action)
+void ActionSpace::denormalizeAction(const ActionSharedPtr& action, ActionSharedPtr &denormalizedAction)
 {
-    actionNormalizer_->denormalizeAction(action);    
+    actionNormalizer_->denormalizeAction(action, denormalizedAction);    
 }
 
 }

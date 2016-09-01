@@ -3,13 +3,14 @@
 namespace shared
 {
 
-DubinRobot::DubinRobot(std::string robot_file):
-    Robot(robot_file),
+DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
+    Robot(robotFile, configFile),
     dim_x_(0.0),
     dim_y_(0.0),
     dim_z_(0.0),
     d_(0.0),
-    beacons_()
+    beacons_(),
+    initialState_(nullptr)
 {
     //Dimensions
     dim_x_ = 0.06;
@@ -19,6 +20,7 @@ DubinRobot::DubinRobot(std::string robot_file):
     //Distance between axels
     d_ = 0.11;
 
+    serializer_ = std::make_shared<frapu::DubinSerializer>();
     propagator_ = std::make_shared<shared::DubinPropagator>();
     static_cast<shared::DubinPropagator*>(propagator_.get())->setD(d_);
 
@@ -50,6 +52,13 @@ DubinRobot::DubinRobot(std::string robot_file):
     shared::Beacon b0(-0.7, 0.7);
     shared::Beacon b1(0.7, -0.7);
     beacons_ = std::vector<shared::Beacon>( {b0, b1});
+    
+    std::ifstream input(configFile);
+    initialState_ = static_cast<frapu::DubinSerializer *>(serializer_.get())->loadInitalState(input);    
+}
+
+frapu::RobotStateSharedPtr DubinRobot::sampleInitialState() const {
+    return initialState_;
 }
 
 void DubinRobot::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,
@@ -107,8 +116,8 @@ bool DubinRobot::makeObservationSpace(const frapu::ObservationSpaceInfo& observa
     observationSpace_ = std::make_shared<frapu::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
-    if (observationSpaceInfo.observationType == "linear") {
-        observationSpace_->setDimension(getStateSpaceDimension());
+    if (observationSpaceInfo.observationType == "linear") {	
+        observationSpace_->setDimension(4);
         static_cast<frapu::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerStateLimits_,
                 upperStateLimits_);
     } else {
@@ -175,11 +184,6 @@ void DubinRobot::transformToObservationSpace(const frapu::RobotStateSharedPtr& s
     }
     
     res = std::make_shared<frapu::VectorObservation>(observationVec);
-}
-
-int DubinRobot::getStateSpaceDimension() const
-{
-    return 4;
 }
 
 int DubinRobot::getDOF() const
@@ -315,7 +319,7 @@ void DubinRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
 }
 
 void DubinRobot::updateViewer(const frapu::RobotStateSharedPtr& state,
-                              std::vector<std::vector<double>>& particles,
+                              std::vector<frapu::RobotStateSharedPtr>& particles,
                               std::vector<std::vector<double>>& particleColors)
 {
 #ifdef USE_OPENRAVE
@@ -328,18 +332,18 @@ void DubinRobot::updateViewer(const frapu::RobotStateSharedPtr& state,
     std::vector<double> main_dims( {stateVec[0], stateVec[1], 0.025, dim_x_, dim_y_, dim_z_, stateVec[2]});
     dims.push_back(main_dims);
     std::vector<double> main_color( {1.0, 0.0, 0.0, 0.5});
-    colors.push_back(main_color);
+    colors.push_back(main_color);    
     for (size_t i = 0; i < particles.size(); i++) {
         std::string p_name = "particle_dubin" + std::to_string(i);
         names.push_back(p_name);
-
-        std::vector<double> p_dims( {particles[i][0],
-                                     particles[i][1],
+        std::vector<double> particle = static_cast<const frapu::VectorState *>(particles[i].get())->asVector();
+        std::vector<double> p_dims( {particle[0],
+                                     particle[1],
                                      0.025,
                                      dim_x_,
                                      dim_y_,
                                      dim_z_,
-                                     particles[i][2]
+                                     particle[2]
                                     });
         dims.push_back(p_dims);
         colors.push_back(particleColors[i]);

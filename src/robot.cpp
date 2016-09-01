@@ -6,9 +6,9 @@ using std::endl;
 namespace shared
 {
 
-Robot::Robot(std::string robot_file):
+Robot::Robot(std::string robotFile, std::string configFile):
     InterfaceBase(),
-    robot_file_(robot_file),
+    robot_file_(robotFile),
     constraints_enforced_(true),
     propagator_(nullptr),
     viewer_(nullptr),
@@ -19,7 +19,8 @@ Robot::Robot(std::string robot_file):
     environmentInfo_(nullptr),
     stateSpace_(nullptr),
     actionSpace_(nullptr),
-    observationSpace_(nullptr)
+    observationSpace_(nullptr),
+    serializer_(nullptr)
 {
 #ifdef USE_OPENRAVE
     viewer_ = std::make_shared<shared::ViewerInterface>();
@@ -153,11 +154,6 @@ void Robot::enforceConstraints(bool enforce)
     constraints_enforced_ = enforce;
 }
 
-unsigned int Robot::getControlSpaceDimension() const
-{
-    return actionSpace_->getNumDimensions();
-}
-
 void Robot::setNewtonModel()
 {
 
@@ -166,6 +162,10 @@ void Robot::setNewtonModel()
 void Robot::setGravityConstant(double gravity_constant)
 {
 
+}
+
+double Robot::getHeuristicValue(frapu::HeuristicInfoSharedPtr) const {
+    return 0.0;
 }
 
 void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr& environmentInfo)

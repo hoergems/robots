@@ -312,8 +312,8 @@ std::vector<double> ManipulatorRobot::process_origin_(TiXmlElement* xml)
     }
 }
 
-ManipulatorRobot::ManipulatorRobot(std::string robot_file):
-    Robot(robot_file),
+ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile):
+    Robot(robotFile, configFile),
     links_(),
     joints_(),
     link_names_(),
@@ -337,12 +337,14 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
     link_masses_(),
     link_inertia_origins_(),
     kinematics_(new Kinematics()),
-    rbdl_interface_(nullptr)
+    rbdl_interface_(nullptr),
+    initialState_(nullptr)
 {
 
+    serializer_ = std::make_shared<frapu::ManipulatorSerializer>();
     propagator_ = std::make_shared<shared::ManipulatorPropagator>();
     TiXmlDocument xml_doc;
-    xml_doc.LoadFile(robot_file);
+    xml_doc.LoadFile(robotFile);
     TiXmlElement* robot_xml = xml_doc.FirstChildElement("robot");
     initLinks(robot_xml);
     initJoints(robot_xml);
@@ -361,6 +363,14 @@ ManipulatorRobot::ManipulatorRobot(std::string robot_file):
         lowerControlLimits_.push_back(-active_joint_torque_limits_[i]);
         upperControlLimits_.push_back(active_joint_torque_limits_[i]);
     }
+    
+    
+    std::ifstream infile(configFile);
+    initialState_ = static_cast<frapu::ManipulatorSerializer *>(serializer_.get())->loadInitalState(infile);
+}
+
+frapu::RobotStateSharedPtr ManipulatorRobot::sampleInitialState() const {
+    return initialState_;
 }
 
 void ManipulatorRobot::setNewtonModel()
@@ -590,7 +600,8 @@ void ManipulatorRobot::createRobotCollisionObjects(const frapu::RobotStateShared
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
     unsigned int len = stateVec.size();
-    if (stateVec.size() > getControlSpaceDimension()) {
+    unsigned int actionSpaceDimension = actionSpace_->getNumDimensions();
+    if (stateVec.size() > actionSpaceDimension) {
         len = stateVec.size() / 2;
     }
     Eigen::MatrixXd res = Eigen::MatrixXd::Identity(4, 4);
@@ -716,7 +727,7 @@ void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_a
 }
 
 void ManipulatorRobot::updateViewer(const frapu::RobotStateSharedPtr& state,
-                                    std::vector<std::vector<double>>& particles,
+                                    std::vector<frapu::RobotStateSharedPtr>& particles,
                                     std::vector<std::vector<double>>& particleColors)
 {
 #ifdef USE_OPENRAVE
@@ -732,8 +743,9 @@ void ManipulatorRobot::updateViewer(const frapu::RobotStateSharedPtr& state,
 
     for (size_t i = 0; i < particles.size(); i++) {
         std::vector<double> particle;
+	std::vector<double> particleVec = static_cast<const frapu::VectorState *>(particles[i].get())->asVector();
         for (size_t j = 0; j < stateVec.size() / 2; j++) {
-            particle.push_back(particles[i][j]);
+            particle.push_back(particleVec[j]);
         }
         particle_joint_values.push_back(particle);
 
@@ -1179,12 +1191,6 @@ std::vector<double> ManipulatorRobot::getProcessMatrices(std::vector<double>& x,
             rho,
             t_e
                                                                                                                  );
-}
-
-std::shared_ptr<shared::Robot> makeManipulatorRobot(std::string model_file)
-{
-    std::shared_ptr<shared::Robot> robot_ptr = std::make_shared<ManipulatorRobot>(model_file);
-    return robot_ptr;
 }
 
 void ManipulatorRobot::makeProcessDistribution(Eigen::MatrixXd& mean,

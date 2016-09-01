@@ -2,12 +2,15 @@
 
 namespace shared
 {
-AUV::AUV(std::string robot_file):
-    Robot(robot_file),
+AUV::AUV(std::string robotFile, std::string configFile):
+    Robot(robotFile, configFile),
     dim_x_(0.0),
     dim_y_(0.0),
-    dim_z_(0.0)
+    dim_z_(0.0),
+    initialState_()
 {
+    
+    serializer_ = std::make_shared<frapu::AUVSerializer>();
     propagator_ = std::make_shared<shared::AUVPropagator>();
     dim_x_ = 0.005;
     dim_y_ = 0.005;
@@ -29,6 +32,12 @@ AUV::AUV(std::string robot_file):
 
     lowerControlLimits_.push_back(1.0);
     upperControlLimits_.push_back(5.0);
+    std::ifstream inputFile(configFile);
+    initialState_ = static_cast<frapu::AUVSerializer *>(serializer_.get())->loadInitalState(inputFile);
+}
+
+frapu::RobotStateSharedPtr AUV::sampleInitialState() const {
+    return initialState_;
 }
 
 void AUV::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,
@@ -144,11 +153,6 @@ void AUV::transformToObservationSpace(const frapu::RobotStateSharedPtr& state,
     getObservation(state, res);
 }
 
-int AUV::getStateSpaceDimension() const
-{
-    return 2;
-}
-
 int AUV::getDOF() const
 {
     return 2;
@@ -232,7 +236,7 @@ void AUV::updateRobot(const frapu::RobotStateSharedPtr& state)
 }
 
 void AUV::updateViewer(const frapu::RobotStateSharedPtr& state,
-                       std::vector<std::vector<double>>& particles,
+                       std::vector<frapu::RobotStateSharedPtr>& particles,
                        std::vector<std::vector<double>>& particleColors)
 {
 #ifdef USE_OPENRAVE
@@ -249,9 +253,9 @@ void AUV::updateViewer(const frapu::RobotStateSharedPtr& state,
     for (size_t i = 0; i < particles.size(); i++) {
         std::string p_name = "particle_auv" + std::to_string(i);
         names.push_back(p_name);
-
-        std::vector<double> p_dims( {particles[i][0],
-                                     particles[i][1],
+	std::vector<double> particle = static_cast<const frapu::VectorState *>(particles[i].get())->asVector();
+        std::vector<double> p_dims( {particle[0],
+                                     particle[1],
                                      0.001,
                                      dim_x_,
                                      dim_y_,

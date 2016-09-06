@@ -103,10 +103,10 @@ double Robot::calcLikelihood(const frapu::RobotStateSharedPtr& state,
 {
     frapu::ObservationSharedPtr observationState;
     transformToObservationSpace(state, observationState);
-    std::vector<double> observationVec =
-        static_cast<frapu::VectorObservation*>(observationState.get())->asVector();
     std::vector<double> stateVec =
-        static_cast<frapu::VectorState*>(state.get())->asVector();
+        static_cast<frapu::VectorObservation*>(observationState.get())->asVector();
+    std::vector<double> observationVec =
+        static_cast<frapu::VectorObservation*>(observation.get())->asVector();
     return observation_distribution_->calcPdf(observationVec, stateVec);
 }
 

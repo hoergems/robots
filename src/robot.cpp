@@ -80,7 +80,8 @@ bool Robot::isValid(const frapu::RobotStateSharedPtr& state) const
     return true;
 }
 
-frapu::SerializerSharedPtr Robot::getSerializer() const {
+frapu::SerializerSharedPtr Robot::getSerializer() const
+{
     return serializer_;
 }
 
@@ -129,12 +130,14 @@ frapu::ActionSpaceSharedPtr Robot::getActionSpace() const
     return actionSpace_;
 }
 
-frapu::HeuristicSharedPtr Robot::getHeuristic() const {
+frapu::HeuristicSharedPtr Robot::getHeuristic() const
+{
     return heuristic_;
 }
 
-double Robot::getHeuristicValue(frapu::HeuristicInfoSharedPtr &heuristicInfo) const {
-    return heuristic_->operator()(heuristicInfo);    
+double Robot::getHeuristicValue(frapu::HeuristicInfoSharedPtr& heuristicInfo) const
+{
+    return heuristic_->operator()(heuristicInfo);
 }
 
 void Robot::setGoalArea(std::vector<double>& goal_position, double& goal_radius)
@@ -180,26 +183,25 @@ void Robot::setGravityConstant(double gravity_constant)
 void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr& environmentInfo)
 {
     if (!environmentInfo) {
-	cout << "IS NULL!!!!!!!!!!!!" << endl;
+        cout << "IS NULL!!!!!!!!!!!!" << endl;
+    } else {
+        cout << "NOT NULL!!!" << endl;
+        cout << "size : " << environmentInfo->obstacles.size() << endl;
+        for (size_t i = 0; i < environmentInfo->obstacles.size(); i++) {
+            cout << "name: " << environmentInfo->obstacles[i]->getName() << endl;
+        }
     }
-    else {
-	cout << "NOT NULL!!!" << endl;
-	cout << "size : " << environmentInfo->obstacles.size() << endl;
-	for (size_t i = 0; i < environmentInfo->obstacles.size(); i++) {
-	    cout << "name: " << environmentInfo->obstacles[i]->getName() << endl;
-	}
-    }
-    
+
     frapu::EnvironmentInfoSharedPtr envinf = std::make_shared<frapu::EnvironmentInfo>();
     cout << "ty" << endl;
     environmentInfo_ = nullptr;
     environmentInfo_ = frapu::EnvironmentInfoSharedPtr(new frapu::EnvironmentInfo());
-    
+
     environmentInfo_->obstacles = environmentInfo->obstacles;
-    
-    
-    
-    
+
+
+
+
     environmentInfo_ = environmentInfo;
 }
 

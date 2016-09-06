@@ -1,10 +1,10 @@
 #include <robot_headers/AUV/AUVPropagator.hpp>
 
-namespace shared
+namespace frapu
 {
 
 AUVPropagator::AUVPropagator():
-    shared::Propagator()    
+    Propagator()    
 {
 
 }

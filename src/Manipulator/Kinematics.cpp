@@ -5,7 +5,7 @@ using std::cout;
 using std::endl;
 
 
-namespace shared
+namespace frapu
 {
 
 Kinematics::Kinematics():

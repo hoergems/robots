@@ -3,7 +3,7 @@
 using std::cout;
 using std::endl;
 
-namespace shared
+namespace frapu
 {
 
 template<class T>
@@ -114,7 +114,7 @@ bool ManipulatorRobot::initLinks(TiXmlElement* robot_xml)
 {
     for (TiXmlElement* link_xml = robot_xml->FirstChildElement("link"); link_xml; link_xml = link_xml->NextSiblingElement("link")) {
 
-        shared::Link link;
+        frapu::Link link;
         link.active = false;
         //Link names
         std::string link_name(link_xml->Attribute("name"));
@@ -342,7 +342,7 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
 {
 
     serializer_ = std::make_shared<frapu::ManipulatorSerializer>();
-    propagator_ = std::make_shared<shared::ManipulatorPropagator>();
+    propagator_ = std::make_shared<frapu::ManipulatorPropagator>();
     TiXmlDocument xml_doc;
     xml_doc.LoadFile(robotFile);
     TiXmlElement* robot_xml = xml_doc.FirstChildElement("robot");
@@ -350,8 +350,8 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
     initJoints(robot_xml);
     kinematics_->setJointOrigins(joint_origins_);
     kinematics_->setLinkDimensions(active_link_dimensions_);
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setJointDamping(joint_dampings_);
-    //static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setVelocityLimits(lowerVelocityLimits, upperVelocityLimits);
+    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setJointDamping(joint_dampings_);
+    //static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setVelocityLimits(lowerVelocityLimits, upperVelocityLimits);
     lowerStateLimits_ = active_lower_joint_limits_;
     upperStateLimits_ = active_upper_joint_limits_;
     for (size_t i = 0; i < active_joint_velocity_limits_.size(); i++) {
@@ -369,6 +369,10 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
     initialState_ = static_cast<frapu::ManipulatorSerializer *>(serializer_.get())->loadInitalState(infile);
 }
 
+void ManipulatorRobot::setupHeuristic() {
+    heuristic_ = std::make_shared<frapu::RRTHeuristic>();
+}
+
 frapu::RobotStateSharedPtr ManipulatorRobot::sampleInitialState() const {
     return initialState_;
 }
@@ -377,7 +381,7 @@ void ManipulatorRobot::setNewtonModel()
 {
     rbdl_interface_ = std::make_shared<RBDLInterface>();
     rbdl_interface_->load_model(robot_file_);
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setRBDLInterface(rbdl_interface_);
+    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setRBDLInterface(rbdl_interface_);
     rbdl_interface_->setViscous(joint_dampings_);
     rbdl_interface_->setPositionConstraints(lower_joint_limits_, upper_joint_limits_);
 }
@@ -430,7 +434,7 @@ bool ManipulatorRobot::makeStateSpace()
     unsigned int dimensions = lowerStateLimits_.size();
     stateSpace_ = std::make_shared<frapu::VectorStateSpace>(dimensions);
     frapu::StateLimitsSharedPtr stateLimits =
-        std::make_shared<shared::ManipulatorStateLimits>(lowerStateLimits_, upperStateLimits_);
+        std::make_shared<frapu::ManipulatorStateLimits>(lowerStateLimits_, upperStateLimits_);
     stateSpace_->setStateLimits(stateLimits);
 }
 
@@ -659,7 +663,7 @@ void ManipulatorRobot::getLinearProcessMatrices(const frapu::RobotStateSharedPtr
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     std::vector<double> controlVec = static_cast<frapu::VectorAction*>(control.get())->asVector();
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(stateVec,
+    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(stateVec,
             controlVec,
             duration,
             observationSpace_->getObservationSpaceInfo().observationType,
@@ -671,7 +675,7 @@ void ManipulatorRobot::getLinearObservationDynamics(const frapu::RobotStateShare
         Eigen::MatrixXd& W) const
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
-    shared::ManipulatorPropagator* p = static_cast<shared::ManipulatorPropagator*>(propagator_.get());
+    frapu::ManipulatorPropagator* p = static_cast<frapu::ManipulatorPropagator*>(propagator_.get());
     p->getIntegrator()->getLinearObservationDynamics(stateVec,
             observationSpace_->getObservationSpaceInfo().observationType,
             H,
@@ -817,7 +821,7 @@ bool ManipulatorRobot::propagate_linear(std::vector<double>& current_state,
                                         double duration,
                                         std::vector<double>& result)
 {
-    return static_cast<shared::ManipulatorPropagator*>(propagator_.get())->propagate_linear(current_state,
+    return static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->propagate_linear(current_state,
             control_input,
             control_error,
             duration,
@@ -826,7 +830,7 @@ bool ManipulatorRobot::propagate_linear(std::vector<double>& current_state,
 
 void ManipulatorRobot::setGravityConstant(double gravity_constant)
 {
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setGravityConstant(gravity_constant);
+    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setGravityConstant(gravity_constant);
     if (rbdl_interface_) {
         rbdl_interface_->setGravity(gravity_constant);
     }
@@ -839,12 +843,12 @@ void ManipulatorRobot::setExternalForce(double f_x,
                                         double f_pitch,
                                         double f_yaw)
 {
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setExternalForce(f_x, f_y, f_z, f_roll, f_pitch, f_yaw);
+    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setExternalForce(f_x, f_y, f_z, f_roll, f_pitch, f_yaw);
 }
 
 void ManipulatorRobot::setAccelerationLimit(double accelerationLimit)
 {
-    static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setAccelerationLimit(accelerationLimit);
+    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setAccelerationLimit(accelerationLimit);
 }
 
 void ManipulatorRobot::getEndEffectorJacobian(const std::vector<double>& joint_angles,
@@ -913,7 +917,7 @@ bool ManipulatorRobot::propagate_first_order(std::vector<double>& current_state,
         current_joint_velocities.push_back(current_state[i + current_state.size() / 2]);
     }
 
-    return static_cast<shared::ManipulatorPropagator*>(propagator_.get())->propagate_nonlinear_first_order(current_joint_values,
+    return static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->propagate_nonlinear_first_order(current_joint_values,
             current_joint_velocities,
             control_input,
             control_error,
@@ -941,7 +945,7 @@ bool ManipulatorRobot::propagate_second_order(std::vector<double>& current_state
         current_joint_velocities.push_back(current_state[i + current_state.size() / 2]);
     }
 
-    return static_cast<shared::ManipulatorPropagator*>(propagator_.get())->propagate_nonlinear_second_order(current_joint_values,
+    return static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->propagate_nonlinear_second_order(current_joint_values,
             current_joint_velocities,
             control_input,
             control_error,
@@ -1187,7 +1191,7 @@ std::vector<double> ManipulatorRobot::getProcessMatrices(std::vector<double>& x,
         std::vector<double>& rho,
         double t_e)
 {
-    return static_cast<shared::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatricesVec(x,
+    return static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatricesVec(x,
             rho,
             t_e
                                                                                                                  );

@@ -3,7 +3,7 @@
 using std::cout;
 using std::endl;
 
-namespace shared
+namespace frapu
 {
 
 Robot::Robot(std::string robotFile, std::string configFile):
@@ -20,10 +20,11 @@ Robot::Robot(std::string robotFile, std::string configFile):
     stateSpace_(nullptr),
     actionSpace_(nullptr),
     observationSpace_(nullptr),
-    serializer_(nullptr)
+    serializer_(nullptr),
+    heuristic_(nullptr)
 {
 #ifdef USE_OPENRAVE
-    viewer_ = std::make_shared<shared::ViewerInterface>();
+    viewer_ = std::make_shared<frapu::ViewerInterface>();
 #endif
 }
 
@@ -128,6 +129,14 @@ frapu::ActionSpaceSharedPtr Robot::getActionSpace() const
     return actionSpace_;
 }
 
+frapu::HeuristicSharedPtr Robot::getHeuristic() const {
+    return heuristic_;
+}
+
+double Robot::getHeuristicValue(frapu::HeuristicInfoSharedPtr &heuristicInfo) const {
+    return heuristic_->operator()(heuristicInfo);    
+}
+
 void Robot::setGoalArea(std::vector<double>& goal_position, double& goal_radius)
 {
     goal_position_.clear();
@@ -166,10 +175,6 @@ void Robot::setNewtonModel()
 void Robot::setGravityConstant(double gravity_constant)
 {
 
-}
-
-double Robot::getHeuristicValue(frapu::HeuristicInfoSharedPtr) const {
-    return 0.0;
 }
 
 void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr& environmentInfo)

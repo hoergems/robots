@@ -1,13 +1,13 @@
 #include <robot_headers/Dubin/DubinPropagator.hpp>
 
-namespace shared
+namespace frapu
 {
 
 using std::cout;
 using std::endl;
 
 DubinPropagator::DubinPropagator():
-    shared::Propagator(),
+    Propagator(),
     d_()
 {
 

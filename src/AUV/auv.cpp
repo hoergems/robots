@@ -1,6 +1,6 @@
 #include <robot_headers/AUV/auv.hpp>
 
-namespace shared
+namespace frapu
 {
 AUV::AUV(std::string robotFile, std::string configFile):
     Robot(robotFile, configFile),
@@ -11,7 +11,7 @@ AUV::AUV(std::string robotFile, std::string configFile):
 {
     
     serializer_ = std::make_shared<frapu::AUVSerializer>();
-    propagator_ = std::make_shared<shared::AUVPropagator>();
+    propagator_ = std::make_shared<frapu::AUVPropagator>();
     dim_x_ = 0.005;
     dim_y_ = 0.005;
     dim_z_ = 0.005;
@@ -34,6 +34,10 @@ AUV::AUV(std::string robotFile, std::string configFile):
     upperControlLimits_.push_back(5.0);
     std::ifstream inputFile(configFile);
     initialState_ = static_cast<frapu::AUVSerializer *>(serializer_.get())->loadInitalState(inputFile);
+}
+
+void AUV::setupHeuristic() {
+    heuristic_ = std::make_shared<frapu::RRTHeuristic>();
 }
 
 frapu::RobotStateSharedPtr AUV::sampleInitialState() const {

@@ -4,7 +4,7 @@ using namespace boost::numeric::odeint;
 using std::endl;
 using std::cout;
 
-namespace shared{
+namespace frapu{
 
 template<class T>
 struct VecToList
@@ -42,11 +42,11 @@ void Integrate::setGravityConstant(double g) {
 	g_ = g;
 }
 
-void Integrate::setRBDLInterface(std::shared_ptr<shared::RBDLInterface> &rbdl_interface) {
+void Integrate::setRBDLInterface(std::shared_ptr<RBDLInterface> &rbdl_interface) {
 	rbdl_interface_ = rbdl_interface;
 }
 
-std::shared_ptr<shared::RBDLInterface> Integrate::getRBDLInterface() {
+std::shared_ptr<RBDLInterface> Integrate::getRBDLInterface() {
 	return rbdl_interface_;
 }
 

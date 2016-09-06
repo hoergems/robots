@@ -1,6 +1,6 @@
 #include <robot_headers/Airplane/AirplaneIntegrator.hpp>
 
-namespace shared
+namespace frapu
 {
 
 AirplaneIntegrator::AirplaneIntegrator():

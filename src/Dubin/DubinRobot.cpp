@@ -1,6 +1,6 @@
 #include <robot_headers/Dubin/DubinRobot.hpp>
 
-namespace shared
+namespace frapu
 {
 
 DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
@@ -21,8 +21,8 @@ DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
     d_ = 0.11;
 
     serializer_ = std::make_shared<frapu::DubinSerializer>();
-    propagator_ = std::make_shared<shared::DubinPropagator>();
-    static_cast<shared::DubinPropagator*>(propagator_.get())->setD(d_);
+    propagator_ = std::make_shared<frapu::DubinPropagator>();
+    static_cast<frapu::DubinPropagator*>(propagator_.get())->setD(d_);
 
     //make the state limits
     lowerStateLimits_.clear();
@@ -49,12 +49,16 @@ DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
     upperControlLimits_.push_back(1.0);
 
     // put the beacons in the evironment
-    shared::Beacon b0(-0.7, 0.7);
-    shared::Beacon b1(0.7, -0.7);
-    beacons_ = std::vector<shared::Beacon>( {b0, b1});
+    Beacon b0(-0.7, 0.7);
+    Beacon b1(0.7, -0.7);
+    beacons_ = std::vector<Beacon>( {b0, b1});
     
     std::ifstream input(configFile);
     initialState_ = static_cast<frapu::DubinSerializer *>(serializer_.get())->loadInitalState(input);    
+}
+
+void DubinRobot::setupHeuristic() {
+    heuristic_ = std::make_shared<frapu::RRTHeuristic>();
 }
 
 frapu::RobotStateSharedPtr DubinRobot::sampleInitialState() const {

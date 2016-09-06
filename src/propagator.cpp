@@ -1,6 +1,6 @@
 #include <robot_headers/propagator.hpp>
 
-namespace shared {
+namespace frapu {
 
 Propagator::Propagator() {
 	

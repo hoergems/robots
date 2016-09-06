@@ -4,11 +4,11 @@
 using std::cout;
 using std::endl;
 
-namespace shared
+namespace frapu
 {
 
 ManipulatorPropagator::ManipulatorPropagator():
-    shared::Propagator(),
+    frapu::Propagator(),
     integrator_(new Integrate())
 {
 }

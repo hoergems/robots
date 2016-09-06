@@ -1,9 +1,9 @@
 #include <robot_headers/Airplane/AirplanePropagator.hpp>
 
-namespace shared
+namespace frapu
 {
 AirplanePropagator::AirplanePropagator():
-    integrator_(std::make_shared<shared::AirplaneIntegrator>())
+    integrator_(std::make_shared<AirplaneIntegrator>())
 {
 
 }
@@ -23,7 +23,7 @@ bool AirplanePropagator::propagateState(const std::vector<double>& currentState,
     integrator_->do_integration(currentStateNonConst, control, control_error, intTimes, result);
 }
 
-std::shared_ptr<shared::AirplaneIntegrator> AirplanePropagator::getIntegrator() const
+std::shared_ptr<AirplaneIntegrator> AirplanePropagator::getIntegrator() const
 {
     return integrator_;
 }

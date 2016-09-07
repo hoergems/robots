@@ -1,4 +1,6 @@
 #include <robot_headers/Manipulator/ManipulatorRobot.hpp>
+#include <path_planner/path_planner.hpp>
+#include <path_planner/dynamic_path_planner.hpp>
 
 using std::cout;
 using std::endl;
@@ -338,7 +340,8 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
     link_inertia_origins_(),
     kinematics_(new Kinematics()),
     rbdl_interface_(nullptr),
-    initialState_(nullptr)
+    initialState_(nullptr),
+    rrtOptions()
 {
 
     serializer_ = std::make_shared<frapu::ManipulatorSerializer>();
@@ -367,10 +370,34 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
     
     std::ifstream infile(configFile);
     initialState_ = static_cast<frapu::ManipulatorSerializer *>(serializer_.get())->loadInitalState(infile);
+    rrtOptions.continuousCollision = static_cast<frapu::ManipulatorSerializer *>(serializer_.get())->loadContinuousCollision(infile);
+    rrtOptions.planningVelocity = static_cast<frapu::ManipulatorSerializer *>(serializer_.get())->loadPlanningVelocity(infile);    
 }
 
-void ManipulatorRobot::setupHeuristic() {
-    heuristic_ = std::make_shared<frapu::RRTHeuristic>();
+void ManipulatorRobot::setupHeuristic(frapu::RewardModelSharedPtr &rewardModel) {    
+    frapu::PathPlannerSharedPtr pathPlanner = std::make_shared<frapu::StandardPathPlanner>(control_duration_,
+            rrtOptions.continuousCollision,
+            rrtOptions.planningVelocity,
+            1.0,
+            false,
+            false);    
+    frapu::StandardPathPlanner *standardPathPlanner = static_cast<frapu::StandardPathPlanner*>(pathPlanner.get());
+    
+    /**
+     * This is very bad!!!!!
+     */
+    frapu::RobotSharedPtr rob(this);
+    standardPathPlanner->setup(environmentInfo_->scene, rob);
+    standardPathPlanner->setupPlanner("RRTConnect");
+    std::vector<frapu::RobotStateSharedPtr> goalStates = getGoalStates();
+    if (goalStates.size() == 0) {
+	cout << "Error. No goal states available" << endl;	
+    }
+    ompl::base::GoalPtr goal_region = frapu::makeRobotGoalRegion(standardPathPlanner->getSpaceInformation(),
+                                      rob,
+                                      goalStates);
+    standardPathPlanner->setGoal(goal_region);
+    heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner);  
 }
 
 frapu::RobotStateSharedPtr ManipulatorRobot::sampleInitialState() const {

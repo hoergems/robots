@@ -57,8 +57,9 @@ DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
     initialState_ = static_cast<frapu::DubinSerializer *>(serializer_.get())->loadInitalState(input);    
 }
 
-void DubinRobot::setupHeuristic() {
-    heuristic_ = std::make_shared<frapu::RRTHeuristic>();
+void DubinRobot::setupHeuristic(frapu::RewardModelSharedPtr &rewardModel) {
+    frapu::PathPlannerSharedPtr pathPlanner;
+    heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner);
 }
 
 frapu::RobotStateSharedPtr DubinRobot::sampleInitialState() const {

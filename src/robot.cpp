@@ -70,14 +70,29 @@ bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,
 bool Robot::isValid(const frapu::RobotStateSharedPtr& state) const
 {
     std::vector<frapu::CollisionObjectSharedPtr> collisionObjects;
+    std::vector<frapu::ObstacleSharedPtr> obstacles;
+    environmentInfo_->scene->getObstacles(obstacles);
     createRobotCollisionObjects(state, collisionObjects);
-    for (size_t i = 0; i < environmentInfo_->obstacles.size(); i++) {
-        if (environmentInfo_->obstacles[i]->inCollision(collisionObjects)) {
-            return false;
+    
+    for (size_t i = 0; i < obstacles.size(); i++) {
+        if (!obstacles[i]->getTerrain()->isTraversable()) {
+            if (obstacles[i]->inCollision(collisionObjects)) {
+                return false;
+            }
         }
     }
 
     return true;
+}
+
+void Robot::setControlDuration(double control_duration)
+{
+    control_duration_ = control_duration;
+}
+
+double Robot::getControlDuration() const
+{
+    return control_duration_;
 }
 
 frapu::SerializerSharedPtr Robot::getSerializer() const
@@ -150,6 +165,15 @@ void Robot::setGoalArea(std::vector<double>& goal_position, double& goal_radius)
     goal_radius_ = goal_radius;
 }
 
+void Robot::getGoalArea(std::vector<double> &goalArea) const {
+    goalArea.clear();
+    for (size_t i = 0; i < goal_position_.size(); i++) { 
+	goalArea.push_back(goal_position_[i]);	
+    }
+    
+    goalArea.push_back(goal_radius_);
+}
+
 bool Robot::checkSelfCollision(std::vector<std::shared_ptr<fcl::CollisionObject>>& collision_objects) const
 {
     return false;
@@ -182,7 +206,7 @@ void Robot::setGravityConstant(double gravity_constant)
 
 void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr& environmentInfo)
 {
-    if (!environmentInfo) {
+    /**if (!environmentInfo) {
         cout << "IS NULL!!!!!!!!!!!!" << endl;
     } else {
         cout << "NOT NULL!!!" << endl;
@@ -202,7 +226,21 @@ void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr& environmentInfo)
 
 
 
+    environmentInfo_ = environmentInfo;*/
     environmentInfo_ = environmentInfo;
+}
+
+std::vector<frapu::RobotStateSharedPtr> Robot::loadGoalStatesFromFile(std::string &filename) const {
+    return serializer_->loadGoalStatesFromFile(filename);
+}
+
+std::vector<frapu::RobotStateSharedPtr> Robot::getGoalStates() const
+{
+    return goalStates_;
+}
+
+void Robot::setGoalStates(std::vector<frapu::RobotStateSharedPtr> &goalStates) {
+    goalStates_ = goalStates;
 }
 
 void Robot::resetViewer(std::string model_file, std::string environment_file)

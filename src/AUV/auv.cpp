@@ -36,8 +36,9 @@ AUV::AUV(std::string robotFile, std::string configFile):
     initialState_ = static_cast<frapu::AUVSerializer *>(serializer_.get())->loadInitalState(inputFile);
 }
 
-void AUV::setupHeuristic() {
-    heuristic_ = std::make_shared<frapu::RRTHeuristic>();
+void AUV::setupHeuristic(frapu::RewardModelSharedPtr &rewardModel) {
+    frapu::PathPlannerSharedPtr pathPlanner;
+    heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner);
 }
 
 frapu::RobotStateSharedPtr AUV::sampleInitialState() const {
@@ -109,10 +110,12 @@ bool AUV::getObservation(const frapu::RobotStateSharedPtr& state,
                          frapu::ObservationSharedPtr& observation) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    std::vector<frapu::ObstacleSharedPtr> obstacles;
+    environmentInfo_->scene->getObstacles(obstacles);
     std::vector<double> observationVec;
     std::vector<frapu::CollisionObjectSharedPtr> collisionObjects;
     createRobotCollisionObjects(state, collisionObjects);
-    for (auto & obstacle : environmentInfo_->obstacles) {
+    for (auto & obstacle : obstacles) {
         if (obstacle->getTerrain()->isObservable()) {
             if (obstacle->inCollision(collisionObjects)) {
                 observationVec = stateVec;
@@ -235,8 +238,7 @@ void AUV::makeObservationDistribution(Eigen::MatrixXd& mean,
 
 void AUV::updateRobot(const frapu::RobotStateSharedPtr& state)
 {
-    cout << "UPDATE" << endl;
-    cout << "obstacles size: " << environmentInfo_->obstacles.size() << endl;
+    cout << "UPDATE" << endl;    
 }
 
 void AUV::updateViewer(const frapu::RobotStateSharedPtr& state,

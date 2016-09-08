@@ -38,7 +38,7 @@ AUV::AUV(std::string robotFile, std::string configFile):
 
 void AUV::setupHeuristic(frapu::RewardModelSharedPtr &rewardModel) {
     frapu::PathPlannerSharedPtr pathPlanner;
-    heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner);
+    //heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner, this);
 }
 
 frapu::RobotStateSharedPtr AUV::sampleInitialState() const {
@@ -172,26 +172,26 @@ void AUV::makeNextStateAfterCollision(const frapu::RobotStateSharedPtr& previous
     nextState = previousState;
 }
 
+void AUV::makeGoal() {
+    goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);    
+}
+
 bool AUV::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
-    double dist = distanceGoal(state);
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    return static_cast<frapu::SphereGoal *>(goal_.get())->isSatisfied(stateVec);
+    /**double dist = distanceGoal(state);
     if (dist < goal_radius_) {
         return true;
     }
 
-    return false;
+    return false;*/
 }
 
-double AUV::distanceGoal(const frapu::RobotStateSharedPtr& state) const
-{
-    std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
-    assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
-    double x = stateVec[0];
-    double y = stateVec[1];
-
-    double dist = std::pow(goal_position_[0] - x, 2);
-    dist += std::pow(goal_position_[1] - y, 2);
-    return std::sqrt(dist);
+double AUV::distanceGoal(const frapu::RobotStateSharedPtr& state) const{
+    
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    return static_cast<frapu::SphereGoal *>(goal_.get())->distanceCenter(stateVec);    
 }
 
 void AUV::setGravityConstant(double gravity_constant)

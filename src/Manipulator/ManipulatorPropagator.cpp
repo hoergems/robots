@@ -174,7 +174,7 @@ bool ManipulatorPropagator::propagateState(const std::vector<double>& currentSta
     return true;
 }
 
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(propagate_nonlinear_overload, propagateState, 6, 6);
+/**BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(propagate_nonlinear_overload, propagateState, 6, 6);
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(propagate_linear_overload, propagate_linear, 5, 5);
 
 BOOST_PYTHON_MODULE(libpropagator)
@@ -185,7 +185,7 @@ BOOST_PYTHON_MODULE(libpropagator)
     .def("propagateState", &Propagator::propagateState, propagate_nonlinear_overload())
     .def("propagateLinear", &ManipulatorPropagator::propagate_linear, propagate_linear_overload())    
     ;
-}
+}*/
 
 
 }

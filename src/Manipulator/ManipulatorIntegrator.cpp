@@ -6,7 +6,7 @@ using std::cout;
 
 namespace frapu{
 
-template<class T>
+/**template<class T>
 struct VecToList
 {
     static PyObject* convert(const std::vector<T>& vec)
@@ -17,7 +17,7 @@ struct VecToList
 
         return l->ptr();
     }
-};
+};*/
 
 Integrate::Integrate():
     Integrator(),
@@ -434,7 +434,7 @@ void Integrate::odeDelta(const state_type &x, state_type& dxdt, double t) const 
     
 }
 
-BOOST_PYTHON_MODULE(libintegrate) {
+/**BOOST_PYTHON_MODULE(libintegrate) {
     using namespace boost::python;
     
     class_<std::vector<double> > ("v_double")
@@ -447,7 +447,7 @@ BOOST_PYTHON_MODULE(libintegrate) {
 						.def("getProcessMatrices", &Integrate::getProcessMatricesVec)
 						.def("setGravityConstant", &Integrate::setGravityConstant)
     ;
-}
+}*/
 
 MatrixXd Integrate::getA0(const state_type &x, const state_type &rho, const state_type &zeta) const{ 
 MatrixXd m(8, 8); 

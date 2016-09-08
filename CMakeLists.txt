@@ -66,17 +66,17 @@ add_definitions(-DUSE_OPENRAVE)
 endif() 
 
 ############################# LOAD PYTHON #############################
-if(PKG_CONFIG_FOUND)    
-    pkg_check_modules(PYTHON python-2.7)
-    if(NOT PYTHON_FOUND)
-       message(FATAL_ERROR "Python could not be found")
-    endif()
-    include_directories(${PYTHON_INCLUDE_DIRS})
-    link_directories(${PYTHON_LIBRARY_DIRS})    
-endif()
+#if(PKG_CONFIG_FOUND)    
+#    pkg_check_modules(PYTHON python-2.7)
+#    if(NOT PYTHON_FOUND)
+#       message(FATAL_ERROR "Python could not be found")
+#    endif()
+#    include_directories(${PYTHON_INCLUDE_DIRS})
+#    link_directories(${PYTHON_LIBRARY_DIRS})    
+#endif()
 
 ############################# LOAD BOOST #############################
-find_package(Boost ${BOOST_MIN_VERSION} REQUIRED COMPONENTS python system thread timer)
+find_package(Boost ${BOOST_MIN_VERSION} REQUIRED COMPONENTS system thread timer)
 if (NOT Boost_FOUND)
     set(Boost_INCLUDE_DIRS "${BOOST_INCLUDE_DIRS}")
     IF ( NOT Boost_INCLUDE_DIRS )
@@ -160,7 +160,8 @@ add_library(robots SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousVectorActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ObservationSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteObservationSpace.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousObservationSpace.cpp)
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousObservationSpace.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Heuristic.cpp)
             
 target_link_libraries (robots
                        ${Boost_LIBRARIES}

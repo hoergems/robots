@@ -59,7 +59,7 @@ DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
 
 void DubinRobot::setupHeuristic(frapu::RewardModelSharedPtr &rewardModel) {
     frapu::PathPlannerSharedPtr pathPlanner;
-    heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner);
+    //heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner, this);
 }
 
 frapu::RobotStateSharedPtr DubinRobot::sampleInitialState() const {
@@ -99,6 +99,10 @@ bool DubinRobot::makeStateSpace()
     frapu::StateLimitsSharedPtr stateLimits =
         std::make_shared<frapu::VectorStateLimits>(lowerStateLimits_, upperStateLimits_);
     stateSpace_->setStateLimits(stateLimits);
+}
+
+void DubinRobot::makeGoal() {
+    goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);    
 }
 
 bool DubinRobot::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
@@ -208,25 +212,28 @@ void DubinRobot::makeNextStateAfterCollision(const frapu::RobotStateSharedPtr& p
 
 bool DubinRobot::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
-    double dist = distanceGoal(state);
+    std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    return static_cast<frapu::SphereGoal *>(goal_.get())->isSatisfied(stateVec);
+    /**double dist = distanceGoal(state);
     if (dist < goal_radius_) {
         return true;
     }
 
-    return false;
+    return false;*/
 }
 
 
 double DubinRobot::distanceGoal(const frapu::RobotStateSharedPtr& state) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
-    assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
+    return static_cast<frapu::SphereGoal *>(goal_.get())->distanceCenter(stateVec);
+    /**assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
     double x = stateVec[0];
-    double y = stateVec[1];
+    double y = stateVec[1];    
 
     double dist = std::pow(goal_position_[0] - x, 2);
     dist += std::pow(goal_position_[1] - y, 2);
-    return std::sqrt(dist);
+    return std::sqrt(dist);*/
 }
 
 void DubinRobot::setGravityConstant(double gravity_constant)

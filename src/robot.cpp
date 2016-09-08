@@ -21,11 +21,12 @@ Robot::Robot(std::string robotFile, std::string configFile):
     actionSpace_(nullptr),
     observationSpace_(nullptr),
     serializer_(nullptr),
-    heuristic_(nullptr)
+    heuristic_(nullptr),
+    goal_(nullptr)
 {
 #ifdef USE_OPENRAVE
     viewer_ = std::make_shared<frapu::ViewerInterface>();
-#endif
+#endif    
 }
 
 bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,
@@ -232,6 +233,14 @@ void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr& environmentInfo)
 
 std::vector<frapu::RobotStateSharedPtr> Robot::loadGoalStatesFromFile(std::string &filename) const {
     return serializer_->loadGoalStatesFromFile(filename);
+}
+
+void Robot::makeGoal() {
+    
+}
+    
+frapu::GoalSharedPtr Robot::getGoal() const {
+    return goal_;
 }
 
 std::vector<frapu::RobotStateSharedPtr> Robot::getGoalStates() const

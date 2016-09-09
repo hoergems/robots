@@ -152,6 +152,7 @@ add_library(robots SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/AUV/AUVPropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Airplane/AirplanePropagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Airplane/AirplaneIntegrator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Homecare/Homecare.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/propagator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteActionSpace.cpp

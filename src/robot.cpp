@@ -20,8 +20,7 @@ Robot::Robot(std::string robotFile, std::string configFile):
     stateSpace_(nullptr),
     actionSpace_(nullptr),
     observationSpace_(nullptr),
-    serializer_(nullptr),
-    heuristic_(nullptr),
+    serializer_(nullptr),    
     goal_(nullptr)
 {
 #ifdef USE_OPENRAVE
@@ -144,16 +143,6 @@ frapu::ActionSpaceSharedPtr Robot::getActionSpace() const
         assert(false && "ACTION SPACE IS NULL");
     }
     return actionSpace_;
-}
-
-frapu::HeuristicSharedPtr Robot::getHeuristic() const
-{
-    return heuristic_;
-}
-
-double Robot::getHeuristicValue(frapu::HeuristicInfoSharedPtr& heuristicInfo) const
-{
-    return heuristic_->operator()(heuristicInfo);
 }
 
 void Robot::setGoalArea(std::vector<double>& goal_position, double& goal_radius)

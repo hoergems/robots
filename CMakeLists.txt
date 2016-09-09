@@ -160,8 +160,7 @@ add_library(robots SHARED
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousVectorActionSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ObservationSpace.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/DiscreteObservationSpace.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousObservationSpace.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/Heuristic.cpp)
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/ContinuousObservationSpace.cpp)
             
 target_link_libraries (robots
                        ${Boost_LIBRARIES}

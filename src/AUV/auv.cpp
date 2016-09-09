@@ -36,9 +36,8 @@ AUV::AUV(std::string robotFile, std::string configFile):
     initialState_ = static_cast<frapu::AUVSerializer *>(serializer_.get())->loadInitalState(inputFile);
 }
 
-void AUV::setupHeuristic(frapu::RewardModelSharedPtr &rewardModel) {
-    frapu::PathPlannerSharedPtr pathPlanner;
-    //heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner, this);
+frapu::HeuristicFunctionSharedPtr AUV::makeHeuristicFunction() const {
+    return nullptr;
 }
 
 frapu::RobotStateSharedPtr AUV::sampleInitialState() const {

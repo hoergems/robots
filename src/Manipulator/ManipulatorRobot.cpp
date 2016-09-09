@@ -1,6 +1,4 @@
 #include <robot_headers/Manipulator/ManipulatorRobot.hpp>
-#include <path_planner/path_planner.hpp>
-#include <path_planner/dynamic_path_planner.hpp>
 
 using std::cout;
 using std::endl;
@@ -374,7 +372,14 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
     rrtOptions.planningVelocity = static_cast<frapu::ManipulatorSerializer*>(serializer_.get())->loadPlanningVelocity(infile);
 }
 
-void ManipulatorRobot::setupHeuristic(frapu::RewardModelSharedPtr& rewardModel)
+frapu::HeuristicFunctionSharedPtr ManipulatorRobot::makeHeuristicFunction() const {
+    frapu::HeuristicFunctionSharedPtr heuristicFunction = std::make_shared<RRTHeuristicFunction>();
+    auto terminalFunction = std::bind(&ManipulatorRobot::isTerminal, this, std::placeholders::_1);
+    heuristicFunction->setTerminalFunction(terminalFunction);    
+    return heuristicFunction;
+}
+
+/**void ManipulatorRobot::setupHeuristic(frapu::RewardModelSharedPtr& rewardModel)
 {
     frapu::PathPlannerSharedPtr pathPlanner = std::make_shared<frapu::StandardPathPlanner>(control_duration_,
             rrtOptions.continuousCollision,
@@ -387,8 +392,8 @@ void ManipulatorRobot::setupHeuristic(frapu::RewardModelSharedPtr& rewardModel)
     /**
      * This is very bad!!!!!
      */
-    frapu::RobotSharedPtr rob(this);
-    standardPathPlanner->setup(environmentInfo_->scene, rob);
+/**    frapu::RobotSharedPtr rob(this);
+    pathPlanner->setup(environmentInfo_->scene, rob);
     standardPathPlanner->setupPlanner("RRTConnect");
     std::vector<frapu::RobotStateSharedPtr> goalStates = getGoalStates();
     if (goalStates.size() == 0) {
@@ -403,7 +408,7 @@ void ManipulatorRobot::setupHeuristic(frapu::RewardModelSharedPtr& rewardModel)
     std::shared_ptr<frapu::MotionValidator> motionValidatorSharedPtr = std::static_pointer_cast<frapu::MotionValidator>(motionValidator);
     frapu::CollisionCheckerSharedPtr collisionChecker = motionValidatorSharedPtr;    
     heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner, collisionChecker, environmentInfo_, terminalFunction);
-}
+}*/
 
 void ManipulatorRobot::makeGoal()
 {    

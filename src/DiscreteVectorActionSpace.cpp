@@ -62,7 +62,8 @@ std::vector<frapu::ActionSharedPtr> DiscreteVectorActionSpace::getAllActionsInOr
             actionValues.push_back(lowerLimits[i] + ss[i] * ks[i]);
         }
         
-        allActions.push_back(std::make_shared<frapu::VectorAction>(actionValues));
+        frapu::VectorActionSharedPtr vectorActionPtr(new frapu::VectorAction(actionValues));
+        allActions.push_back(vectorActionPtr);
 	static_cast<frapu::DiscreteVectorAction *>(allActions[allActions.size() - 1].get())->setBinNumber(code);
     }
     

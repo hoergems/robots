@@ -195,28 +195,10 @@ void Robot::setGravityConstant(double gravity_constant)
 }
 
 void Robot::setEnvironmentInfo(frapu::EnvironmentInfoSharedPtr& environmentInfo)
-{
-    /**if (!environmentInfo) {
-        cout << "IS NULL!!!!!!!!!!!!" << endl;
-    } else {
-        cout << "NOT NULL!!!" << endl;
-        cout << "size : " << environmentInfo->obstacles.size() << endl;
-        for (size_t i = 0; i < environmentInfo->obstacles.size(); i++) {
-            cout << "name: " << environmentInfo->obstacles[i]->getName() << endl;
-        }
+{    
+    if (!environmentInfo) {
+	frapu::ERROR("Robot: setSenvironmentInfo: environmentInfo is null!!!");
     }
-
-    frapu::EnvironmentInfoSharedPtr envinf = std::make_shared<frapu::EnvironmentInfo>();
-    cout << "ty" << endl;
-    environmentInfo_ = nullptr;
-    environmentInfo_ = frapu::EnvironmentInfoSharedPtr(new frapu::EnvironmentInfo());
-
-    environmentInfo_->obstacles = environmentInfo->obstacles;
-
-
-
-
-    environmentInfo_ = environmentInfo;*/
     environmentInfo_ = environmentInfo;
 }
 

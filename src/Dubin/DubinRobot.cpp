@@ -58,7 +58,10 @@ DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
 }
 
 frapu::HeuristicFunctionSharedPtr DubinRobot::makeHeuristicFunction() const {
-    return nullptr;
+    frapu::HeuristicFunctionSharedPtr heuristicFunction = std::make_shared<RRTHeuristicFunction>();
+    auto terminalFunction = std::bind(&DubinRobot::isTerminal, this, std::placeholders::_1);
+    heuristicFunction->setTerminalFunction(terminalFunction);    
+    return heuristicFunction;
 }
 
 frapu::RobotStateSharedPtr DubinRobot::sampleInitialState() const {
@@ -100,7 +103,7 @@ bool DubinRobot::makeStateSpace()
     stateSpace_->setStateLimits(stateLimits);
 }
 
-void DubinRobot::makeGoal() {
+void DubinRobot::makeGoal() {    
     goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);    
 }
 
@@ -212,6 +215,10 @@ void DubinRobot::makeNextStateAfterCollision(const frapu::RobotStateSharedPtr& p
 bool DubinRobot::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    std::vector<double> sVec(3);
+    sVec[0] = stateVec[0];
+    sVec[1] = stateVec[1];
+    sVec[2] = 0.0;
     return static_cast<frapu::SphereGoal *>(goal_.get())->isSatisfied(stateVec);
     /**double dist = distanceGoal(state);
     if (dist < goal_radius_) {
@@ -225,7 +232,11 @@ bool DubinRobot::isTerminal(const frapu::RobotStateSharedPtr& state) const
 double DubinRobot::distanceGoal(const frapu::RobotStateSharedPtr& state) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
-    return static_cast<frapu::SphereGoal *>(goal_.get())->distanceCenter(stateVec);
+    std::vector<double> sVec(3);
+    sVec[0] = stateVec[0];
+    sVec[1] = stateVec[1];
+    sVec[2] = 0.0;
+    return static_cast<frapu::SphereGoal *>(goal_.get())->distanceCenter(sVec);
     /**assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
     double x = stateVec[0];
     double y = stateVec[1];    

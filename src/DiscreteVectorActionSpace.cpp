@@ -29,6 +29,7 @@ ActionSharedPtr DiscreteVectorActionSpace::sampleUniform(std::default_random_eng
 
 std::vector<frapu::ActionSharedPtr> DiscreteVectorActionSpace::getAllActionsInOrder(unsigned int& numStepsPerDimension) const
 {
+    cout << "hello in get all actions" << endl;
     std::vector<frapu::ActionSharedPtr> allActions;
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;

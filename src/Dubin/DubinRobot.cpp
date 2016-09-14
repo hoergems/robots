@@ -52,19 +52,21 @@ DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
     Beacon b0(-0.7, 0.7);
     Beacon b1(0.7, -0.7);
     beacons_ = std::vector<Beacon>( {b0, b1});
-    
+
     std::ifstream input(configFile);
-    initialState_ = static_cast<frapu::DubinSerializer *>(serializer_.get())->loadInitalState(input);    
+    initialState_ = static_cast<frapu::DubinSerializer*>(serializer_.get())->loadInitalState(input);
 }
 
-frapu::HeuristicFunctionSharedPtr DubinRobot::makeHeuristicFunction() const {
+frapu::HeuristicFunctionSharedPtr DubinRobot::makeHeuristicFunction() const
+{
     frapu::HeuristicFunctionSharedPtr heuristicFunction = std::make_shared<RRTHeuristicFunction>();
     auto terminalFunction = std::bind(&DubinRobot::isTerminal, this, std::placeholders::_1);
-    heuristicFunction->setTerminalFunction(terminalFunction);    
+    heuristicFunction->setTerminalFunction(terminalFunction);
     return heuristicFunction;
 }
 
-frapu::RobotStateSharedPtr DubinRobot::sampleInitialState() const {
+frapu::RobotStateSharedPtr DubinRobot::sampleInitialState() const
+{    
     return initialState_;
 }
 
@@ -103,23 +105,25 @@ bool DubinRobot::makeStateSpace()
     stateSpace_->setStateLimits(stateLimits);
 }
 
-void DubinRobot::makeGoal() {    
-    goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);    
+void DubinRobot::makeGoal()
+{
+    goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);
 }
 
 bool DubinRobot::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
 {
     if (actionSpaceInfo.type == "continuous") {
-	actionSpace_ = std::make_shared<frapu::ContinuousVectorActionSpace>(actionSpaceInfo);
+        actionSpace_ = std::make_shared<frapu::ContinuousVectorActionSpace>(actionSpaceInfo);
     } else {
-	actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo);        
+        actionSpace_ = std::make_shared<frapu::DiscreteVectorActionSpace>(actionSpaceInfo);
     }
+
+    unsigned int numDimensions = 2;
+    actionSpace_->setNumDimensions(numDimensions);
 
     frapu::ActionLimitsSharedPtr actionLimits =
         std::make_shared<frapu::VectorActionLimits>(lowerControlLimits_, upperControlLimits_);
     actionSpace_->setActionLimits(actionLimits);
-    unsigned int numDimensions = 2;
-    actionSpace_->setNumDimensions(numDimensions);
 }
 
 bool DubinRobot::makeObservationSpace(const frapu::ObservationSpaceInfo& observationSpaceInfo)
@@ -127,7 +131,7 @@ bool DubinRobot::makeObservationSpace(const frapu::ObservationSpaceInfo& observa
     observationSpace_ = std::make_shared<frapu::ContinuousObservationSpace>(observationSpaceInfo);
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
-    if (observationSpaceInfo.observationType == "linear") {	
+    if (observationSpaceInfo.observationType == "linear") {
         observationSpace_->setDimension(4);
         static_cast<frapu::ContinuousObservationSpace*>(observationSpace_.get())->setLimits(lowerStateLimits_,
                 upperStateLimits_);
@@ -150,7 +154,7 @@ bool DubinRobot::getObservation(const frapu::RobotStateSharedPtr& state,
     for (size_t i = 0; i < observationError.size(); i++) {
         observationVec[i] += observationError[i];
     }
-    
+
     observation = std::make_shared<frapu::VectorObservation>(observationVec);
 }
 
@@ -160,7 +164,7 @@ bool DubinRobot::getObservation(const frapu::RobotStateSharedPtr& state,
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     std::vector<double> observationVec;
     if (observationSpace_->getObservationSpaceInfo().observationType == "linear") {
-        observationVec = std::vector<double>(stateVec.size());        
+        observationVec = std::vector<double>(stateVec.size());
         Eigen::MatrixXd sample = observation_distribution_->samples(1);
         for (size_t i = 0; i < stateVec.size(); i++) {
             observationVec[i] = stateVec[i] + sample(i, 0);
@@ -175,7 +179,7 @@ bool DubinRobot::getObservation(const frapu::RobotStateSharedPtr& state,
         observationVec[2] = stateVec[3] + sample(2, 0);
 
     }
-    
+
     observation = std::make_shared<frapu::VectorObservation>(observationVec);
     return true;
 }
@@ -193,7 +197,7 @@ void DubinRobot::transformToObservationSpace(const frapu::RobotStateSharedPtr& s
         observationVec[1] = 1.0 / (std::pow(stateVec[0] - beacons_[1].x_, 2) + std::pow(stateVec[1] - beacons_[1].y_, 2) + 1.0);
         observationVec[2] = stateVec[3];
     }
-    
+
     res = std::make_shared<frapu::VectorObservation>(observationVec);
 }
 
@@ -215,17 +219,16 @@ void DubinRobot::makeNextStateAfterCollision(const frapu::RobotStateSharedPtr& p
 bool DubinRobot::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
+    if (stateVec.size() > 4) {
+	frapu::ERROR("state vec size " + std::to_string(stateVec.size()));
+    }
+    
     std::vector<double> sVec(3);
     sVec[0] = stateVec[0];
     sVec[1] = stateVec[1];
     sVec[2] = 0.0;
-    return static_cast<frapu::SphereGoal *>(goal_.get())->isSatisfied(stateVec);
-    /**double dist = distanceGoal(state);
-    if (dist < goal_radius_) {
-        return true;
-    }
-
-    return false;*/
+    
+    return static_cast<frapu::SphereGoal*>(goal_.get())->isSatisfied(sVec);
 }
 
 
@@ -236,10 +239,10 @@ double DubinRobot::distanceGoal(const frapu::RobotStateSharedPtr& state) const
     sVec[0] = stateVec[0];
     sVec[1] = stateVec[1];
     sVec[2] = 0.0;
-    return static_cast<frapu::SphereGoal *>(goal_.get())->distanceCenter(sVec);
+    return static_cast<frapu::SphereGoal*>(goal_.get())->distanceCenter(sVec);
     /**assert(goal_position_.size() != 0 && "DubinRobot: No goal area set. Cannot calculate distance!");
     double x = stateVec[0];
-    double y = stateVec[1];    
+    double y = stateVec[1];
 
     double dist = std::pow(goal_position_[0] - x, 2);
     dist += std::pow(goal_position_[1] - y, 2);
@@ -354,11 +357,11 @@ void DubinRobot::updateViewer(const frapu::RobotStateSharedPtr& state,
     std::vector<double> main_dims( {stateVec[0], stateVec[1], 0.025, dim_x_, dim_y_, dim_z_, stateVec[2]});
     dims.push_back(main_dims);
     std::vector<double> main_color( {1.0, 0.0, 0.0, 0.5});
-    colors.push_back(main_color);    
+    colors.push_back(main_color);
     for (size_t i = 0; i < particles.size(); i++) {
         std::string p_name = "particle_dubin" + std::to_string(i);
         names.push_back(p_name);
-        std::vector<double> particle = static_cast<const frapu::VectorState *>(particles[i].get())->asVector();
+        std::vector<double> particle = static_cast<const frapu::VectorState*>(particles[i].get())->asVector();
         std::vector<double> p_dims( {particle[0],
                                      particle[1],
                                      0.025,

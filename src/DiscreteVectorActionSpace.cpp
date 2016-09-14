@@ -3,41 +3,37 @@
 namespace frapu
 {
 DiscreteVectorActionSpace::DiscreteVectorActionSpace(const ActionSpaceInfo& actionSpaceInfo):
-    DiscreteActionSpace(actionSpaceInfo)
+    DiscreteActionSpace(actionSpaceInfo),
+    actionSpaceInfo_(actionSpaceInfo),
+    allActionsOrdered_()
 {
 
 }
 
-ActionSharedPtr DiscreteVectorActionSpace::sampleUniform(std::default_random_engine* randGen) const
+void DiscreteVectorActionSpace::setActionLimits(frapu::ActionLimitsSharedPtr& actionLimits)
 {
-    std::vector<double> lowerActionLimits;
-    std::vector<double> upperActionLimits;
-    static_cast<VectorActionLimits*>(actionLimits_.get())->getRawLimits(lowerActionLimits, upperActionLimits);
-    std::vector<double> randomActionVec(lowerActionLimits.size());
-    for (size_t i = 0; i < lowerActionLimits.size(); i++) {
-        unsigned int rand_num = std::uniform_int_distribution<long>(0, 1)(*randGen);
-        if (rand_num == 0) {
-            randomActionVec[i] = lowerActionLimits[i];
-        } else {
-            randomActionVec[i] = upperActionLimits[i];
-        }
+    if (getNumDimensions() == 0) {
+        frapu::ERROR("DiscreteActionSpace: setActionLimits(): number of dimensions not set. Can't set action limits");
     }
-
-    ActionSharedPtr action = std::make_shared<VectorAction>(randomActionVec);
-    return action;
+    ActionSpace::setActionLimits(actionLimits);
+    makeAllActionsInOrder(actionSpaceInfo_.numStepsPerDimension);
 }
 
-std::vector<frapu::ActionSharedPtr> DiscreteVectorActionSpace::getAllActionsInOrder(unsigned int& numStepsPerDimension) const
+void DiscreteVectorActionSpace::makeAllActionsInOrder(const unsigned int& numStepsPerDimension)
 {
-    cout << "hello in get all actions" << endl;
-    std::vector<frapu::ActionSharedPtr> allActions;
     std::vector<double> lowerLimits;
     std::vector<double> upperLimits;
     unsigned int numDimensions = getNumDimensions();
     ActionLimitsSharedPtr actionLimits = getActionLimits();
+    if (!actionLimits) {
+        frapu::ERROR("action limits is null");
+    }
+    
+    allActionsOrdered_ = std::vector<frapu::ActionSharedPtr>(std::pow(numStepsPerDimension, numDimensions));
+
     static_cast<VectorActionLimits*>(actionLimits.get())->getRawLimits(lowerLimits, upperLimits);
     for (long code = 0; code < std::pow(numStepsPerDimension, numDimensions); code++) {
-        std::vector<double> ks;        
+        std::vector<double> ks;
         std::vector<double> ss;
         for (size_t i = 0; i < lowerLimits.size(); i++) {
             ks.push_back((upperLimits[i] - lowerLimits[i]) / (numStepsPerDimension - 1));
@@ -56,19 +52,42 @@ std::vector<frapu::ActionSharedPtr> DiscreteVectorActionSpace::getAllActionsInOr
                 j_old = j;
             }
         }
-        
+
         ss.push_back((int)j_old % numStepsPerDimension);
         std::vector<double> actionValues;
         for (size_t i = 0; i < lowerLimits.size(); i++) {
             actionValues.push_back(lowerLimits[i] + ss[i] * ks[i]);
         }
-        
-        frapu::VectorActionSharedPtr vectorActionPtr(new frapu::VectorAction(actionValues));
-        allActions.push_back(vectorActionPtr);
-	static_cast<frapu::DiscreteVectorAction *>(allActions[allActions.size() - 1].get())->setBinNumber(code);
+
+        frapu::ActionSharedPtr action(new frapu::DiscreteVectorAction(actionValues));
+	static_cast<frapu::DiscreteVectorAction*>(action.get())->setBinNumber(code);
+        allActionsOrdered_[code] = action;        
     }
-    
-    return allActions;
+}
+
+ActionSharedPtr DiscreteVectorActionSpace::sampleUniform(std::default_random_engine* randGen) const
+{
+    unsigned int randNum = std::uniform_int_distribution<unsigned int>(0, allActionsOrdered_.size() - 1)(*randGen);
+    return allActionsOrdered_[randNum];
+}
+
+std::vector<frapu::ActionSharedPtr> DiscreteVectorActionSpace::getAllActionsInOrder() const
+{
+    if (allActionsOrdered_.size() == 0) {
+        frapu::ERROR("DiscreteVectorActionSpace: getAllActionsInOrder(): number of actions is 0. Have you forgotten to set the action limits?");
+    }
+    return allActionsOrdered_;
+}
+
+frapu::ActionSharedPtr DiscreteVectorActionSpace::getAction(unsigned int& index) const
+{
+    if (index > allActionsOrdered_.size()) {
+        frapu::ERROR("DiscreteVectorActionSpace: getAction(): action with index " +
+                     std::to_string(index) + " requested, but largest index is " +
+                     std::to_string(allActionsOrdered_.size()));
+    }
+
+    return allActionsOrdered_[index];
 }
 
 }

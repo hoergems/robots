@@ -143,8 +143,10 @@ endif()
 add_library(robots SHARED 
             ${CMAKE_CURRENT_SOURCE_DIR}/src/robot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/ManipulatorRobot.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/ManipulatorRobotLinear.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/Kinematics.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/ManipulatorPropagator.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/ManipulatorPropagatorLinear.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Manipulator/ManipulatorIntegrator.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Dubin/DubinRobot.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/Dubin/DubinPropagator.cpp

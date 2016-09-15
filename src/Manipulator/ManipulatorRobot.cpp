@@ -372,10 +372,11 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
     rrtOptions.planningVelocity = static_cast<frapu::ManipulatorSerializer*>(serializer_.get())->loadPlanningVelocity(infile);
 }
 
-frapu::HeuristicFunctionSharedPtr ManipulatorRobot::makeHeuristicFunction() const {
+frapu::HeuristicFunctionSharedPtr ManipulatorRobot::makeHeuristicFunction() const
+{
     frapu::HeuristicFunctionSharedPtr heuristicFunction = std::make_shared<RRTHeuristicFunction>();
     auto terminalFunction = std::bind(&ManipulatorRobot::isTerminal, this, std::placeholders::_1);
-    heuristicFunction->setTerminalFunction(terminalFunction);    
+    heuristicFunction->setTerminalFunction(terminalFunction);
     return heuristicFunction;
 }
 
@@ -406,13 +407,13 @@ frapu::HeuristicFunctionSharedPtr ManipulatorRobot::makeHeuristicFunction() cons
     auto terminalFunction = std::bind(&ManipulatorRobot::isTerminal, this, std::placeholders::_1);
     ompl::base::MotionValidatorPtr motionValidator = standardPathPlanner->getMotionValidator();
     std::shared_ptr<frapu::MotionValidator> motionValidatorSharedPtr = std::static_pointer_cast<frapu::MotionValidator>(motionValidator);
-    frapu::CollisionCheckerSharedPtr collisionChecker = motionValidatorSharedPtr;    
+    frapu::CollisionCheckerSharedPtr collisionChecker = motionValidatorSharedPtr;
     heuristic_ = std::make_shared<frapu::RRTHeuristic>(pathPlanner, collisionChecker, environmentInfo_, terminalFunction);
 }*/
 
 void ManipulatorRobot::makeGoal()
-{    
-    goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);    
+{
+    goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);
 }
 
 frapu::RobotStateSharedPtr ManipulatorRobot::sampleInitialState() const
@@ -475,6 +476,7 @@ std::vector<std::shared_ptr<fcl::CollisionObject>>
 bool ManipulatorRobot::makeStateSpace()
 {
     unsigned int dimensions = lowerStateLimits_.size();
+    cout << "state dim " << dimensions << endl;    
     stateSpace_ = std::make_shared<frapu::VectorStateSpace>(dimensions);
     frapu::StateLimitsSharedPtr stateLimits =
         std::make_shared<frapu::ManipulatorStateLimits>(lowerStateLimits_, upperStateLimits_);
@@ -749,16 +751,16 @@ void ManipulatorRobot::getPositionOfLinkN(const std::vector<double>& joint_angle
 
 void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_angles, std::vector<double>& end_effector_position) const
 {
-    if (joint_angles.size() > getStateSpaceDimension() / 2) {
-        std::vector<double> ja(getStateSpaceDimension() / 2);
-        for (size_t i = 0; i < getStateSpaceDimension() / 2; i++) {
+    if (joint_angles.size() > getDOF()) {        
+        std::vector<double> ja(getDOF());
+        for (size_t i = 0; i < getDOF(); i++) {
             ja[i] = joint_angles[i];
         }
 
         const std::vector<double> ja2(ja);
         kinematics_->getEndEffectorPosition(ja2, end_effector_position);
     } else {
-        kinematics_->getEndEffectorPosition(joint_angles, end_effector_position);
+        kinematics_->getEndEffectorPosition(joint_angles, end_effector_position);        
     }
 
 }
@@ -863,7 +865,13 @@ bool ManipulatorRobot::propagate_linear(std::vector<double>& current_state,
 
 void ManipulatorRobot::setGravityConstant(double gravity_constant)
 {
-    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setGravityConstant(gravity_constant);
+    std::shared_ptr<frapu::Integrator> integrator =
+        static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator();
+    frapu::Integrate *integrate = static_cast<frapu::Integrate *>(integrator.get());
+    if (integrate) {
+        integrate->setGravityConstant(gravity_constant);
+    }
+
     if (rbdl_interface_) {
         rbdl_interface_->setGravity(gravity_constant);
     }
@@ -876,12 +884,22 @@ void ManipulatorRobot::setExternalForce(double f_x,
                                         double f_pitch,
                                         double f_yaw)
 {
-    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setExternalForce(f_x, f_y, f_z, f_roll, f_pitch, f_yaw);
+    std::shared_ptr<frapu::Integrator> integrator =
+        static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator();
+    frapu::Integrate *integrate = static_cast<frapu::Integrate *>(integrator.get());
+    if (integrate) {
+        integrate->setExternalForce(f_x, f_y, f_z, f_roll, f_pitch, f_yaw);
+    }
 }
 
 void ManipulatorRobot::setAccelerationLimit(double accelerationLimit)
 {
-    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setAccelerationLimit(accelerationLimit);
+    std::shared_ptr<frapu::Integrator> integrator =
+        static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator();
+    frapu::Integrate *integrate = static_cast<frapu::Integrate *>(integrator.get());
+    if (integrate) {
+        integrate->setAccelerationLimit(accelerationLimit);
+    }
 }
 
 void ManipulatorRobot::getEndEffectorJacobian(const std::vector<double>& joint_angles,
@@ -1169,7 +1187,7 @@ void ManipulatorRobot::getJointAxis(std::vector<std::string>& joints, std::vecto
 
 int ManipulatorRobot::getStateSpaceDimension() const
 {
-    return active_joints_.size() * 2;
+    return stateSpace_->getNumDimensions();
 }
 
 /**int ManipulatorRobot::getControlSpaceDimension() const
@@ -1187,7 +1205,8 @@ bool ManipulatorRobot::isTerminal(const frapu::RobotStateSharedPtr& state) const
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
     std::vector<double> end_effector_position;
     getEndEffectorPosition(stateVec, end_effector_position);
-    return static_cast<frapu::SphereGoal*>(goal_.get())->isSatisfied(end_effector_position);    
+    bool terminal = static_cast<frapu::SphereGoal*>(goal_.get())->isSatisfied(end_effector_position);
+    return static_cast<frapu::SphereGoal*>(goal_.get())->isSatisfied(end_effector_position);
 }
 
 double ManipulatorRobot::distanceGoal(const frapu::RobotStateSharedPtr& state) const
@@ -1219,27 +1238,17 @@ void ManipulatorRobot::makeNextStateAfterCollision(const frapu::RobotStateShared
     nextState = std::make_shared<frapu::VectorState>(nextStateVec);
 }
 
-std::vector<double> ManipulatorRobot::getProcessMatrices(std::vector<double>& x,
-        std::vector<double>& rho,
-        double t_e)
-{
-    return static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatricesVec(x,
-            rho,
-            t_e
-                                                                                                                );
-}
-
 void ManipulatorRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix,
         unsigned long seed)
-{
+{    
     process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
 }
 
 void ManipulatorRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix,
         unsigned long seed)
-{
+{   
     observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
 }
 

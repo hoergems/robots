@@ -9,7 +9,7 @@ AUV::AUV(std::string robotFile, std::string configFile):
     dim_z_(0.0),
     initialState_()
 {
-    
+
     serializer_ = std::make_shared<frapu::AUVSerializer>();
     propagator_ = std::make_shared<frapu::AUVPropagator>();
     dim_x_ = 0.005;
@@ -33,14 +33,22 @@ AUV::AUV(std::string robotFile, std::string configFile):
     lowerControlLimits_.push_back(1.0);
     upperControlLimits_.push_back(5.0);
     std::ifstream inputFile(configFile);
-    initialState_ = static_cast<frapu::AUVSerializer *>(serializer_.get())->loadInitalState(inputFile);
+    initialState_ = static_cast<frapu::AUVSerializer*>(serializer_.get())->loadInitalState(inputFile);
 }
 
-frapu::HeuristicFunctionSharedPtr AUV::makeHeuristicFunction() const {
+std::string AUV::getName() const
+{
+    std::string name = "AUV";
+    return name;
+}
+
+frapu::HeuristicFunctionSharedPtr AUV::makeHeuristicFunction() const
+{
     return nullptr;
 }
 
-frapu::RobotStateSharedPtr AUV::sampleInitialState() const {
+frapu::RobotStateSharedPtr AUV::sampleInitialState() const
+{
     return initialState_;
 }
 
@@ -171,14 +179,15 @@ void AUV::makeNextStateAfterCollision(const frapu::RobotStateSharedPtr& previous
     nextState = previousState;
 }
 
-void AUV::makeGoal() {
-    goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);    
+void AUV::makeGoal()
+{
+    goal_ = std::make_shared<frapu::SphereGoal>(goal_position_, goal_radius_);
 }
 
 bool AUV::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
-    return static_cast<frapu::SphereGoal *>(goal_.get())->isSatisfied(stateVec);
+    return static_cast<frapu::SphereGoal*>(goal_.get())->isSatisfied(stateVec);
     /**double dist = distanceGoal(state);
     if (dist < goal_radius_) {
         return true;
@@ -187,10 +196,11 @@ bool AUV::isTerminal(const frapu::RobotStateSharedPtr& state) const
     return false;*/
 }
 
-double AUV::distanceGoal(const frapu::RobotStateSharedPtr& state) const{
-    
+double AUV::distanceGoal(const frapu::RobotStateSharedPtr& state) const
+{
+
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
-    return static_cast<frapu::SphereGoal *>(goal_.get())->distanceCenter(stateVec);    
+    return static_cast<frapu::SphereGoal*>(goal_.get())->distanceCenter(stateVec);
 }
 
 void AUV::setGravityConstant(double gravity_constant)
@@ -214,10 +224,9 @@ void AUV::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
 }
 
 void AUV::makeProcessDistribution(Eigen::MatrixXd& mean,
-                                  Eigen::MatrixXd& covariance_matrix,
-                                  unsigned long seed)
+                                  Eigen::MatrixXd& covariance_matrix)
 {
-    process_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
+    process_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>(randomEngine_);
     std::vector<std::pair<std::vector<double>, double>> elements;
     std::vector<double> elem0( { -0.01, 0.0});
     std::vector<double> elem1( {0.0, 0.0});
@@ -229,15 +238,15 @@ void AUV::makeProcessDistribution(Eigen::MatrixXd& mean,
 }
 
 void AUV::makeObservationDistribution(Eigen::MatrixXd& mean,
-                                      Eigen::MatrixXd& covariance_matrix,
-                                      unsigned long seed)
+                                      Eigen::MatrixXd& covariance_matrix)
 {
-    observation_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
+    observation_distribution_ =
+        std::make_shared<Eigen::WeightedDiscreteDistribution<double>>(randomEngine_);
 }
 
 void AUV::updateRobot(const frapu::RobotStateSharedPtr& state)
 {
-    cout << "UPDATE" << endl;    
+    cout << "UPDATE" << endl;
 }
 
 void AUV::updateViewer(const frapu::RobotStateSharedPtr& state,
@@ -258,7 +267,7 @@ void AUV::updateViewer(const frapu::RobotStateSharedPtr& state,
     for (size_t i = 0; i < particles.size(); i++) {
         std::string p_name = "particle_auv" + std::to_string(i);
         names.push_back(p_name);
-	std::vector<double> particle = static_cast<const frapu::VectorState *>(particles[i].get())->asVector();
+        std::vector<double> particle = static_cast<const frapu::VectorState*>(particles[i].get())->asVector();
         std::vector<double> p_dims( {particle[0],
                                      particle[1],
                                      0.001,

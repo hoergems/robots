@@ -372,6 +372,11 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
     rrtOptions.planningVelocity = static_cast<frapu::ManipulatorSerializer*>(serializer_.get())->loadPlanningVelocity(infile);
 }
 
+std::string ManipulatorRobot::getName() const {
+    std::string name = "Manipulator";
+    return name;
+}
+
 frapu::HeuristicFunctionSharedPtr ManipulatorRobot::makeHeuristicFunction() const
 {
     frapu::HeuristicFunctionSharedPtr heuristicFunction = std::make_shared<RRTHeuristicFunction>();
@@ -1239,17 +1244,15 @@ void ManipulatorRobot::makeNextStateAfterCollision(const frapu::RobotStateShared
 }
 
 void ManipulatorRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
-        Eigen::MatrixXd& covariance_matrix,
-        unsigned long seed)
+        Eigen::MatrixXd& covariance_matrix)
 {    
-    process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
+    process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, randomEngine_);
 }
 
 void ManipulatorRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
-        Eigen::MatrixXd& covariance_matrix,
-        unsigned long seed)
+        Eigen::MatrixXd& covariance_matrix)
 {   
-    observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
+    observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, randomEngine_);
 }
 
 /**BOOST_PYTHON_MODULE(librobots)

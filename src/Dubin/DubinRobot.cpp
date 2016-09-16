@@ -57,6 +57,11 @@ DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
     initialState_ = static_cast<frapu::DubinSerializer*>(serializer_.get())->loadInitalState(input);
 }
 
+std::string DubinRobot::getName() const {
+    std::string name = "Dubin";
+    return name;
+}
+
 frapu::HeuristicFunctionSharedPtr DubinRobot::makeHeuristicFunction() const
 {
     frapu::HeuristicFunctionSharedPtr heuristicFunction = std::make_shared<RRTHeuristicFunction>();

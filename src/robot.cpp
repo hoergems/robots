@@ -21,11 +21,16 @@ Robot::Robot(std::string robotFile, std::string configFile):
     actionSpace_(nullptr),
     observationSpace_(nullptr),
     serializer_(nullptr),    
-    goal_(nullptr)
+    goal_(nullptr),
+    randomEngine_()
 {
 #ifdef USE_OPENRAVE
     viewer_ = std::make_shared<frapu::ViewerInterface>();
 #endif    
+}
+
+void Robot::setRandomEngine(std::default_random_engine &randomEngine) {
+    randomEngine_ = randomEngine;
 }
 
 bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,

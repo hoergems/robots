@@ -30,6 +30,11 @@ ManipulatorRobotLinear::ManipulatorRobotLinear(std::string robotFile, std::strin
 
 }
 
+std::string ManipulatorRobotLinear::getName() const {
+    std::string name = "ManipulatorLinear";
+    return name;
+}
+
 void ManipulatorRobotLinear::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
         const frapu::ActionSharedPtr& control,
         double& duration,

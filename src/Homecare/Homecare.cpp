@@ -18,6 +18,11 @@ Homecare::Homecare(std::string robotFile, std::string configFile):
     upperControlLimits_.push_back(5.0);
 }
 
+std::string Homecare::getName() const {
+    std::string name = "Homecare";
+    return name;
+}
+
 bool Homecare::propagateState(const frapu::RobotStateSharedPtr& state,
                               const frapu::ActionSharedPtr& action,
                               double duration,
@@ -126,15 +131,13 @@ double Homecare::distanceGoal(const frapu::RobotStateSharedPtr& state) const
 }
 
 void Homecare::makeProcessDistribution(Eigen::MatrixXd& mean,
-                                       Eigen::MatrixXd& covariance_matrix,
-                                       unsigned long seed)
+                                       Eigen::MatrixXd& covariance_matrix)
 {
 //TODO
 }
 
 void Homecare::makeObservationDistribution(Eigen::MatrixXd& mean,
-        Eigen::MatrixXd& covariance_matrix,
-        unsigned long seed)
+        Eigen::MatrixXd& covariance_matrix)
 {
 //TODO
 }

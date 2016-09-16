@@ -1246,13 +1246,13 @@ void ManipulatorRobot::makeNextStateAfterCollision(const frapu::RobotStateShared
 void ManipulatorRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix)
 {    
-    process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, randomEngine_);
+    process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false);
 }
 
 void ManipulatorRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix)
 {   
-    observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, randomEngine_);
+    observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false);
 }
 
 /**BOOST_PYTHON_MODULE(librobots)

@@ -226,7 +226,7 @@ void AUV::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& state,
 void AUV::makeProcessDistribution(Eigen::MatrixXd& mean,
                                   Eigen::MatrixXd& covariance_matrix)
 {
-    process_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>(randomEngine_);
+    process_distribution_ = std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
     std::vector<std::pair<std::vector<double>, double>> elements;
     std::vector<double> elem0( { -0.01, 0.0});
     std::vector<double> elem1( {0.0, 0.0});
@@ -241,7 +241,7 @@ void AUV::makeObservationDistribution(Eigen::MatrixXd& mean,
                                       Eigen::MatrixXd& covariance_matrix)
 {
     observation_distribution_ =
-        std::make_shared<Eigen::WeightedDiscreteDistribution<double>>(randomEngine_);
+        std::make_shared<Eigen::WeightedDiscreteDistribution<double>>();
 }
 
 void AUV::updateRobot(const frapu::RobotStateSharedPtr& state)

@@ -65,6 +65,7 @@ bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,
     std::vector<double> controlVec = static_cast<const frapu::VectorAction*>(action.get())->asVector();
     std::vector<double> controlError(controlVec.size());
     Eigen::MatrixXd sample = process_distribution_->samples(1);
+    //cout << "sample: " << sample << endl;
     for (size_t i = 0; i < controlError.size(); i++) {
         controlError[i] = sample(i, 0);
     }
@@ -129,7 +130,8 @@ double Robot::calcLikelihood(const frapu::RobotStateSharedPtr& state,
         static_cast<frapu::VectorObservation*>(observationState.get())->asVector();
     std::vector<double> observationVec =
         static_cast<frapu::VectorObservation*>(observation.get())->asVector();
-    return observation_distribution_->calcPdf(observationVec, stateVec);
+    double pdf = observation_distribution_->calcPdf(observationVec, stateVec);
+    return pdf;
 }
 
 frapu::StateSpaceSharedPtr Robot::getStateSpace() const

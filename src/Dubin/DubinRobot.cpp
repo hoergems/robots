@@ -57,7 +57,8 @@ DubinRobot::DubinRobot(std::string robotFile, std::string configFile):
     initialState_ = static_cast<frapu::DubinSerializer*>(serializer_.get())->loadInitalState(input);
 }
 
-std::string DubinRobot::getName() const {
+std::string DubinRobot::getName() const
+{
     std::string name = "Dubin";
     return name;
 }
@@ -71,7 +72,7 @@ frapu::HeuristicFunctionSharedPtr DubinRobot::makeHeuristicFunction() const
 }
 
 frapu::RobotStateSharedPtr DubinRobot::sampleInitialState() const
-{    
+{
     return initialState_;
 }
 
@@ -225,14 +226,14 @@ bool DubinRobot::isTerminal(const frapu::RobotStateSharedPtr& state) const
 {
     std::vector<double> stateVec = static_cast<const frapu::VectorState*>(state.get())->asVector();
     if (stateVec.size() > 4) {
-	frapu::ERROR("state vec size " + std::to_string(stateVec.size()));
+        frapu::ERROR("state vec size " + std::to_string(stateVec.size()));
     }
-    
+
     std::vector<double> sVec(3);
     sVec[0] = stateVec[0];
     sVec[1] = stateVec[1];
     sVec[2] = 0.0;
-    
+
     return static_cast<frapu::SphereGoal*>(goal_.get())->isSatisfied(sVec);
 }
 
@@ -335,17 +336,17 @@ void DubinRobot::getLinearProcessMatrices(const frapu::RobotStateSharedPtr& stat
 }
 
 void DubinRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
-        Eigen::MatrixXd& covariance_matrix,
-        unsigned long seed)
+        Eigen::MatrixXd& covariance_matrix)
 {
-    process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
+    process_distribution_ =
+        std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false);    
 }
 
 void DubinRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
-        Eigen::MatrixXd& covariance_matrix,
-        unsigned long seed)
+        Eigen::MatrixXd& covariance_matrix)
 {
-    observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false, seed);
+    observation_distribution_ =
+        std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false);
 }
 
 void DubinRobot::updateViewer(const frapu::RobotStateSharedPtr& state,

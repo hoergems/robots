@@ -47,7 +47,7 @@ bool Robot::propagateState(const frapu::RobotStateSharedPtr& state,
     std::vector<double> resultVec;
     propagator_->propagateState(stateVec, controlVec, controlError, duration, simulationStepSize, resultVec);
     result = std::make_shared<frapu::VectorState>(resultVec);
-    if (constraints_enforced_) {
+    if (constraints_enforced_) {	
         stateSpace_->enforceStateLimits(result);
     }
 

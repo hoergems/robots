@@ -372,7 +372,8 @@ ManipulatorRobot::ManipulatorRobot(std::string robotFile, std::string configFile
     rrtOptions.planningVelocity = static_cast<frapu::ManipulatorSerializer*>(serializer_.get())->loadPlanningVelocity(infile);
 }
 
-std::string ManipulatorRobot::getName() const {
+std::string ManipulatorRobot::getName() const
+{
     std::string name = "Manipulator";
     return name;
 }
@@ -481,10 +482,12 @@ std::vector<std::shared_ptr<fcl::CollisionObject>>
 bool ManipulatorRobot::makeStateSpace()
 {
     unsigned int dimensions = lowerStateLimits_.size();
-    cout << "state dim " << dimensions << endl;    
+    cout << "state dim " << dimensions << endl;
     stateSpace_ = std::make_shared<frapu::VectorStateSpace>(dimensions);
     frapu::StateLimitsSharedPtr stateLimits =
         std::make_shared<frapu::ManipulatorStateLimits>(lowerStateLimits_, upperStateLimits_);
+    frapu::printVector<double>(lowerStateLimits_, "lowerLimits");
+    frapu::printVector<double>(upperStateLimits_, "upperLimits");
     stateSpace_->setStateLimits(stateLimits);
 }
 
@@ -756,7 +759,7 @@ void ManipulatorRobot::getPositionOfLinkN(const std::vector<double>& joint_angle
 
 void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_angles, std::vector<double>& end_effector_position) const
 {
-    if (joint_angles.size() > getDOF()) {        
+    if (joint_angles.size() > getDOF()) {
         std::vector<double> ja(getDOF());
         for (size_t i = 0; i < getDOF(); i++) {
             ja[i] = joint_angles[i];
@@ -765,7 +768,7 @@ void ManipulatorRobot::getEndEffectorPosition(const std::vector<double>& joint_a
         const std::vector<double> ja2(ja);
         kinematics_->getEndEffectorPosition(ja2, end_effector_position);
     } else {
-        kinematics_->getEndEffectorPosition(joint_angles, end_effector_position);        
+        kinematics_->getEndEffectorPosition(joint_angles, end_effector_position);
     }
 
 }
@@ -872,7 +875,7 @@ void ManipulatorRobot::setGravityConstant(double gravity_constant)
 {
     std::shared_ptr<frapu::Integrator> integrator =
         static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator();
-    frapu::Integrate *integrate = static_cast<frapu::Integrate *>(integrator.get());
+    frapu::Integrate* integrate = static_cast<frapu::Integrate*>(integrator.get());
     if (integrate) {
         integrate->setGravityConstant(gravity_constant);
     }
@@ -891,7 +894,7 @@ void ManipulatorRobot::setExternalForce(double f_x,
 {
     std::shared_ptr<frapu::Integrator> integrator =
         static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator();
-    frapu::Integrate *integrate = static_cast<frapu::Integrate *>(integrator.get());
+    frapu::Integrate* integrate = static_cast<frapu::Integrate*>(integrator.get());
     if (integrate) {
         integrate->setExternalForce(f_x, f_y, f_z, f_roll, f_pitch, f_yaw);
     }
@@ -901,7 +904,7 @@ void ManipulatorRobot::setAccelerationLimit(double accelerationLimit)
 {
     std::shared_ptr<frapu::Integrator> integrator =
         static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator();
-    frapu::Integrate *integrate = static_cast<frapu::Integrate *>(integrator.get());
+    frapu::Integrate* integrate = static_cast<frapu::Integrate*>(integrator.get());
     if (integrate) {
         integrate->setAccelerationLimit(accelerationLimit);
     }
@@ -1245,13 +1248,13 @@ void ManipulatorRobot::makeNextStateAfterCollision(const frapu::RobotStateShared
 
 void ManipulatorRobot::makeProcessDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix)
-{    
+{
     process_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false);
 }
 
 void ManipulatorRobot::makeObservationDistribution(Eigen::MatrixXd& mean,
         Eigen::MatrixXd& covariance_matrix)
-{   
+{
     observation_distribution_ = std::make_shared<Eigen::EigenMultivariateNormal<double>>(mean, covariance_matrix, false);
 }
 

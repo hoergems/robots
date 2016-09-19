@@ -8,11 +8,17 @@ from urdf_parser_py import urdf
 class ModelParser:
   def __init__(self, file, header_src, imple_src):
     self.build_model(file)
-    linkJacobians = self.calcLinkJacobians()
+    print "Calculate link jacobians"
+    linkJacobians, baseToCOMTransformations = self.calcLinkJacobians()
+    g = Matrix([0.0, 0.0, 9.81]).T
+    print "Calculate inertia matrix"
     M = self.calcManipulatorInertiaMatrix(linkJacobians)
+    print "Calculate coriolis matrix"
     C = self.calcCentrifugalMatrix(M)
+    print "Calculate normal forces"
+    N = self.calcNormalForces(g, baseToCOMTransformations)
     numLinks = len(self.link_names)
-    dhList = []
+    '''dhList = []
     for i in xrange(numLinks-2):
       #(alpha, a, d, theta)
       dhList.append((self.joint_origins[i+1][3], 
@@ -42,11 +48,11 @@ class ModelParser:
 	matr_list[i] = matr_list[i].subs(rbtdef.l[j][1], rbtdef.Le[j][3])
 	matr_list[i] = matr_list[i].subs(rbtdef.l[j][2], rbtdef.Le[j][5])
 	matr_list[i] = matr_list[i].subs(rbtdef.m[j], self.link_masses[j + 1])
-	matr_list[i] = matr_list[i].subs(rbtdef.dq[j], self.qdot[j])
+	matr_list[i] = matr_list[i].subs(rbtdef.dq[j], self.qdot[j])'''
     print "simplify terms..."
-    M = trigsimp(matr_list[0])
+    '''M = trigsimp(matr_list[0])
     C = trigsimp(matr_list[1])
-    N = trigsimp(matr_list[2])
+    N = trigsimp(matr_list[2])'''
     print "invert inertia matrix"
     M_inv = self.inertia_inverse(M, symbolic=True)
     print "get dynamic model"    
@@ -54,7 +60,7 @@ class ModelParser:
     print "Calculate partial derivatives"  
     A, B, V = self.partial_derivatives2(f)
     print "Calc first order derivatives of observation function" 
-    H, W = self.calc_observation_derivatives(rbt)
+    H, W = self.calc_observation_derivatives(baseToCOMTransformations)
     print "cleaning cpp code..."    
     
     self.clean_cpp_code(header_src, imple_src)
@@ -66,6 +72,28 @@ class ModelParser:
     self.gen_cpp_code2(H, "H0", header_src, imple_src)
     self.gen_cpp_code2(W, "W0", header_src, imple_src)
     print "done"
+  
+  def calcNormalForces(self, g, baseToCOMTransformations):     
+    Ocs = []
+    for i in xrange(len(baseToCOMTransformations)):
+	Oc = Matrix([baseToCOMTransformations[i][0, 3],
+	             baseToCOMTransformations[i][1, 3],
+	             baseToCOMTransformations[i][2, 3]]).T
+	Ocs.append(Oc)
+    V = 0.0
+    link_masses = self.link_masses[1:len(self.link_masses)-1] 
+    
+    for i in xrange(len(link_masses)):            
+       el = link_masses[i] * g[2] * Ocs[i][2]      
+       V += el
+    N = Matrix([[trigsimp(diff(V, self.q[i]))] for i in xrange(len(self.q) - 1)])
+    qdot = self.qdot[0:len(self.qdot) - 1]
+    
+    '''
+    The joint friction forces
+    '''
+    K = N + Matrix([[self.viscous[i] * qdot[i]] for i in xrange(len(qdot))])
+    return K  
     
   def calcCentrifugalMatrix(self, M):    
     C = zeros(M.shape[0], M.shape[1])
@@ -129,7 +157,7 @@ class ModelParser:
 	    J[k, j] = trigsimp(upper[k])
 	    J[k+3, j] = trigsimp(lower[k])
 	linkJacobians.append(J)
-    return linkJacobians
+    return linkJacobians, baseToCOMTransformations
     
     
   def dh(self, theta, d, a, alpha):
@@ -150,14 +178,14 @@ class ModelParser:
         else:
             return M.inv()
     
-  def calc_observation_derivatives(self, rbt):
+  def calc_observation_derivatives(self, baseToCOMTransformations):
         t = self.transformation(0.0, 0.0, self.joint_origins[0][2])        
-        ee_transformation = t * rbt.geo.T[-1]
+        ee_transformation = baseToCOMTransformations[-1] * self.transformation(self.joint_origins[1][0], 0.0, 0.0)
 	
 	g_funct = [ee_transformation[0, 3], 
 	           ee_transformation[1, 3], 
 	           ee_transformation[2, 3]]
-	for i in xrange(len(self.qdot)):
+	for i in xrange(len(self.qdot) - 1):
 	    g_funct.append(self.qdot[i])
 	g_funct = Matrix(g_funct)
 	#g_funct = g_funct.T
@@ -165,8 +193,8 @@ class ModelParser:
 	
 	for i in xrange(len(etas)):
 	    g_funct[i] = g_funct[i] + etas[i]
-	x = [self.q[i] for i in xrange(len(self.q))]
-	x.extend([self.qdot[i] for i in xrange(len(self.qdot))])
+	x = [self.q[i] for i in xrange(len(self.q) - 1)]
+	x.extend([self.qdot[i] for i in xrange(len(self.qdot) - 1)])
 	H = g_funct.jacobian([x[i] for i in xrange(len(x))])
 	W = g_funct.jacobian([etas[i] for i in xrange(len(etas))])
 	H = simplify(H)
@@ -180,26 +208,25 @@ class ModelParser:
 		[0.0, 0.0, 0.0, 1.0]])
     return t
     
-  def partial_derivatives2(self, f):
-        A1 = f.jacobian([self.q[i] for i in xrange(len(self.q))])
-        A2 = f.jacobian([self.qdot[i] for i in xrange(len(self.qdot))])
-        B =  f.jacobian([self.rho[i] for i in xrange(len(self.rho))])
-        C =  f.jacobian([self.zeta[i] for i in xrange(len(self.zeta))])
+  def partial_derivatives2(self, f):        
+        A1 = f.jacobian([self.q[i] for i in xrange(len(self.q) - 1)])
+        A2 = f.jacobian([self.qdot[i] for i in xrange(len(self.qdot) - 1)])
+        B =  f.jacobian([self.rho[i] for i in xrange(len(self.rho) - 1)])
+        C =  f.jacobian([self.zeta[i] for i in xrange(len(self.zeta) - 1)])
         A = A1.row_join(A2)        
         return A, B, C    
     
   def get_dynamic_model(self, M, M_inv, C, N, thetas, dot_thetas, rs, zetas):             
-        #print "time to invert: " + str(time.time() - t0)        
-        Thetas = Matrix([[thetas[i]] for i in xrange(len(thetas))])
-        Dotthetas = Matrix([[dot_thetas[i]] for i in xrange(len(dot_thetas))])
-        Rs = Matrix([[rs[i]] for i in xrange(len(rs))])
-        Zetas = Matrix([[zetas[i]] for i in xrange(len(zetas))])
+        #print "time to invert: " + str(time.time() - t0)
+        Dotthetas = Matrix([[dot_thetas[i]] for i in xrange(len(dot_thetas) - 1)])       
+        Rs = Matrix([[rs[i]] for i in xrange(len(rs) - 1)])        
+        Zetas = Matrix([[zetas[i]] for i in xrange(len(zetas) - 1)])        
         print "Constructing 2nd-order ODE"
-        m_upper = Matrix([[dot_thetas[i]] for i in xrange(len(dot_thetas))])
+        m_upper = Matrix([[Dotthetas[i]] for i in xrange(len(Dotthetas))])
         m_lower = 0
         '''if self.simplifying:
             m_lower = trigsimp(-M_inv * trigsimp(C * Dotthetas + N) + M_inv * Rs)           
-        else:'''        
+        else:'''
         m_lower = M_inv * ((Rs + Zetas) - C * Dotthetas - N)
         h = m_upper.col_join(m_lower)        
         return h

@@ -635,7 +635,7 @@ void ManipulatorRobot::initCollisionObjects()
         fcl::Transform3f box_tf;
         fcl::Transform3f trans;
         fcl::constructBox(link_aabbs[i], trans, *box, box_tf);
-        collision_objects_.push_back(std::make_shared<fcl::CollisionObject>(boost::shared_ptr<fcl::CollisionGeometry>(box), box_tf));
+        collision_objects_.push_back(std::make_shared<fcl::CollisionObject>(std::shared_ptr<fcl::CollisionGeometry>(box), box_tf));
     }
 
     // Init the end-effector collision object
@@ -649,7 +649,7 @@ void ManipulatorRobot::initCollisionObjects()
     fcl::Transform3f box_tf;
     fcl::Transform3f trans;
     fcl::constructBox(aabb, trans, *box, box_tf);
-    collision_objects_.push_back(std::make_shared<fcl::CollisionObject>(boost::shared_ptr<fcl::CollisionGeometry>(box), box_tf));
+    collision_objects_.push_back(std::make_shared<fcl::CollisionObject>(std::shared_ptr<fcl::CollisionGeometry>(box), box_tf));
 }
 
 void ManipulatorRobot::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,

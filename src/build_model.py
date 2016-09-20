@@ -15,7 +15,7 @@ from gi.overrides.keysyms import R10
 from urdf_parser_py import urdf
 
 class Test:
-    def __init__(self, model, simplifying, buildcpp, lin_steady_states, xml_file):
+    def __init__(self, model, simplifying, buildcpp, lin_steady_states, xml_file, header_file, source_file):
         t_start = time.time()        
         self.simplifying = simplifying
         self.parse_urdf(model, xml_file)        
@@ -94,8 +94,8 @@ class Test:
         #Sec = self.partial_derivatives_second_order(f, First)       
         
         print "Clean cpp code"
-        header_src = "include/integrate.hpp"
-        imple_src = "integrate.cpp"
+        header_src = header_file
+        imple_src = source_file
         
         self.clean_cpp_code(header_src, imple_src)
         
@@ -1102,8 +1102,10 @@ if __name__ == "__main__":
     parser.add_argument("-ss", "--steady_states",
                         help="Linearize about steady states",
                         action="store_true")
+    parser.add_argument("-he", "--header", help="Path to the robot header file")
+    parser.add_argument("-src", "--source", help="Path to the robot source file")
     parser.add_argument("-m", "--model", help="Path to the robot model file")
     parser.add_argument('file', type=argparse.FileType('r'), nargs='?', default=None, help='File to load. Use - for stdin')
     args = parser.parse_args()
     xml_file = args.file.read()
-    Test(args.model, args.simplifying, args.buildcpp, args.steady_states, xml_file)
+    Test(args.model, args.simplifying, args.buildcpp, args.steady_states, xml_file, args.header, args.source)

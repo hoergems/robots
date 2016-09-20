@@ -10,65 +10,30 @@ class ModelParser:
     self.build_model(file)
     print "Calculate link jacobians"
     linkJacobians, baseToCOMTransformations = self.calcLinkJacobians()
-    g = Matrix([0.0, 0.0, 9.81]).T
+    '''g = Matrix([0.0, 0.0, 9.81]).T
     print "Calculate inertia matrix"
     M = self.calcManipulatorInertiaMatrix(linkJacobians)
     print "Calculate coriolis matrix"
     C = self.calcCentrifugalMatrix(M)
     print "Calculate normal forces"
     N = self.calcNormalForces(g, baseToCOMTransformations)
-    numLinks = len(self.link_names)
-    '''dhList = []
-    for i in xrange(numLinks-2):
-      #(alpha, a, d, theta)
-      dhList.append((self.joint_origins[i+1][3], 
-		     self.joint_origins[i+1][0], 
-		     self.joint_origins[i+1][2], 
-		     self.q[i]))
-    dhList.append((0.0, 1.0, 0.0, self.q[numLinks - 2]))
-    rbtdef = sympybotics.RobotDef('Example Robot', dhList, dh_convention='standard')
-    rbtdef.gravityacc = Matrix([0.0, 0.0, -9.81])
-    rbtdef.frictionmodel = None
-    for i in xrange(numLinks - 1):      
-      rbtdef.Le[i][0] = self.Is[i][0]
-      rbtdef.Le[i][1] = 0.0
-      rbtdef.Le[i][2] = 0.0
-      rbtdef.Le[i][3] = self.Is[i][1]
-      rbtdef.Le[i][4] = 0.0
-      rbtdef.Le[i][5] = self.Is[i][2]   
-    
-    rbt = sympybotics.RobotDynCode(rbtdef, verbose=True)
-    M = rbt.M_code[1]
-    C = rbt.C_code[1]
-    N = rbt.g_code[1]
-    matr_list = [M, C, N]
-    for i in xrange(len(matr_list)):
-      for j in xrange(numLinks - 1):      
-	matr_list[i] = matr_list[i].subs(rbtdef.l[j][0], rbtdef.Le[j][0])
-	matr_list[i] = matr_list[i].subs(rbtdef.l[j][1], rbtdef.Le[j][3])
-	matr_list[i] = matr_list[i].subs(rbtdef.l[j][2], rbtdef.Le[j][5])
-	matr_list[i] = matr_list[i].subs(rbtdef.m[j], self.link_masses[j + 1])
-	matr_list[i] = matr_list[i].subs(rbtdef.dq[j], self.qdot[j])'''
-    print "simplify terms..."
-    '''M = trigsimp(matr_list[0])
-    C = trigsimp(matr_list[1])
-    N = trigsimp(matr_list[2])'''
+    numLinks = len(self.link_names)    
     print "invert inertia matrix"
     M_inv = self.inertia_inverse(M, symbolic=True)
     print "get dynamic model"    
     f = self.get_dynamic_model(M, M_inv, C, N, self.q, self.qdot, self.rho, self.zeta)
     print "Calculate partial derivatives"  
     A, B, V = self.partial_derivatives2(f)
-    print "Calc first order derivatives of observation function" 
+    print "Calc first order derivatives of observation function" '''
     H, W = self.calc_observation_derivatives(baseToCOMTransformations)
     print "cleaning cpp code..."    
     
-    self.clean_cpp_code(header_src, imple_src)
-    self.gen_cpp_code2(f, "F0", header_src, imple_src)
-    self.gen_cpp_code2(A, "A0", header_src, imple_src)
-    self.gen_cpp_code2(B, "B0", header_src, imple_src)
-    self.gen_cpp_code2(V, "V0", header_src, imple_src)
-    self.gen_cpp_code2(M, "M0", header_src, imple_src)
+    self.clean_cpp_code2(header_src, imple_src)
+    #self.gen_cpp_code2(f, "F0", header_src, imple_src)
+    #self.gen_cpp_code2(A, "A0", header_src, imple_src)
+    #self.gen_cpp_code2(B, "B0", header_src, imple_src)
+    #self.gen_cpp_code2(V, "V0", header_src, imple_src)
+    #self.gen_cpp_code2(M, "M0", header_src, imple_src)
     self.gen_cpp_code2(H, "H0", header_src, imple_src)
     self.gen_cpp_code2(W, "W0", header_src, imple_src)
     print "done"
@@ -179,24 +144,22 @@ class ModelParser:
             return M.inv()
     
   def calc_observation_derivatives(self, baseToCOMTransformations):
-        t = self.transformation(0.0, 0.0, self.joint_origins[0][2])        
-        ee_transformation = baseToCOMTransformations[-1] * self.transformation(self.joint_origins[1][0], 0.0, 0.0)
-	
-	g_funct = [ee_transformation[0, 3], 
-	           ee_transformation[1, 3], 
-	           ee_transformation[2, 3]]
+        ee_transformation = baseToCOMTransformations[-1] * self.transformation(self.joint_origins[1][0] / 2, 0.0, 0.0)
+	g_funct = [trigsimp(ee_transformation[0, 3]), 
+	           trigsimp(ee_transformation[1, 3]), 
+	           trigsimp(ee_transformation[2, 3])]	
 	for i in xrange(len(self.qdot) - 1):
 	    g_funct.append(self.qdot[i])
 	g_funct = Matrix(g_funct)
-	#g_funct = g_funct.T
+	g_funct = g_funct
 	etas = [symbols("eta_[" + str(i) + "]") for i in xrange(g_funct.shape[0])]	
 	
 	for i in xrange(len(etas)):
-	    g_funct[i] = g_funct[i] + etas[i]
+	    g_funct[i, 0] = g_funct[i, 0] + etas[i]
 	x = [self.q[i] for i in xrange(len(self.q) - 1)]
 	x.extend([self.qdot[i] for i in xrange(len(self.qdot) - 1)])
-	H = g_funct.jacobian([x[i] for i in xrange(len(x))])
-	W = g_funct.jacobian([etas[i] for i in xrange(len(etas))])
+	H = trigsimp(g_funct.jacobian([x[i] for i in xrange(len(x))]))
+	W = trigsimp(g_funct.jacobian([etas[i] for i in xrange(len(etas))]))	
 	H = simplify(H)
 	H = nsimplify(H, tolerance=1e-4) 
 	return H, W
@@ -365,6 +328,75 @@ class ModelParser:
                 f.write(line)
         with open(header_src, 'a+') as f:
             for line in lines_header:
+                f.write(line)
+                
+  def clean_cpp_code2(self, header_src, imple_src):
+        lines = list(open(imple_src, 'r'))
+        lines_header = list(open(header_src, 'r'))
+        tmp_lines = []
+        idx_pairs = []
+        
+        idx1 = -1
+        idx2 = -1
+        breaking = False
+        for i in xrange(len(lines)):
+	    if ("MatrixXd Integrate::getH" in lines[i] or
+                "MatrixXd Integrate::getW" in lines[i]):            
+                idx1 = i                
+                breaking = True
+            if "}" in lines[i] and breaking:
+                idx_pairs.append((idx1, i))
+                idx1 = -1
+                breaking = False               
+        for i in xrange(len(lines)):
+            app = True
+            for j in xrange(len(idx_pairs)):
+                if i >= idx_pairs[j][0] and i <= idx_pairs[j][1]:
+                    app = False
+                    break                
+            if app:
+                tmp_lines.append(lines[i])
+        os.remove(imple_src)        
+        with open(imple_src, 'a+') as f:
+            for line in tmp_lines:
+                f.write(line)
+                
+        tmp_lines = []
+        idxs = []
+        for i in xrange(len(lines_header)):
+	    if ("MatrixXd getH" in lines_header[i] or
+                "MatrixXd getW" in lines_header[i]):            
+                idxs.append(i)
+        for i in xrange(len(lines_header)):
+            app = True
+            for j in xrange(len(idxs)):
+                if i == idxs[j]:
+                    app = False
+            if app:
+                tmp_lines.append(lines_header[i])
+                
+        os.remove(header_src)        
+        with open(header_src, 'a+') as f:
+            for line in tmp_lines:
+                f.write(line)
+                
+        lines = list(open(imple_src, 'r'))
+        tmp_lines = []
+        idx1 = -1
+        idx2 = -1
+        breaking = False
+        for i in xrange(len(lines)):
+            if "void Integrate::setupSteadyStates() const {" in lines[i]:
+                idx1 = i + 1
+                breaking = True
+            elif "std::pair<Integrate::AB_funct, std::pair<Integrate::AB_funct, Integrate::AB_funct>> Integrate::getClosestSteadyStateFunctions" in lines[i]:
+                idx2 = i - 3                
+                if breaking:
+                    break                     
+        del lines[idx1:idx2]        
+        os.remove(imple_src)        
+        with open(imple_src, 'a+') as f:
+            for line in lines:               
                 f.write(line)
     
     

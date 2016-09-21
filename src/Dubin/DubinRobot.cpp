@@ -99,7 +99,7 @@ void DubinRobot::createRobotCollisionObjects(const frapu::RobotStateSharedPtr st
     fcl::Transform3f box_tf;
     fcl::constructBox(link_aabb, trans, *box, box_tf);
     std::shared_ptr<fcl::CollisionObject> coll_obj =
-        std::make_shared<fcl::CollisionObject>(std::shared_ptr<fcl::CollisionGeometry>(box), box_tf);
+        std::make_shared<fcl::CollisionObject>(boost::shared_ptr<fcl::CollisionGeometry>(box), box_tf);
     collision_objects.push_back(coll_obj);
 }
 

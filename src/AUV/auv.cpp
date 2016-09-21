@@ -72,7 +72,7 @@ void AUV::createRobotCollisionObjects(const frapu::RobotStateSharedPtr state,
     fcl::Box* box = new fcl::Box();
     fcl::Transform3f box_tf;
     fcl::constructBox(link_aabb, trans, *box, box_tf);
-    frapu::CollisionObjectSharedPtr coll_obj = std::make_shared<fcl::CollisionObject>(std::shared_ptr<fcl::CollisionGeometry>(box), box_tf);
+    frapu::CollisionObjectSharedPtr coll_obj = std::make_shared<fcl::CollisionObject>(boost::shared_ptr<fcl::CollisionGeometry>(box), box_tf);
     collision_objects.push_back(coll_obj);
 }
 

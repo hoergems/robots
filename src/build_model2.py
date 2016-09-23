@@ -9,8 +9,9 @@ class ModelParser:
   def __init__(self, file, header_src, imple_src):
     self.build_model(file)
     print "Calculate link jacobians"
-    linkJacobians, baseToCOMTransformations = self.calcLinkJacobians()
-    '''g = Matrix([0.0, 0.0, 9.81]).T
+    linkJacobians, baseToCOMTransformations = self.calcLinkJacobians2()
+    g_ = symbols("g_")
+    g = Matrix([0.0, 0.0, g_]).T
     print "Calculate inertia matrix"
     M = self.calcManipulatorInertiaMatrix(linkJacobians)
     print "Calculate coriolis matrix"
@@ -24,40 +25,48 @@ class ModelParser:
     f = self.get_dynamic_model(M, M_inv, C, N, self.q, self.qdot, self.rho, self.zeta)
     print "Calculate partial derivatives"  
     A, B, V = self.partial_derivatives2(f)
-    print "Calc first order derivatives of observation function" '''
+    print "Calc first order derivatives of observation function"
     H, W = self.calc_observation_derivatives(baseToCOMTransformations)
     print "cleaning cpp code..."    
     
-    self.clean_cpp_code2(header_src, imple_src)
-    #self.gen_cpp_code2(f, "F0", header_src, imple_src)
-    #self.gen_cpp_code2(A, "A0", header_src, imple_src)
-    #self.gen_cpp_code2(B, "B0", header_src, imple_src)
-    #self.gen_cpp_code2(V, "V0", header_src, imple_src)
-    #self.gen_cpp_code2(M, "M0", header_src, imple_src)
+    self.clean_cpp_code(header_src, imple_src)
+    self.gen_cpp_code2(f, "F0", header_src, imple_src)
+    self.gen_cpp_code2(A, "A0", header_src, imple_src)
+    self.gen_cpp_code2(B, "B0", header_src, imple_src)
+    self.gen_cpp_code2(V, "V0", header_src, imple_src)
+    self.gen_cpp_code2(M, "M0", header_src, imple_src)
     self.gen_cpp_code2(H, "H0", header_src, imple_src)
     self.gen_cpp_code2(W, "W0", header_src, imple_src)
     print "done"
   
   def calcNormalForces(self, g, baseToCOMTransformations):     
-    Ocs = []
+    Ocs = []    
     for i in xrange(len(baseToCOMTransformations)):
+	print baseToCOMTransformations[i]
 	Oc = Matrix([baseToCOMTransformations[i][0, 3],
 	             baseToCOMTransformations[i][1, 3],
-	             baseToCOMTransformations[i][2, 3]]).T
+	             baseToCOMTransformations[i][2, 3]])
 	Ocs.append(Oc)
+    
     V = 0.0
-    link_masses = self.link_masses[1:len(self.link_masses)-1] 
-    
-    for i in xrange(len(link_masses)):            
-       el = link_masses[i] * g[2] * Ocs[i][2]      
-       V += el
-    N = Matrix([[trigsimp(diff(V, self.q[i]))] for i in xrange(len(self.q) - 1)])
+    link_masses = self.link_masses[1:len(self.link_masses)-1]    
+    for i in xrange(len(link_masses)):
+      el = g[2] * Ocs[i][2] * link_masses[i] 
+      print "el " + str(el)
+      V = V + el
+      V = trigsimp(V)     
+    q = [self.q[i] for i in xrange(len(self.q) - 1)]
+    VDiff = trigsimp(Matrix([V]).jacobian(q).T)
+    return VDiff
+    print VDiff 
+    print VDiff.shape
+    N = Matrix([[trigsimp(diff(V, self.q[i]).doit())] for i in xrange(len(self.q) - 1)])
+    print N;sleep
     qdot = self.qdot[0:len(self.qdot) - 1]
-    
     '''
     The joint friction forces
     '''
-    K = N + Matrix([[self.viscous[i] * qdot[i]] for i in xrange(len(qdot))])
+    K = N + Matrix([[self.viscous[i] * qdot[i]] for i in xrange(len(qdot))])    
     return K  
     
   def calcCentrifugalMatrix(self, M):    
@@ -94,6 +103,66 @@ class ModelParser:
     for i in xrange(len(linkJacobians)):
       M += trigsimp(linkJacobians[i].T * Ms[i] * linkJacobians[i])
     return trigsimp(M)
+
+  def getJointRotation(self, jointNumber):      
+      jointAxis = self.joint_axis[jointNumber]
+      print "jointNumber " + str(jointNumber)
+      print "ja " + str(jointAxis)
+      rotation = 0
+      if (jointAxis[0] == 1.0):
+	  print "GET ROTATION ABOUT X"
+	  rotation = self.rotateX(self.q[jointNumber])
+      elif (jointAxis[1] == 1.0):
+	  print "GET ROTATION ABOUT Y"
+	  rotation = self.rotateY(self.q[jointNumber])
+      elif (jointAxis[2] == 1.0):
+	  print "GET ROTATION ABOUT Z"
+	  rotation = self.rotateZ(self.q[jointNumber])
+      
+      return rotation
+       
+  def calcLinkJacobians2(self):    
+    baseToJointTransformations = []
+    baseToCOMTransformations = []
+    currentTrans = self.translateXYZ(0.0, 0.0, 0.0)    
+    for i in xrange(len(self.joint_origins) - 1):
+        jointRotation = 0
+	if (i == 0):
+	    jointRotation = self.rotateZ(0)
+	else:	    
+	    jointRotation = self.getJointRotation(i-1)	
+	trans = self.translateXYZ(self.joint_origins[i][0], self.joint_origins[i][1], self.joint_origins[i][2])	
+	rotX = self.rotateX(self.joint_origins[i][3])
+	rotY = self.rotateY(self.joint_origins[i][4])
+	rotZ = self.rotateZ(self.joint_origins[i][5])	
+	currentTrans *= jointRotation	
+	currentTrans *= trans	
+	currentTrans *= rotX
+	currentTrans *= rotY
+	currentTrans *= rotZ	
+	currentTrans = trigsimp(currentTrans)	
+	baseToJointTransformations.append(currentTrans)    
+    for i in xrange(len(self.joint_origins) - 1):
+      jointRotation = self.getJointRotation(i)      
+      inertialPose = self.inertial_poses[i+1]
+      inertialTranslation = self.translateXYZ(inertialPose[0], inertialPose[1], inertialPose[2])
+      trans = baseToJointTransformations[i] * jointRotation * inertialTranslation
+      trans = trigsimp(trans)
+      baseToCOMTransformations.append(trans)    
+    linkJacobians = []
+    for i in xrange(len(self.joint_origins) - 1):
+	J = zeros(6, len(self.joint_origins) - 1)
+	Oc = trigsimp(Matrix([baseToCOMTransformations[i].col(3)[k] for k in xrange(3)]).T)
+	for j in xrange(i + 1):
+	  Oj = trigsimp(Matrix([baseToJointTransformations[j].col(3)[k] for k in xrange(3)]).T)	  
+	  Zj = trigsimp(Matrix([baseToJointTransformations[j].col(2)[k] for k in xrange(3)]).T)
+	  upper = Zj.cross(Oc - Oj)
+	  lower = Zj
+	  for k in xrange(3):
+	    J[k, j] = trigsimp(upper[k])
+	    J[k+3, j] = trigsimp(lower[k])
+	linkJacobians.append(J)	
+    return linkJacobians, baseToCOMTransformations
     
   def calcLinkJacobians(self):
     baseToJointTransformations = []
@@ -123,6 +192,30 @@ class ModelParser:
 	    J[k+3, j] = trigsimp(lower[k])
 	linkJacobians.append(J)
     return linkJacobians, baseToCOMTransformations
+
+  def translateXYZ(self, x, y, z):
+      return Matrix([[1.0, 0.0, 0.0, x],
+		     [0.0, 1.0, 0.0, y],
+		     [0.0, 0.0, 1.0, z],
+		     [0.0, 0.0, 0.0, 1.0]])
+
+  def rotateX(self, theta):
+      return Matrix([[1.0, 0.0, 0.0, 0.0],
+		     [0.0, cos(theta), -sin(theta), 0.0],
+		     [0.0, sin(theta), cos(theta), 0.0],
+		     [0.0, 0.0, 0.0, 1.0]])
+  
+  def rotateY(self, theta):
+      return Matrix([[cos(theta), 0.0, sin(theta), 0.0],
+		     [0.0, 1.0, 0.0, 0.0],
+		     [-sin(theta), 0.0, cos(theta), 0.0],
+		     [0.0, 0.0, 0.0, 1.0]])
+  
+  def rotateZ(self, theta):
+      return Matrix([[cos(theta), -sin(theta), 0.0, 0.0],
+		     [sin(theta), cos(theta), 0.0, 0.0],
+		     [0.0, 0.0, 1.0, 0.0],
+		     [0.0, 0.0, 0.0, 1.0]])
     
     
   def dh(self, theta, d, a, alpha):
@@ -340,7 +433,14 @@ class ModelParser:
         idx2 = -1
         breaking = False
         for i in xrange(len(lines)):
-	    if ("MatrixXd Integrate::getH" in lines[i] or
+	    if ("MatrixXd Integrate::getA" in lines[i] or
+	        "MatrixXd Integrate::getB" in lines[i] or
+	        "MatrixXd Integrate::getV" in lines[i] or
+	        "MatrixXd Integrate::getF" in lines[i] or
+	        "MatrixXd Integrate::getM" in lines[i] or
+	        "MatrixXd Integrate::getC" in lines[i] or
+	        "MatrixXd Integrate::getN" in lines[i] or
+		"MatrixXd Integrate::getH" in lines[i] or
                 "MatrixXd Integrate::getW" in lines[i]):            
                 idx1 = i                
                 breaking = True
@@ -364,8 +464,15 @@ class ModelParser:
         tmp_lines = []
         idxs = []
         for i in xrange(len(lines_header)):
-	    if ("MatrixXd getH" in lines_header[i] or
-                "MatrixXd getW" in lines_header[i]):            
+	    if ("MatrixXd Integrate::getA" in lines[i] or
+	        "MatrixXd Integrate::getB" in lines[i] or
+	        "MatrixXd Integrate::getV" in lines[i] or
+	        "MatrixXd Integrate::getF" in lines[i] or
+	        "MatrixXd Integrate::getM" in lines[i] or
+	        "MatrixXd Integrate::getC" in lines[i] or
+	        "MatrixXd Integrate::getN" in lines[i] or
+		"MatrixXd Integrate::getH" in lines[i] or
+                "MatrixXd Integrate::getW" in lines[i]):            
                 idxs.append(i)
         for i in xrange(len(lines_header)):
             app = True

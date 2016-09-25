@@ -31,9 +31,9 @@ class ModelParser:
     
     self.clean_cpp_code(header_src, imple_src)
     self.gen_cpp_code2(f, "F0", header_src, imple_src)
-    self.gen_cpp_code2(A, "A0", header_src, imple_src)
-    self.gen_cpp_code2(B, "B0", header_src, imple_src)
-    self.gen_cpp_code2(V, "V0", header_src, imple_src)
+    #self.gen_cpp_code2(A, "A0", header_src, imple_src)
+    #self.gen_cpp_code2(B, "B0", header_src, imple_src)
+    #self.gen_cpp_code2(V, "V0", header_src, imple_src)
     self.gen_cpp_code2(M, "M0", header_src, imple_src)
     self.gen_cpp_code2(H, "H0", header_src, imple_src)
     self.gen_cpp_code2(W, "W0", header_src, imple_src)
@@ -109,14 +109,12 @@ class ModelParser:
       print "jointNumber " + str(jointNumber)
       print "ja " + str(jointAxis)
       rotation = 0
-      if (jointAxis[0] == 1.0):
-	  print "GET ROTATION ABOUT X"
+      if (jointAxis[0] == 1.0):	  
 	  rotation = self.rotateX(self.q[jointNumber])
-      elif (jointAxis[1] == 1.0):
-	  print "GET ROTATION ABOUT Y"
+      elif (jointAxis[1] == 1.0):	 
 	  rotation = self.rotateY(self.q[jointNumber])
       elif (jointAxis[2] == 1.0):
-	  print "GET ROTATION ABOUT Z"
+	  
 	  rotation = self.rotateZ(self.q[jointNumber])
       
       return rotation
@@ -125,6 +123,7 @@ class ModelParser:
     baseToJointTransformations = []
     baseToCOMTransformations = []
     currentTrans = self.translateXYZ(0.0, 0.0, 0.0)    
+    
     for i in xrange(len(self.joint_origins) - 1):
         jointRotation = 0
 	if (i == 0):
@@ -133,19 +132,19 @@ class ModelParser:
 	    jointRotation = self.getJointRotation(i-1)	
 	trans = self.translateXYZ(self.joint_origins[i][0], self.joint_origins[i][1], self.joint_origins[i][2])	
 	rotX = self.rotateX(self.joint_origins[i][3])
-	rotY = self.rotateY(self.joint_origins[i][4])
-	rotZ = self.rotateZ(self.joint_origins[i][5])	
+	#rotY = self.rotateY(self.joint_origins[i][4])
+	#rotZ = self.rotateZ(self.joint_origins[i][5])	
 	currentTrans *= jointRotation	
 	currentTrans *= trans	
 	currentTrans *= rotX
-	currentTrans *= rotY
-	currentTrans *= rotZ	
+	#currentTrans *= rotY
+	#currentTrans *= rotZ	
 	currentTrans = trigsimp(currentTrans)	
 	baseToJointTransformations.append(currentTrans)    
     for i in xrange(len(self.joint_origins) - 1):
       jointRotation = self.getJointRotation(i)      
       inertialPose = self.inertial_poses[i+1]
-      inertialTranslation = self.translateXYZ(inertialPose[0], inertialPose[1], inertialPose[2])
+      inertialTranslation = self.translateXYZ(inertialPose[0], inertialPose[1], inertialPose[2])      
       trans = baseToJointTransformations[i] * jointRotation * inertialTranslation
       trans = trigsimp(trans)
       baseToCOMTransformations.append(trans)    

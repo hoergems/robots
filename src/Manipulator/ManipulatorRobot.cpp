@@ -489,6 +489,13 @@ bool ManipulatorRobot::makeStateSpace()
     frapu::printVector<double>(lowerStateLimits_, "lowerLimits");
     frapu::printVector<double>(upperStateLimits_, "upperLimits");
     stateSpace_->setStateLimits(stateLimits);
+    std::shared_ptr<frapu::Integrate> integrator =
+        static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator();
+    if (!integrator) {
+        frapu::ERROR("No integrator!");
+        sleep(10000);
+    }
+    integrator->setStateSpaceDimension(dimensions);
 }
 
 bool ManipulatorRobot::makeActionSpace(const frapu::ActionSpaceInfo& actionSpaceInfo)
@@ -504,6 +511,7 @@ bool ManipulatorRobot::makeActionSpace(const frapu::ActionSpaceInfo& actionSpace
     frapu::ActionLimitsSharedPtr actionLimits =
         std::make_shared<frapu::VectorActionLimits>(lowerControlLimits_, upperControlLimits_);
     actionSpace_->setActionLimits(actionLimits);
+    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->setControlSpaceDimension(numDimensions);
 }
 
 bool ManipulatorRobot::makeObservationSpace(const frapu::ObservationSpaceInfo& observationSpaceInfo)
@@ -716,7 +724,7 @@ void ManipulatorRobot::getLinearProcessMatrices(const frapu::RobotStateSharedPtr
 {
     std::vector<double> stateVec = static_cast<frapu::VectorState*>(state.get())->asVector();
     std::vector<double> controlVec = static_cast<frapu::VectorAction*>(control.get())->asVector();
-    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices(stateVec,
+    static_cast<frapu::ManipulatorPropagator*>(propagator_.get())->getIntegrator()->getProcessMatrices2(stateVec,
             controlVec,
             duration,
             observationSpace_->getObservationSpaceInfo().observationType,
